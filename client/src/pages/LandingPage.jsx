@@ -6,6 +6,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { reopenconnection } from '../utils/Reconnection'
 import {useSocket} from '../context/SocketProvider'
+// import Authbox from '../components/landingpage/Authbox'
 
 const min = 750;
 
@@ -115,11 +116,19 @@ const LandingPage = () => {
     const pageref = useRef(null);
     const [name,setname] = useState(``);
     const [roomid,setroomid] = useState(``);
+    const [ws,setws] = useState()
 
     const navigate = useNavigate();
 
-    let ws = useSocket()
+    const {socket} =useSocket()
 
+  
+    useEffect(()=>{
+     
+        setws(socket)
+    
+    },[socket])
+    
 
     useEffect(()=>{
         if(pageref.current){
@@ -161,84 +170,42 @@ const LandingPage = () => {
     },[pageref])
 
 
-    // const sendrequest =async(serverurl)=>{
-    //     try{
-    //         if(name != '' && roomid != ''){
-    //             const url = serverurl;
-    //             const body = {
-    //                 name:name,
-    //                 roomcode:roomid
-    //             }
-    //             const header ={
-    //                 'content-type':'application/json'
-    //             }
-    //             const {data} = await axios.post(url,body,{headers:header})
-    //             console.log(data)
 
-    //             navigate('/chat',{state:{name:data.name,room:data.room}})
-    //         }
-           
-    //     }catch(error){
-    //         console.log(error)
-    //     }
-        
-    // }
-
-
-    useEffect(()=>{
-        ws.onclose = async () => {
-            console.log('Connection closed, trying to reconnect...');
-            ws = await reopenconnection();
-            console.log('connected')
-        };
-
-        // ws.onmessage = ({data})=>{
-        //     console.log(JSON.parse(data))
-        // }
-    },[])
 
    
 
-    const checkconnection =(websoc)=>{
-        return new Promise((resolve,reject)=>{
-            switch(websoc.readyState){
-                case 0:
-                    websoc.onopen =()=> resolve(websoc);
-                    break;
 
-                case 1:
-                    resolve(websoc);
-                    break;
+    useEffect(()=>{
+        if(ws){
+   
 
-                case 2:
-                    websoc.onclose = async()=>{
-                        websoc =await reopenconnection()
-                        resolve(websoc)
-                    }
-                    break;
-
+        ws.onmessage = ({data})=>{
+            const jsondata = JSON.parse(data)
+            console.log(jsondata.type)
+            if(jsondata.permission){
+                if(jsondata.permission === 'Acc')
+                {
+                    console.log()
+                    navigate('/chat',{state:{name:jsondata.name,room:jsondata.roomid}})
+                }
             }
-           
-            
-        })
+        }
     }
+      
+    },[ws])
+
+   
 
     const requestcreate =async()=>{
         try{
-            if(!ws ||ws.readyState == ws.CLOSED || ws.CLOSING){
-                
-                ws = await checkconnection(ws);
-            }
-            ws.send(JSON.stringify({create:true,roomid:roomid,name:name}))
-            // if(ws.readyState == ws.CLOSED || ws.CLOSING)
-            // {
-            //     console.log('hi')
-            //     ws =await reopenconnection()
-            //     requestcreate()
-            // }else{
+            if(ws){
+                ws.send(JSON.stringify({create:true,roomid:roomid,name:name}))
+         
                 navigate('/chat',{state:{name,room:roomid}})
                
-            // }
+        
+            }
+           
         }catch(error){
            console.log(error)
         }
@@ -247,18 +214,11 @@ const LandingPage = () => {
 
     const requestjoin =async()=>{
   try{
-            if(!ws||ws.readyState == ws.CLOSED || ws.CLOSING){
-                
-                ws = await checkconnection(ws);
-            }
+         if(ws){
             ws.send(JSON.stringify({join:true,roomid:roomid,name:name}))
-            // navigate('/chat',{state:{name,room:roomid}})
-            // if(ws.readyState == ws.CLOSED || ws.CLOSING)
-            // {
-            // }else{
-            //     ws =await reopenconnection()
-            // requestjoin()
-            // }
+
+         }
+          
         }catch(error){
            console.log(error)
         }

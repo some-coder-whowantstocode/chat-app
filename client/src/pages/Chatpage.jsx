@@ -1,17 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components';
 import { AiOutlineSend } from "react-icons/ai";
-import { reopenconnection } from '../utils/Reconnection';
 import { useSocket } from '../context/SocketProvider';
+import RequestBox from '../components/Chatpage/RequestBox';
+import Chat from '../components/Chatpage/Chat';
 
 
 const min = 750
 
 const Chatroom = styled.div`
-height: 1009vh;
 width: 100%;
+height: calc(100vw - 160px);
 background-color: #ebebeb;
+padding-top: 40px;
+padding-bottom: 80px;
 
 `
 
@@ -53,19 +56,44 @@ const Send = styled(AiOutlineSend)`
   cursor: pointer;
 `
 
-const Requestcard = styled.div`
-height:160px ;
-width: 230px;
-background-color: black;
-position: fixed;
-top: 50%;
-left: 50%;
-transform: translateX(-50%) translateY(-50%);
+const Chatbox = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
+const Chathead = styled.div`
+  background-color: white;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  font-weight: 800;
+  font-size: 20px;
+  position: fixed;
+  top: 0;
+`
+
+const Leave = styled.div`
+  color: #a70303;
+  position: fixed;
+  top: 6px;
+  right: 10px;
+  padding: 4px ;
+  border-radius: 10px;
+  cursor: pointer;
+  transition-duration: 0.3s;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-weight: 600;
+  &:hover{
+    color: white;
+    background-color: #a70303;
+  }
 `
 
 const Chatpage = () => {
 
-  let ws = useSocket()
+  const {socket} = useSocket()
 
 
     const location = useLocation();
@@ -73,50 +101,54 @@ const Chatpage = () => {
     const [roomid,setroomid] = useState();
     const [msgs,setmsgs] = useState([]);
     const [msg,setmsg] = useState();
-    const [reqbox,setreqbox] = useState(false)
-    const [reqdata,setreqdata] = useState(null);
+    const [reqdata,setreqdata] = useState([]);
+    
+   
 
     const inputref = useRef(null)
 
     useEffect(()=>{
-      ws.onmessage =(event)=>{
+      socket.onmessage =(event)=>{
         console.log(event.data)
       }
-    },[])
+    },[socket])
 
     useEffect(()=>{
-        // console.log(location.state)
         if(location.state){
-            const {name,room,wss} = location.state;
+            const {name,room} = location.state;
             setname(name);
             setroomid(room);
-            ws = ws
+            
         }
     },[location.state])
 
     useEffect(()=>{
-      ws.onclose = async () => {
-          console.log('Connection closed, trying to reconnect...');
-          ws = await reopenconnection();
-          console.log('connected')
-          
-      };
 
-      ws.onmessage = ({data})=>{
+      socket.onmessage = ({data})=>{
           let jsondata = JSON.parse(data);
-          if(jsondata.type =`message`){
+          if(jsondata.type ==`message`){
             console.log(jsondata);
-          }else if(jsondata.type = 'request'){
-            setreqbox(true);
-            setreqdata(data);
-            console.log(jsondata);
+            setmsgs(prevmsg=>[...prevmsg,jsondata])
+          }else if(jsondata.type == 'request'){
+            setreqdata(prevreqdata =>[jsondata,...prevreqdata])
+          }else if(jsondata.type == 'removereq'){
+
+            setreqdata(prevreqdata => {
+              let arr = prevreqdata.filter((r)=>r.name != jsondata.name);
+              return arr;
+            });
+          }else if(jsondata.type == 'Announcement'){
+            console.log(jsondata)
           }
+         
       }
-  },[])
+  },[socket])
+
+ 
 
     const sendmsg =async()=>{
-      if(ws.readyState === 1 && msg != ''){
-        ws.send(JSON.stringify({
+      try{
+        socket.send(JSON.stringify({
           create:false,
           msg:msg,
           name:username,
@@ -124,21 +156,54 @@ const Chatpage = () => {
         }))
         setmsg('')
         inputref.current.value = ''
-      }else{
-        ws =await reopenconnection();
-        ws.onopen = ()=>sendmsg();
+      }catch(err){
+        console.log(err)
       }
     }
 
-    useEffect(()=>{
-      reqbox && console.log(reqbox)
-    },[reqbox])
+    const navigate = useNavigate()
+
+
+    const leaveroom =()=>{
+      try{
+        socket.send(JSON.stringify({
+          leave:true,
+          name:username,
+          roomid:roomid
+        }))
+        navigate('/landingpage')
+      }catch(err){
+        console.log(err)
+      }
+    
+    }
+
 
   return (
     <Chatroom>
-      {reqbox === true &&
-        <Requestcard></Requestcard>}
-      <CustomInput ref={inputref} defaultValue={msg} onChange={(e)=>setmsg(e.target.value)}/>
+      <Chathead>
+        {roomid}
+        </Chathead>
+
+        <Leave 
+        onClick={()=>leaveroom()}
+        >
+          Leave room
+        </Leave>
+      {
+        reqdata.map((rd)=>(
+          <RequestBox key={rd.name} data={rd}/>
+          ))
+      }
+      <Chatbox>
+      {
+        
+        msgs.map((msg)=>(
+          <Chat m={msg.msg} me={username==msg.name}/>
+        ))
+      }
+      </Chatbox>
+      <CustomInput ref={inputref} defaultValue={msg} onChange={(e)=>setmsg(e.target.value)} onKeyUp={(e)=>e.key ==='Enter' && sendmsg()}/>
       <Send onClick={()=>sendmsg()}/>
     </Chatroom>
   )

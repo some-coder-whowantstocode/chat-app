@@ -1,20 +1,32 @@
 const {sendtoall} = require('./senttoall.js')
 
-module.exports.permission =(data,ws,rooms_id,users_in_rooms)=>{
-    if(data.permission == 'Accepted'){
-        data.websocket.send(JSON.stringify({
+module.exports.permission =(data,ws,rooms_id,users_in_rooms,requesters)=>{
+    if(data.response=="Dec"){
+        let arr = requesters.get(data.roomid)
+        let w = arr.filter((a)=>a.name === data.name);
+        w[0].ws.send(JSON.stringify({
             type:'response',
-            permission:false
+            permission:'Dec',
+            roomid:data.roomid,
+            name:data.name
         }))
+
+
+        arr = arr.filter((a)=>a.name !== data.name)
     }else{
             let arr = users_in_rooms.get(data.roomid);
-        let room = rooms_id.get(data.roomid);
-        room.push(ws);
+            let room = rooms_id.get(data.roomid);
+            let req = requesters.get(data.roomid)
+            let w = req.filter((a)=>a.name === data.name);
+        room.push(w[0].ws);
         arr.push(data.name)
-        data.websocket.send(JSON.stringify({
+        w[0].ws.send(JSON.stringify({
             type:'response',
-            permission:true
+            permission:'Acc',
+            roomid:data.roomid,
+            name:data.name
         }))
+        req = req.filter((a)=>a.name !== data.name)
         let msg = {
             type:'Announcement',
             msg:`${data.name} joined the room.`
@@ -23,3 +35,14 @@ module.exports.permission =(data,ws,rooms_id,users_in_rooms)=>{
      
     }
 }
+
+
+
+/*
+data={
+    roomid
+    ws
+    name
+    
+}
+*/
