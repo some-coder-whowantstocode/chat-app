@@ -135,12 +135,16 @@ wss.on('connection',async(ws,req)=>{
             else if(data.leave){
               leaveroom(data,ws,rooms_id,users_in_rooms,roomAdmin,jwtToken)
             }
+            else if(data.cancel){
+              
+            }
             else{
                 let msg = {
                     type:'message',
                     msg:data.msg,
                     name:data.name
                 }
+                console.log(msg,data.roomid)
                sendtoall(Array.from(rooms_id.get(data.roomid)),msg);
             }
             

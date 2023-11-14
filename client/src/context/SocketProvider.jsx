@@ -6,52 +6,62 @@ const SocketContext = createContext();
 export function SocketProvider({ children }) {
   const [socket, setSocket] = useState();
   const [loading, setLoading] = useState(true);
-  const [state,setstate] = useState('notauthenticated')
+  const [state,setstate] = useState('notauthenticated');
+  const [isinchat,setinchat] = useState(false);
 
-  useEffect(() => {
-    try {
       const url = 'http://localhost:9310/handshake';
 
-      axios.get(url).then(({ data }) => {
-        const { jwtToken } = data;
-        sessionStorage.setItem('jwtToken',jwtToken);
-        let socket = new WebSocket(`ws://localhost:9827/${'jwtToken'}`);
-        setSocket(socket);
-      });
+      const gettoken =async()=>{
+        try{
+          const {data} =await axios.get(url);
+          const {jwtToken} = data;
+          sessionStorage.setItem('jwtToken',jwtToken);
+          let socket =  new WebSocket(`ws://localhost:9827/${jwtToken}`);
+          setSocket(socket);
+          setstate('Authenticated')
+        }catch(err){
+          console.log(err);
+        setstate('Authfailed')
+        }finally{
+          setLoading(false)
+        }
+       
 
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
+      }
 
-  
-  }, []);
+      useEffect(()=>{
+        if(state === 'notauthenticated'){
+          gettoken();
+
+        }
+      },[state])
+
 
   const updatestate =(value)=>{
     setstate(value)
   }
 
   const reopensocket =()=>{
-    if (state == 'Authfailed') {
-          
-            const jwtToken = sessionStorage.getItem('jwtToken');
-            let socket = new WebSocket(`ws://localhost:9827/${jwtToken}`);
-            setSocket(socket);
+    if (state == 'Authfailed' || state == 'ConnectionLost') {
+            gettoken();
           
         }
+  }
+
+  const updateinchat =()=>{
+    setinchat(!isinchat)
   }
 
   useEffect(() => {
     if (socket) {
       socket.onclose =() => {
-      setstate('Authfailed');
+      setstate('ConnectionLost');
       };
     }
   }, [socket]);
 
   return (
-    <SocketContext.Provider value={{ socket: socket, loading: loading,state,updatestate,reopensocket }}>
+    <SocketContext.Provider value={{ socket: socket, loading: loading,state,updatestate,reopensocket,isinchat,updateinchat }}>
       {children}
     </SocketContext.Provider>
   );

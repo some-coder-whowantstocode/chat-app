@@ -5,6 +5,7 @@ import {
 } from './animations'
 import { AiOutlineLoading } from "react-icons/ai";
 import styled,{css, keyframes} from 'styled-components'
+import back from '../../assets/back.jpg'
 
 
 export const Loading =styled.div`
@@ -58,7 +59,6 @@ export const Text = styled.div`
     h1{
     color: #fdfefe99;
         font-size: 70px;
-        opacity: 0;
         animation:${
             
             props=> props.adir 
@@ -81,15 +81,14 @@ export const Text = styled.div`
             props=> props.adir 
             ?
             css`
-            ${moveanimateX('-100px','30px','-20px','10px','0')} ${props=>props.time} linear forwards
+            ${moveanimateX('-100px','30px','-20px','10px','0')} ${props=>props.time} linear forwards 0.2s
             `
             :
             css`
-            ${moveanimateX('0px','-130px','-80px','-110px',"-100px")} ${props=>props.time} linear forwards 
+            ${moveanimateX('0','-130px','-90px','-110px',"-100px")} ${props=>props.time} linear forwards 
             `
             
         } ;
-        animation-delay: 0.2s;
     }
     button{
         opacity: 0;
@@ -107,15 +106,14 @@ export const Text = styled.div`
             props=> props.adir 
             ?
             css`
-           ${moveanimateY('100px','20px','-20px','10px','0px')} ${props=>props.time} linear forwards 
+           ${moveanimateY('100px','20px','-20px','10px','0')} ${props=>props.time} linear forwards 0.2s
             `
             :
             css`
-            ${moveanimateY('0px','130px','90px','110px','100px')} ${props=>props.time} linear forwards 
+            ${moveanimateY('0','130px','90px','110px','100px')} ${props=>props.time} linear forwards 
             `
             
         } ;
-        animation-delay: 0.2s;
     }
 `
 
@@ -130,4 +128,49 @@ export const Backimg = styled.img`
     position: absolute;
     top: 0;
     left: 0;
+`
+
+export const Failed = styled.div`
+height: 100vh;
+width: 100vw;
+max-height: 100%;
+max-width: 100%;
+background: url(${back});
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
+
+h1{
+    font-size: 150px;
+    color: #ffffff;
+    text-shadow: 2px 2px red;
+}
+p{
+    font-size: 30px;
+    color: white;
+
+}
+button{
+    font-size: 19px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: linear-gradient(#e66465, #9198e5);
+    border: none;
+    color: #ffffff;
+    margin-top: 10px;
+    box-shadow: rgba(255, 255, 255, 0.16) 0px 3px 6px, rgba(255, 255, 255, 0.23) 0px 3px 6px;
+    transition-duration: 0.2s;
+    cursor: pointer;
+    &:hover{
+        box-shadow: rgba(255, 255, 255, 0.19) 0px 10px 20px, rgba(255, 255, 255, 0.23) 0px 6px 6px;
+
+    }
+    &:active{
+        box-shadow: rgba(255, 255, 255, 0.19) 0px 10px 20px, rgba(255, 255, 255, 0.23) 0px 6px 6px inset;
+
+    }
+    
+}
+    
 `

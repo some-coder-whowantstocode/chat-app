@@ -1,115 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react'
-import styled from 'styled-components'
 import Nav from '../components/landingpage/Nav'
 import image from '../assets/chatgroup.jpg'
-import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
-import { reopenconnection } from '../utils/Reconnection'
 import {useSocket} from '../context/SocketProvider'
-// import Authbox from '../components/landingpage/Authbox'
-
-const min = 750;
-
-
-const Input = styled.div`
-    height: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition-duration: 1s;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-
-    input{
-        width: 300px;
-        height: 30px;
-        padding-left: 3px;
-        background-color: transparent;
-        border: none;
-        border: 2px solid #696969;
-        border-radius: 5px;
-        color: white;
-        &:focus{
-            transition-delay: 0.1s;
-            color: black;
-            outline: none;
-        }
-    }
-
-    div{
-        width: 300px;
-        position: relative;
-        p{
-            position: absolute;
-            top: 3px;
-            left:0;
-            transition-duration: 0.3s;
-            font-size: 20px;
-            color: #696969;
-            pointer-events: none;
-
-        }
-    }
-   
-`
-
-const Page = styled.div`
-    ${innerWidth > min 
-    ?
-    `
-    width: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content:space-evenly;
-    height:100vh;
-    `
-    :
-
-    `
-    width: 100vw;
-    display: flex;
-    flex-direction:column;
-    align-items: center;
-    justify-content:center ;
-     
-    `
-    
-    } 
-`
-
-const Imagechat = styled.img`
-${innerWidth>min
-    ?
-    `
-    height: 400px;
-    width: 400px;
-    `
-    :
-    `
-    width: 100vw;
-    `
-}
-    
-`
-
-const Controls = styled.div`
-    width: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-`
-
-const Custombtn = styled.div`
-    padding: 2px 8px;
-    font-size: 17px;
-    cursor: pointer;
-    border: none;
-    background-color: #0077ff;
-    color: white;
-    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
-    margin-right: 10px;
-    text-decoration: none;
-`
+import {
+    Custombtn,
+    Controls,
+    Imagechat,
+    Page,
+    Input
+} from '../components/landingpage/customstyles'
 
 const LandingPage = () => {
 
@@ -120,16 +20,20 @@ const LandingPage = () => {
 
     const navigate = useNavigate();
 
-    const {socket} =useSocket()
+   
+    const {socket,state,updateinchat} =useSocket()
 
-  
+    if(state == 'Authfailed' || state == 'ConnectionLost'){
+        navigate('/')
+      }
+
     useEffect(()=>{
      
         setws(socket)
     
     },[socket])
     
-
+// input style code 
     useEffect(()=>{
         if(pageref.current){
             const children = pageref.current.children[0].children;
@@ -152,6 +56,10 @@ const LandingPage = () => {
                         background-color: white;
                         color:gray;
                         `
+                      
+                    inputs[i].style=`
+                    color:black;
+                `
                     }else{
                         titles[i].style = `
                         position: absolute;
@@ -159,7 +67,12 @@ const LandingPage = () => {
                         left:0;
                         transition-duration: 0.5s;
                         font-size: 20px;
+
                         `
+                        inputs[i].style=`
+                        color:transparent;
+
+                    `
                     }
                 }
             }
@@ -170,24 +83,21 @@ const LandingPage = () => {
     },[pageref])
 
 
-
-
-   
-
-
     useEffect(()=>{
         if(ws){
-   
-
         ws.onmessage = ({data})=>{
             const jsondata = JSON.parse(data)
-            console.log(jsondata.type)
             if(jsondata.permission){
                 if(jsondata.permission === 'Acc')
                 {
-                    console.log()
+                    updateinchat();
                     navigate('/chat',{state:{name:jsondata.name,room:jsondata.roomid}})
                 }
+            }else if(jsondata.type === 'error'){
+                // console.log(jsondata)
+            }else if(jsondata.type === 'create'){
+                updateinchat();
+                navigate('/chat',{state:{name:jsondata.name,room:jsondata.roomid}})
             }
         }
     }
@@ -201,7 +111,6 @@ const LandingPage = () => {
             if(ws){
                 ws.send(JSON.stringify({create:true,roomid:roomid,name:name}))
          
-                navigate('/chat',{state:{name,room:roomid}})
                
         
             }
@@ -239,6 +148,7 @@ const LandingPage = () => {
         >Name</p>
         </div>
         <input 
+        autoComplete='off'
        defaultValue={name}
        onChange={(e)=>setname(e.target.value)}
         type="text"  />
@@ -248,6 +158,7 @@ const LandingPage = () => {
       <p>Room Id</p>
       </div>
       <input 
+      autoComplete='off'
       defaultValue={roomid}
       onChange={(e)=>setroomid(e.target.value)}
       type="text" />

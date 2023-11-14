@@ -1,6 +1,16 @@
 module.exports.joinroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
     
     if(rooms_id.has(data.roomid)){
+        let members = users_in_rooms.get(data.roomid);
+        let existsinmem = members.find(m=>m === data.name);
+        let requester = requesters.get(data.roomid);
+        let existreq = requester.find(r=>r.name === data.name);
+        if(existsinmem||existreq){
+            ws.send(JSON.stringify({
+                type:'error',
+                msg:`${data.name} already exists in this room please choose another name.`
+            }))
+        }
         const Admin = roomAdmin.get(data.roomid);
         const request ={
             type:'request',

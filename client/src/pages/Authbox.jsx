@@ -6,22 +6,19 @@ import  {
     Passed,
     Text,
     Backimg,
-
+    Failed
 } from '../components/Auth/cstomstyles'
 import {useSocket} from '../context/SocketProvider'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 
-const Failed = styled.div`
-    
-`
+
 
 const Authbox = () => {
 const [ws,setws] = useState()
 
     const [dir,setdir] =useState(true);
 
-    const {socket,loading,state,updatestate} =useSocket()
+    const {socket,loading,state,updatestate,reopensocket} =useSocket()
    
     const navigate = useNavigate();
 
@@ -99,7 +96,20 @@ const remove =()=>{
     {
         state === 'Authfailed' && 
         <Failed>
-            Authentication Failed
+            <h1>401</h1>
+
+            <p>UnAuthorized access</p>
+            <button onClick={()=>reopensocket()}>Try Again</button>
+        </Failed>
+    }
+
+{
+        state === 'ConnectionLost' && 
+        <Failed>
+            <h1>OOPS</h1>
+
+            <p>Connection lost.</p>
+            <button onClick={()=>reopensocket()}>Try Again</button>
         </Failed>
     }
       

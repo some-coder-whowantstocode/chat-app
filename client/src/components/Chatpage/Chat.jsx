@@ -1,9 +1,15 @@
 import React from 'react'
 import styled from 'styled-components'
+import { Logo } from './customstyles'
 
 const Chatbox = styled.div`
     display: flex;
     flex-direction:${props =>props.me===true ? 'row-reverse' :'row'} ;
+`
+
+const Smallbox = styled.div`
+  display: flex;
+  flex-direction: column;
 `
 
 const Chatblock = styled.span`
@@ -16,22 +22,46 @@ const Chatblock = styled.span`
     width: fit-content;
     text-overflow: clip;
     word-break: break-all;
+    div{
+      display:flex;
+
+      span{
+
+      }
+    }
+`
+const Nameholder = styled.div`
+  display: flex;
+  flex-direction:${props =>props.left===true ? 'row-reverse' :'row'} ;
+  
+  
 `
 
 const Chat = ({m,me}) => {
+  console.log(m,me)
   return (
     <Chatbox me={me}>
     {
         me === true 
         ? 
-        <Chatblock left >
-        {m}
-      </Chatblock>
+        
+        <Smallbox>
+          <Nameholder left>
+          {m.name}
+          </Nameholder>
+          <Chatblock left>
+
+        {m.msg}
+          </Chatblock>
+      </Smallbox>
       
       :
-        <Chatblock >
-        {m}
+      <Smallbox>
+      <Nameholder>{m.name}</Nameholder>
+      <Chatblock>
+    {m.msg}
       </Chatblock>
+  </Smallbox>
     }
    </Chatbox>
   )
