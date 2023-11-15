@@ -1,5 +1,7 @@
 import styled from 'styled-components';
-
+import {
+    moveimg
+} from './animations'
 
 
 const min = 750;
@@ -80,9 +82,12 @@ ${innerWidth>min
     `
     :
     `
-    width: 100vw;
+    width: 80vw;
     `
+
 }
+
+animation: ${moveimg('10px','0px')} 3s linear infinite;
     
 `
 
@@ -103,4 +108,19 @@ export const Custombtn = styled.div`
     box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
     margin-right: 10px;
     text-decoration: none;
+`
+
+export const Imgcover = styled.div`
+    ${innerWidth>min
+    ?
+    `
+    height: 500px;
+    width: 500px;
+    `
+    :
+    `
+    width: 80vw;
+    `
+
+}
 `

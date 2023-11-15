@@ -1,4 +1,6 @@
 const {WebSocket,WebSocketServer} = require('ws');
+require('dotenv').config()
+
 
 const wss = new WebSocketServer({
     port: process.env.SOCKET_PORT,

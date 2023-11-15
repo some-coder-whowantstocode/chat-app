@@ -126,7 +126,7 @@ wss.on('connection',async(ws,req)=>{
             joinroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
             }
             else if(data.response){
-            permission(data,ws,rooms_id,users_in_rooms,requesters,jwtToken);
+            permission(data,rooms_id,users_in_rooms,requesters,jwtToken);
             ws.send(JSON.stringify({
               type:'removereq',
               name:data.name

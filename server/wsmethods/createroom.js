@@ -1,4 +1,12 @@
 module.exports.Createroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
+    if(data.roomid =='' || data.name =='' ){
+        ws.send(JSON.stringify({
+            type:`error`,
+            msg:`please provide valid roomid and name.`
+            
+        }))
+        return;
+    }
     if(rooms_id.has(data.roomid)){
         ws.send(JSON.stringify({
             type:`error`,

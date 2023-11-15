@@ -8,7 +8,8 @@ import {
     Controls,
     Imagechat,
     Page,
-    Input
+    Input,
+    Imgcover
 } from '../components/landingpage/customstyles'
 
 const LandingPage = () => {
@@ -168,8 +169,10 @@ const LandingPage = () => {
         <Custombtn  onClick={()=> requestjoin()}>JOIN</Custombtn>
       </Controls>
       </div>
-     
+     <Imgcover>
+
       <Imagechat src={image} alt="" />
+     </Imgcover>
     </Page>
     </>
   )

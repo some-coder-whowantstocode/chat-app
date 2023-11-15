@@ -1,6 +1,6 @@
 const {sendtoall} = require('./senttoall.js')
 
-module.exports.permission =(data,ws,rooms_id,users_in_rooms,requesters)=>{
+module.exports.permission =(data,rooms_id,users_in_rooms,requesters)=>{
     if(data.response=="Dec"){
         let arr = requesters.get(data.roomid)
         let w = arr.filter((a)=>a.name === data.name);
@@ -12,7 +12,7 @@ module.exports.permission =(data,ws,rooms_id,users_in_rooms,requesters)=>{
         }))
 
 
-        arr = arr.filter((a)=>a.name !== data.name)
+        requesters.set(data.roomid, arr.filter((a)=>a.name !== data.name));
     }else{
             let arr = users_in_rooms.get(data.roomid);
             let room = rooms_id.get(data.roomid);
@@ -26,7 +26,7 @@ module.exports.permission =(data,ws,rooms_id,users_in_rooms,requesters)=>{
             roomid:data.roomid,
             name:data.name
         }))
-        req = req.filter((a)=>a.name !== data.name)
+        requesters.set(data.roomid, req.filter((a)=>a.name !== data.name));
         let msg = {
             type:'Announcement',
             msg:`${data.name} joined the room.`
