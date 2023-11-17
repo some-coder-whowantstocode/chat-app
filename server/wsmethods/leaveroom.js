@@ -1,8 +1,10 @@
 const { sendtoall } = require("./senttoall");
 
-module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin)=>{
-    
-    const room = rooms_id.get(data.roomid);
+module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken)=>{
+
+
+    console.log(data)
+    let room = Array.from(rooms_id.get(data.roomid));
    
     if(room.length>1){
        
@@ -11,7 +13,6 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin)=>{
             
             let index = room.indexOf(ws); 
             room.splice(index,1); 
-            
     
             let i = users.indexOf(data.name);
             users.splice(i,1);
@@ -20,7 +21,9 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin)=>{
                 type:'Announcement',
                 msg:`${data.name} Left the room.`
             };
-            sendtoall(room,msg);
+            sendtoall(Array.from(room),msg);
+            rooms_id.set(data.roomid,room);
+            users_in_rooms.set(data.roomid,users);
 
             if(roomAdmin.has(data.roomid) && roomAdmin.get(data.roomid)===ws){
 
@@ -30,7 +33,6 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin)=>{
                 
                 let e = room.length-1;
                 let randomadmin = Math.floor(Math.random() * (e - s + 1)) + s;
-                console.log(randomadmin)
                 roomAdmin.set(data.roomid,room[randomadmin]);
                 let msg = {
                     type:'Announcement',
@@ -44,7 +46,23 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin)=>{
         roomAdmin.delete(data.roomid);
         rooms_id.delete(data.roomid);
         users_in_rooms.delete(data.roomid);
+        let reqs = requesters.get(data.roomid);
+        reqs.map((req)=>{
+            let msg = {
+                type:'response',
+                permission:'Dec',
+                roomid:data.roomid,
+                name:req.name
+            }
+            req.ws.send((JSON.stringify(msg)));
+            
+        })
+       requesters.clear(data.roomid)
+        ws.send(JSON.stringify({
+            type:'Announcement',
+            msg:`You left the room ${data.roomid}`
+        }));
     }
-   
+   console.log(room.length)
     
 }

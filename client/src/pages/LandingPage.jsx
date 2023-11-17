@@ -11,18 +11,19 @@ import {
     Input,
     Imgcover
 } from '../components/landingpage/customstyles'
+import Reqprocessing from '../components/landingpage/reqprocessing'
 
 const LandingPage = () => {
 
     const pageref = useRef(null);
-    const [name,setname] = useState(``);
-    const [roomid,setroomid] = useState(``);
+    const nameref = useRef(null);
+    const roomidref = useRef(null);
     const [ws,setws] = useState()
 
     const navigate = useNavigate();
 
    
-    const {socket,state,updateinchat} =useSocket()
+    const {socket,state,updateinchat,updatewait} =useSocket()
 
     if(state == 'Authfailed' || state == 'ConnectionLost'){
         navigate('/')
@@ -92,10 +93,11 @@ const LandingPage = () => {
                 if(jsondata.permission === 'Acc')
                 {
                     updateinchat();
+                    updatewait();
                     navigate('/chat',{state:{name:jsondata.name,room:jsondata.roomid}})
                 }
             }else if(jsondata.type === 'error'){
-                // console.log(jsondata)
+                console.log(jsondata)
             }else if(jsondata.type === 'create'){
                 updateinchat();
                 navigate('/chat',{state:{name:jsondata.name,room:jsondata.roomid}})
@@ -109,11 +111,10 @@ const LandingPage = () => {
 
     const requestcreate =async()=>{
         try{
+            let name = nameref.current.value;
+            let roomid = roomidref.current.value;
             if(ws){
                 ws.send(JSON.stringify({create:true,roomid:roomid,name:name}))
-         
-               
-        
             }
            
         }catch(error){
@@ -124,7 +125,10 @@ const LandingPage = () => {
 
     const requestjoin =async()=>{
   try{
+    let name = nameref.current.value;
+    let roomid = roomidref.current.value;
          if(ws){
+            updatewait();
             ws.send(JSON.stringify({join:true,roomid:roomid,name:name}))
 
          }
@@ -138,6 +142,7 @@ const LandingPage = () => {
 
   return (
     <>
+    <Reqprocessing/>
     <Nav/>
     <Page
     ref={pageref}
@@ -150,8 +155,7 @@ const LandingPage = () => {
         </div>
         <input 
         autoComplete='off'
-       defaultValue={name}
-       onChange={(e)=>setname(e.target.value)}
+       ref={nameref}
         type="text"  />
         </Input>
       <Input>
@@ -160,8 +164,7 @@ const LandingPage = () => {
       </div>
       <input 
       autoComplete='off'
-      defaultValue={roomid}
-      onChange={(e)=>setroomid(e.target.value)}
+      ref={roomidref}
       type="text" />
       </Input>
       <Controls>

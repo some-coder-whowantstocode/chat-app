@@ -27,6 +27,8 @@ module.exports.permission =(data,rooms_id,users_in_rooms,requesters)=>{
             name:data.name
         }))
         requesters.set(data.roomid, req.filter((a)=>a.name !== data.name));
+        users_in_rooms.set(data.roomid,arr);
+        rooms_id.set(data.roomid,room)
         let msg = {
             type:'Announcement',
             msg:`${data.name} joined the room.`

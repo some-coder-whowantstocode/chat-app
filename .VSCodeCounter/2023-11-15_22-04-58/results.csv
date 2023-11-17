@@ -1,0 +1,28 @@
+"filename", "language", "JavaScript", "JSON", "comment", "blank", "total"
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\Controller\TokenController.js", "JavaScript", 13, 0, 0, 4, 17
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\Controller\roomController.js", "JavaScript", 77, 0, 0, 18, 95
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\Errors\customerr.js", "JavaScript", 7, 0, 0, 0, 7
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\Errors\index.js", "JavaScript", 4, 0, 0, 1, 5
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\index.js", "JavaScript", 114, 0, 23, 41, 178
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\middleware\bodyParser.js", "JavaScript", 25, 0, 0, 4, 29
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\middleware\defaultpage.js", "JavaScript", 5, 0, 0, 0, 5
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\middleware\errorhandleerror.js", "JavaScript", 5, 0, 0, 0, 5
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\middleware\headerhandler.js", "JavaScript", 12, 0, 0, 3, 15
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\middleware\index.js", "JavaScript", 12, 0, 0, 2, 14
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\middleware\tokengenerator.js", "JavaScript", 18, 0, 0, 7, 25
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\package-lock.json", "JSON", 0, 4327, 0, 1, 4328
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\package.json", "JSON", 0, 21, 0, 1, 22
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\socket.js", "JavaScript", 21, 0, 1, 5, 27
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\cancelrequest.js", "JavaScript", 2, 0, 0, 1, 3
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\createroom.js", "JavaScript", 26, 0, 7, 3, 36
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\index.js", "JavaScript", 12, 0, 0, 1, 13
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\joinroom.js", "JavaScript", 29, 0, 10, 9, 48
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\leaveroom.js", "JavaScript", 34, 0, 0, 16, 50
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\permission.js", "JavaScript", 33, 0, 8, 7, 48
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wsmethods\senttoall.js", "JavaScript", 5, 0, 0, 0, 5
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wstestmethods\createroom.test.js", "JavaScript", 58, 0, 0, 6, 64
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wstestmethods\joinroom.test.js", "JavaScript", 88, 0, 0, 5, 93
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wstestmethods\leaveroom.test.js", "JavaScript", 14, 0, 0, 6, 20
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wstestmethods\permission.test.js", "JavaScript", 47, 0, 0, 6, 53
+"c:\Users\rohit\OneDrive\Documents\web project\chat-app\chat-app\server\wstestmethods\testmaps.js", "JavaScript", 17, 0, 0, 2, 19
+"Total", "-", 678, 4348, 49, 149, 5224

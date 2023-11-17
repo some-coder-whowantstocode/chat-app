@@ -23,6 +23,7 @@ const {
     permission,
     leaveroom
  } = require('./wsmethods/index.js');
+const { cancelrequest } = require('./wsmethods/cancelrequest.js')
 
  const PORT = process.env.PORT || 3000
 
@@ -130,13 +131,13 @@ wss.on('connection',async(ws,req)=>{
             ws.send(JSON.stringify({
               type:'removereq',
               name:data.name
-            }))
+            }));
             }
             else if(data.leave){
-              leaveroom(data,ws,rooms_id,users_in_rooms,roomAdmin,jwtToken)
+              leaveroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
             }
             else if(data.cancel){
-              
+              cancelrequest(data,ws,roomAdmin,requesters);
             }
             else{
                 let msg = {

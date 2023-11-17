@@ -34,6 +34,9 @@ const Chatpage = () => {
         if(location.state){
             const {name,room} = location.state;
             setname(name);
+            sessionStorage.setItem('name',name)
+            sessionStorage.setItem('roomid',room)
+            console.log(sessionStorage.getItem('name'))
             setroomid(room);
             
         }
@@ -59,6 +62,8 @@ const Chatpage = () => {
             });
           }else if(jsondata.type == 'Announcement'){
             console.log(jsondata)
+          }else if(jsondata.type === 'cancelrequest'){
+                
           }
          
       }
@@ -66,13 +71,40 @@ const Chatpage = () => {
      
   },[socket])
 
- 
-    window.addEventListener('beforeunload', (event) => {
-      if(isinchat){
-        leaveroom()
+  useEffect(() => {
+    const handler = (event) => {
+      // event.preventDefault()
+        leaveroom();
+    };
 
+    window.addEventListener('beforeunload', handler);
+
+    return () => {
+        window.removeEventListener('beforeunload', handler);
+    };
+}, []);
+
+const leaveroom = () => {
+    try {
+      if(isinchat){
+
+      
+      console.log(username,roomid)
+        socket.send(JSON.stringify({
+            leave: true,
+            name: sessionStorage.getItem('name'),
+            roomid: sessionStorage.getItem('roomid')
+        }));
+        updateinchat();
+        sessionStorage.removeItem('name');
+        sessionStorage.removeItem('roomid');
+        navigate('/landingpage');
       }
-      });
+    } catch (err) {
+        console.log(err);
+    }
+};
+
 
     const sendmsg =async()=>{
       try{
@@ -80,8 +112,8 @@ const Chatpage = () => {
         socket.send(JSON.stringify({
           create:false,
           msg:msg,
-          name:username,
-          roomid:roomid
+          name:sessionStorage.getItem("name"),
+          roomid:sessionStorage.getItem('roomid')
         }))
         setmsg('')
         inputref.current.value = ''
@@ -99,20 +131,7 @@ const Chatpage = () => {
       }
     },[state])
 
-    const leaveroom =()=>{
-      try{
-        socket.send(JSON.stringify({
-          leave:true,
-          name:username,
-          roomid:roomid
-        }))
-        updateinchat()
-        navigate('/landingpage')
-      }catch(err){
-        console.log(err)
-      }
-    
-    }
+   
 
 
   return (

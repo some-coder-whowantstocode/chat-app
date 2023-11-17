@@ -2,6 +2,8 @@ import styled from 'styled-components';
 import {
     moveimg
 } from './animations'
+import { rotating } from '../Auth/animations';
+import { AiOutlineLoading } from "react-icons/ai";
 
 
 const min = 750;
@@ -123,4 +125,55 @@ export const Imgcover = styled.div`
     `
 
 }
+`
+
+
+export const Probox = styled.div`
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100%;
+    z-index: 10000;
+    background-color: #0000007a;
+`
+
+export const Contentbox = styled.div`
+    width: 300px;
+    height: 200px;
+    background-color: #303030;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
+`
+
+export const Btn = styled.button`
+    background-color: #80808021;
+    border: none;
+    transition-duration: 0.2s;
+    margin: 10px 0;
+    padding: 8px 10px;
+    color: white;
+    cursor: pointer;
+    &:hover{
+        background-color: #c20000;
+    }
+    &:active{
+        background-color: #670101;
+    }
+`
+
+export const Loader = styled(AiOutlineLoading)`
+    animation: ${rotating} infinite 1s;
+    height: 30px;
+    width: 30px;
+    color: white;
 `

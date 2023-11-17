@@ -27,6 +27,7 @@ describe('joinroom',()=>{
             type:`error`,
             msg:`${data.roomid} does not exist.`
     });
+    clearmaps()
     });
     test('If room exists but a member with same name exists send error.',()=>{
         const data = {name:'rohit',roomid:'123'};

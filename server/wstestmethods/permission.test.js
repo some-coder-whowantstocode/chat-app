@@ -1,4 +1,4 @@
-const {permission} = require('../wsmethods/permission.js')
+const {permission,sendtoall} = require('../wsmethods/index.js')
 
 const {
     rooms_id,
@@ -29,25 +29,24 @@ describe('permission',()=>{
         })
         expect(requesters.get(data.roomid).length).toEqual(0);
         expect(users_in_rooms.get(data.roomid).length).toEqual(1);
+        clearmaps();
     });
 
     test('User joins room and announcement is sent', () => {
-        data = { name: 'testUser', roomid: '123' };
-        let sendMock = jest.spyOn({ sendtoall }, 'sendtoall');
-        requesters.set(data.roomid, [{ name: data.name, ws: wsMock }]);
-
+        const data = { name: 'testUser', roomid: '123' };
+        rooms_id.set(data.roomid,[mws])
+        users_in_rooms.set(data.roomid,[mws])
+        requesters.set(data.roomid, [{ name: data.name, ws: mws }]);
+        permission(data,rooms_id,users_in_rooms,requesters);
         expect(users_in_rooms.get(data.roomid)).toContain(data.name);
-        expect(rooms_id.get(data.roomid)).toContain(wsMock);
+        expect(rooms_id.get(data.roomid)).toContain(mws);
         expect(requesters.get(data.roomid)).toHaveLength(0);
-        expect(wsMock.send).toHaveBeenCalledWith(JSON.stringify({
+        expect(mws.send).toHaveBeenCalledWith(JSON.stringify({
             type:'response',
             permission:'Acc',
             roomid:data.roomid,
             name:data.name
         }));
-        expect(sendMock).toHaveBeenCalledWith(rooms_id.get(data.roomid), {
-            type:'Announcement',
-            msg:`${data.name} joined the room.`
-        });
+        clearmaps()
     });
 });
