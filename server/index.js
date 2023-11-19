@@ -71,7 +71,12 @@ const io = socketIo(server,{ transports: ['websocket'] });
 io.on('connection', async (socket) => {
   console.log('a user connected');
 
+<<<<<<< HEAD
   const jwtToken = socket.handshake.query.token;
+=======
+  const jwtToken = req.url.substring(1);
+  console.log(jwtToken)
+>>>>>>> 0e604c64f1b550af9920cfddf6b3967338992a3e
   try{
     console.log(process.env.JWT_SECRET)
     let data = jwt.verify(jwtToken, process.env.JWT_SECRET)
