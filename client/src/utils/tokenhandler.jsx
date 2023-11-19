@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const url = 'https://instant-chat-backend.onrender.com';
+const url = 'https://instant-chat-backend.onrender.com/handshake';
 
 export const gettoken =async()=>{
     
