@@ -10,7 +10,7 @@ export const gettoken = async () => {
   const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
 
-  let socket = io(`ws://localhost:9310`, { // Update this line
+  let socket = io(`ws://instant-chat-backend.onrender.com`, { // Update this line
     query: { token: jwtToken }, // Send the JWT token as a query parameter
     transports: ['websocket'],
     withCredentials: true
