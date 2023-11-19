@@ -92,7 +92,7 @@ const server = http.createServer(async(req,res)=>{
 wss.on('connection',async(ws,req)=>{
 
   const jwtToken = req.url.substring(1);
-  // console.log(jwtToken)
+  console.log(jwtToken)
   try{
     console.log(process.env.JWT_SECRET)
     let data =jwt.verify(jwtToken,process.env.JWT_SECRET)
