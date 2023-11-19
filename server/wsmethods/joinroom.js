@@ -8,7 +8,7 @@ module.exports.joinroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=
         if(existsinmem||existreq){
             ws.send(JSON.stringify({
                 type:'error',
-                msg:`${data.name} already exists in this room please choose another name.`
+                msg:`some one with name ${data.name} already exists in this room please choose another name.`
             }))
             return;
         }
@@ -29,7 +29,7 @@ module.exports.joinroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=
     }else{
         ws.send(JSON.stringify({
             type:`error`,
-            msg:`${data.roomid} does not exist.`
+            msg:`room ${data.roomid} does not exist.`
     }))
 
 

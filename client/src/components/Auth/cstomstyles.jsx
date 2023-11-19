@@ -8,6 +8,7 @@ import styled,{css, keyframes} from 'styled-components'
 import back from '../../assets/back.jpg'
 
 
+
 export const Loading =styled.div`
     max-width: 100%;
     width: 100vw;
@@ -28,10 +29,10 @@ export const Loading =styled.div`
 
 
 export const Loader = styled(AiOutlineLoading)`
-height: 50px ;
-width: 50px;
+
 animation: ${rotating} infinite 1s;
 color: black;
+
 `
 
 

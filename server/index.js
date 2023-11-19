@@ -23,7 +23,7 @@ const {
     permission,
     leaveroom
  } = require('./wsmethods/index.js');
-const { cancelrequest } = require('./wsmethods/cancelrequest.js')
+const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js')
 
  const PORT = process.env.PORT || 3000
 
@@ -95,7 +95,7 @@ wss.on('connection',async(ws,req)=>{
   // console.log(jwtToken)
   try{
     console.log(process.env.JWT_SECRET)
-    let data =await jwt.verify(jwtToken,process.env.JWT_SECRET)
+    let data =jwt.verify(jwtToken,process.env.JWT_SECRET)
     console.log(data)
     ws.send(JSON.stringify({
       type:'Authentication',
@@ -103,13 +103,14 @@ wss.on('connection',async(ws,req)=>{
     }))
   }catch(err){
     console.log(err)
+    
     ws.send(JSON.stringify({
       type:'Authentication',
       status:'failed'
     }))
     ws.close()
   }
-  // console.log(jwtToken)
+  console.log(jwtToken)
     ws.onopen = () => {
       console.log('WebSocket is connected');
       ws.send('Hello, server!');
@@ -118,12 +119,11 @@ wss.on('connection',async(ws,req)=>{
     ws.onmessage = ({data}) => {
         try{
             data = JSON.parse(data)
-
+            
             if(data.create){
             Createroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
             }
             else if(data.join){
-              // console.log(data)
             joinroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
             }
             else if(data.response){
@@ -137,15 +137,17 @@ wss.on('connection',async(ws,req)=>{
               leaveroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
             }
             else if(data.cancel){
-              cancelrequest(data,ws,roomAdmin,requesters);
+              console.log(data)
+              cancelrequest(data,roomAdmin,requesters);
             }
             else{
                 let msg = {
                     type:'message',
                     msg:data.msg,
-                    name:data.name
+                    name:data.name,
+                    Admin:data.Admin
                 }
-                console.log(msg,data.roomid)
+                console.log(data)
                sendtoall(Array.from(rooms_id.get(data.roomid)),msg);
             }
             

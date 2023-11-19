@@ -3,7 +3,6 @@ const { sendtoall } = require("./senttoall");
 module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken)=>{
 
 
-    console.log(data)
     let room = Array.from(rooms_id.get(data.roomid));
    
     if(room.length>1){
@@ -34,10 +33,18 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,
                 let e = room.length-1;
                 let randomadmin = Math.floor(Math.random() * (e - s + 1)) + s;
                 roomAdmin.set(data.roomid,room[randomadmin]);
+                
                 let msg = {
                     type:'Announcement',
                     msg:`${users[randomadmin]} is now the new Admin.`
                 }
+                let users = users_in_rooms.get(data.roomid);
+                room[randomadmin].send(JSON.stringify({
+                    type:'create',
+                    roomid:data.roomid,
+                    name:users[randomadmin],
+                    Admin:true
+        }))
                 sendtoall(room,msg)
             }
         

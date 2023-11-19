@@ -1,6 +1,7 @@
 const {sendtoall} = require('./senttoall.js')
 
 module.exports.permission =(data,rooms_id,users_in_rooms,requesters)=>{
+    console.log(data)
     if(data.response=="Dec"){
         let arr = requesters.get(data.roomid)
         let w = arr.filter((a)=>a.name === data.name);

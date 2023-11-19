@@ -14,47 +14,12 @@ import { useNavigate } from 'react-router-dom'
 
 
 const Authbox = () => {
-const [ws,setws] = useState()
 
     const [dir,setdir] =useState(true);
 
-    const {socket,loading,state,updatestate,reopensocket} =useSocket()
+    const {loading,state,reopensocket} =useSocket()
    
     const navigate = useNavigate();
-
-  
-    useEffect(()=>{
-  if(loading===false){
-        setws(socket)
-    }
-    },[loading,socket])
-
-
-    
-
-
-    useEffect(()=>{
-        if(ws){
-   
-
-        ws.onmessage = ({data})=>{
-            const jsondata = JSON.parse(data)
-         
-            
-            if(jsondata.type){
-                if(jsondata.status === 'passed'){
-                    updatestate('Authenticated')
-                }else{
-                    updatestate('Authfailed')
-                }
-            }
-        
-
-        }
-    }
-      
-    },[ws])
-
 
     
 const remove =()=>{
@@ -77,7 +42,7 @@ const remove =()=>{
         state === 'notauthenticated' &&
         <Loading>
             <div>Connecting please wait...</div>
-            <Loader/>
+            <Loader size={50}/>
         </Loading>
     }
 
@@ -99,7 +64,7 @@ const remove =()=>{
             <h1>401</h1>
 
             <p>UnAuthorized access</p>
-            <button onClick={()=>reopensocket()}>Try Again</button>
+            <button onClick={()=>reopensocket()}>{loading === false ?'Try Again' : <Loader size={30} />}</button>
         </Failed>
     }
 
@@ -109,7 +74,7 @@ const remove =()=>{
             <h1>OOPS</h1>
 
             <p>Connection lost.</p>
-            <button onClick={()=>reopensocket()}>Try Again</button>
+            <button onClick={()=>reopensocket()}>{loading === false ?'Try Again' : <Loader size={30} />}</button>
         </Failed>
     }
       

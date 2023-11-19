@@ -22,6 +22,7 @@ module.exports.Createroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters
     requesters.set(data.roomid,[]);
     ws.send(JSON.stringify({
             type:'create',
+            Admin:true,
             name:data.name,
             roomid:data.roomid
 }))

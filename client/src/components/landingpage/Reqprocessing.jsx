@@ -9,30 +9,18 @@ import { useSocket } from '../../context/SocketProvider';
 
 const Reqprocessing = () => {
 
-    const {socket,waiting,updatewait} = useSocket();
-
-    const cancelrequest =()=>{
-        socket.send(JSON.stringify( {
-            cancel:true,
-            name:localStorage.getItem('name'),
-            roomid:localStorage.getItem('roomid')
-        }))
-        updatewait();
-       
-    }
-
-    
+    const {waiting,wanttocancel} = useSocket();
 
 
   return (
     <>
     {
-        waiting && 
+        waiting == true && 
         <Probox>
         <Contentbox>
             <Loader/>
             waiting for someone to let in...
-            <Btn onClick={()=>cancelrequest()}>cancel</Btn>
+            <Btn onClick={()=>wanttocancel()}>cancel</Btn>
         </Contentbox>
     </Probox>
     }

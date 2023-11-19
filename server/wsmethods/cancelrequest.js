@@ -1,4 +1,4 @@
-module.exports.cancelrequest =(data,ws,roomAdmin,requesters)=>{
+module.exports.cancelrequest =(data,roomAdmin,requesters)=>{
     const {name,roomid} = data;
     let admin = roomAdmin.get(roomid);
     

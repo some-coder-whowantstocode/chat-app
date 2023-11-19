@@ -25,6 +25,7 @@ const RequestBox = ({data}) => {
                 response:res?'Acc' :'Dec'
             }
             socket.send(JSON.stringify(resp));
+            console.log(resp)
         }catch(err){
             console.log(err)
         }

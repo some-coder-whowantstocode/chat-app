@@ -6,10 +6,8 @@ const min = 750
 
 export const Chatroom = styled.div`
 width: 100%;
-height: calc(100vh - 160px);
-background-color: #ebebeb;
 padding-top: 40px;
-padding-bottom: 80px;
+padding-bottom: 65px;
 
 `
 
@@ -24,7 +22,7 @@ export const CustomInput = styled.input`
   border: none;
   border-radius: 20px;
   padding: 7px;
-  background-color: white;
+  background-color: #dbd4d4;
   ${
     innerWidth<min 
     ?
@@ -34,7 +32,7 @@ export const CustomInput = styled.input`
     `
     :
     `
-    width: 600px;
+    width: 98%;
     `
   }
 
@@ -45,7 +43,17 @@ export const CustomInput = styled.input`
 
 export const Send = styled(AiOutlineSend)`
   position: fixed;
-  bottom: 18px;
+  ${
+ innerWidth<min ?
+ `
+ bottom: 17px;
+ `
+ :
+ `
+  bottom:23px
+ `
+  }
+ 
   right: 15px;
   font-size: 20px;
   cursor: pointer;
@@ -54,10 +62,11 @@ export const Send = styled(AiOutlineSend)`
 export const Chatbox = styled.div`
   display: flex;
   flex-direction: column;
+  padding: 0px 5px;
 `
 
 export const Chathead = styled.div`
-  background-color: white;
+  box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -67,6 +76,8 @@ export const Chathead = styled.div`
   font-size: 20px;
   position: fixed;
   top: 0;
+  z-index: 1000;
+  background-color: white;
 `
 
 export const Leave = styled.div`
@@ -80,6 +91,7 @@ export const Leave = styled.div`
   transition-duration: 0.3s;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   font-weight: 600;
+  z-index: 1001;
   &:hover{
     color: white;
     background-color: #a70303;
@@ -90,6 +102,7 @@ export const Requestcard = styled.div`
 height:140px ;
 width: 230px;
 background-color: white;
+box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
 position: fixed;
 top: 50%;
 left: 50%;
@@ -106,18 +119,77 @@ export const Nameholder = styled.div`
 `
 
 export const Logo = styled.p`
-  font-size: 20px;
+box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+  font-size: 16px;
   border: 2px solid gray;
   border-radius: 50%;
-  height: 20px;
-  width: 20px;
+  height: 16px;
+  width: 16px;
   padding: 1px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  margin-right:8px;
+  background-color: gray;
+  position: relative;
+  /* z-index: 0; */
+  transition: ease-in-out;
+  transition-duration: 0.6s;
+  cursor: pointer;
+  div{
+    opacity: 0;
+    position: absolute;
+    background-color: #999696;
+    padding: 3px 10px;
+    z-index: 100;
+    ${
+      props=>props.right ?
+      `
+      right: 27px;
+    top: -5px;
+    
+     
+    
+      `
+      :
+      `
+      left: 29px;
+    top: -5px;
+ 
+      `
+    };
 
+    div{
+      height: 10px;
+      width: 0px;
+      background-color: #9e9999;
+      transform:rotate(46deg);
+      display:flex;
+      ${
+      props=>props.right ?
+      `
+      right: -3px;
+    top: 4px;
+    
+      `
+      :
+      `
+      left: -3px;
+    top: 4px;
+      `
+    };
+
+      z-index:-1;
+      position:absolute;
+    }
+  
+  }
+  &:hover{
+    div{
+      opacity: 1;
+    }
+
+  }
 `
 export const Name = styled.p`
   font-weight:500;
