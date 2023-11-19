@@ -11,7 +11,7 @@ import {
   Input,
   Imgcover,
 } from "../components/landingpage/customstyles";
-import Reqprocessing from "../components/landingpage/reqprocessing";
+import Reqprocessing from "../components/landingpage/Reqprocessing";
 import CustomErrbox from "../components/CustomErrbox";
 
 const LandingPage = () => {
