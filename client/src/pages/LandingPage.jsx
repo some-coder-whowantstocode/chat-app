@@ -80,7 +80,6 @@ const LandingPage = () => {
 
   useEffect(() => {
     if (creation === true || entry === true) {
-      // console.log('hi')
       navigate("/chat");
     }
   }, [creation,entry]);

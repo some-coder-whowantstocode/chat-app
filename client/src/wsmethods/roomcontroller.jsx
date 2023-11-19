@@ -1,6 +1,5 @@
 const createRoom =(socket,name,roomid)=>{
     try{
-        console.log(socket)
         if(socket){
             socket.send(JSON.stringify({create:true,roomid:roomid,name:name}))
         }

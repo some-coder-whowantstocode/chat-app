@@ -1,9 +1,11 @@
 const {WebSocket,WebSocketServer} = require('ws');
 require('dotenv').config()
 
+// Use port 80 for HTTP or 443 for HTTPS
+const PORT = process.env.SOCKET_PORT || 443;
 
 const wss = new WebSocketServer({
-    port: process.env.SOCKET_PORT,
+    port: PORT,
     perMessageDeflate: {
       zlibDeflateOptions: {
         // See zlib defaults.
@@ -22,5 +24,8 @@ const wss = new WebSocketServer({
     }
   });
 
+wss.on('error', function error(err) {
+  console.log('WebSocket error:', err);
+});
 
 module.exports = wss;

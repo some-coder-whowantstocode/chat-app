@@ -36,7 +36,6 @@ export function SocketProvider({ children }) {
           setLoading(true);
           setSocket(socket);
           setstate('Authenticated');
-          console.log('Authpassed')
         })
         .catch(err=>{
           console.log(err);
@@ -57,7 +56,6 @@ export function SocketProvider({ children }) {
       setLoading(true);
 
             gettoken().then(socket=>{
-          console.log('hey')
               setSocket(socket);
               setstate('Authenticated');
             })
@@ -65,7 +63,6 @@ export function SocketProvider({ children }) {
               setstate('Authfailed');
             })
             .finally(()=>{
-              console.log('hoi')
               setLoading(false);
             });
           
@@ -156,7 +153,6 @@ export function SocketProvider({ children }) {
   
 
     if(jsondata.type === 'create'){
-      console.log(jsondata)
       sessionStorage.setItem('name',jsondata.name);
       sessionStorage.setItem('room',jsondata.roomid);
       setinchat(true);
