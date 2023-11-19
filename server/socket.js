@@ -1,7 +1,6 @@
 const {WebSocket,WebSocketServer} = require('ws');
 require('dotenv').config()
 
-// Use port 80 for HTTP or 443 for HTTPS
 const PORT = process.env.SOCKET_PORT || 443;
 
 const wss = new WebSocketServer({

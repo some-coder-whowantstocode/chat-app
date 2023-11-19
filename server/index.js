@@ -163,7 +163,7 @@ wss.on('connection',async(ws,req)=>{
     };
     
     ws.onclose = (event) => {
-      // console.log('WebSocket is closed with event:', event);
+      console.log('WebSocket is closed with event:', event);
       
     };
       })
