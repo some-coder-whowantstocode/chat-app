@@ -25,13 +25,13 @@ const {
  } = require('./wsmethods/index.js');
 const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js')
 
- const PORT = process.env.PORT || 9310
+ const PORT = process.env.PORT || 3000
 
  
 const server = http.createServer(async(req,res)=>{
    
     try{
-        res.setHeader('Access-Control-Allow-Origin','http://localhost:5173');
+        res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT);
         res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, POST, GET, DELETE');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -66,17 +66,12 @@ const server = http.createServer(async(req,res)=>{
     }
 });
 
-const io = socketIo(server,{ transports: ['websocket'] });
+const io = socketIo(server);
 
 io.on('connection', async (socket) => {
   console.log('a user connected');
 
-<<<<<<< HEAD
   const jwtToken = socket.handshake.query.token;
-=======
-  const jwtToken = req.url.substring(1);
-  console.log(jwtToken)
->>>>>>> 0e604c64f1b550af9920cfddf6b3967338992a3e
   try{
     console.log(process.env.JWT_SECRET)
     let data = jwt.verify(jwtToken, process.env.JWT_SECRET)
@@ -98,7 +93,6 @@ io.on('connection', async (socket) => {
   socket.on('message', (data) => {
     try{
       if(data.create){
-        console.log(data)
         Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
       }
       else if(data.join){
@@ -125,7 +119,7 @@ io.on('connection', async (socket) => {
           name:data.name,
           Admin:data.Admin
         }
-        // console.log(data)
+        console.log(data)
         sendtoall(Array.from(rooms_id.get(data.roomid)), msg);
       }
     } catch(err) {
