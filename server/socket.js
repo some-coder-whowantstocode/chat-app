@@ -23,6 +23,10 @@ const wss = new WebSocketServer({
     }
   });
 
+wss.on('connection',function connect(data){
+    console.log('websocket error:',data);
+});
+
 wss.on('error', function error(err) {
   console.log('WebSocket error:', err);
 });
