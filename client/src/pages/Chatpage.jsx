@@ -42,8 +42,7 @@ const Chatpage = () => {
 
     useEffect(()=>{
 
-      const handleMessage =({data})=>{
-        let jsondata = JSON.parse(data);
+      const handleMessage =(jsondata)=>{
         if(jsondata.type ==`message`){
           setmsgs(prevmsg=>[...prevmsg,jsondata])
         }else if(jsondata.type == 'request'){
@@ -102,13 +101,13 @@ const Chatpage = () => {
     const sendmsg =async()=>{
       try{
         if(msg != ''){
-          socket.send(JSON.stringify({
+          socket.send({
             create:false,
             msg:msg,
             Admin:Admin,
             name:sessionStorage.getItem("name"),
             roomid:sessionStorage.getItem('room')
-          }))
+          });
           setmsg('')
           inputref.current.value = ''
         }

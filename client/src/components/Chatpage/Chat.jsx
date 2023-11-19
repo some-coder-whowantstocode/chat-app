@@ -25,7 +25,7 @@ const Chatblock = styled.span`
     word-break: break-all;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     ${props=>props.Admin === true && `
-  background:linear-gradient(to right, gold, deepskyblue);
+  background:gold;
   color:navy;
 
   `}; 

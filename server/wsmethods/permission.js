@@ -5,12 +5,12 @@ module.exports.permission =(data,rooms_id,users_in_rooms,requesters)=>{
     if(data.response=="Dec"){
         let arr = requesters.get(data.roomid)
         let w = arr.filter((a)=>a.name === data.name);
-        w[0].ws.send(JSON.stringify({
+        w[0].ws.send({
             type:'response',
             permission:'Dec',
             roomid:data.roomid,
             name:data.name
-        }))
+        });
 
 
         requesters.set(data.roomid, arr.filter((a)=>a.name !== data.name));
@@ -21,12 +21,12 @@ module.exports.permission =(data,rooms_id,users_in_rooms,requesters)=>{
             let w = req.filter((a)=>a.name === data.name);
         room.push(w[0].ws);
         arr.push(data.name)
-        w[0].ws.send(JSON.stringify({
+        w[0].ws.send({
             type:'response',
             permission:'Acc',
             roomid:data.roomid,
             name:data.name
-        }))
+        });
         requesters.set(data.roomid, req.filter((a)=>a.name !== data.name));
         users_in_rooms.set(data.roomid,arr);
         rooms_id.set(data.roomid,room)

@@ -112,8 +112,8 @@ export function SocketProvider({ children }) {
        setwaiting(false);
       };
 
-      const handlemessage =({data})=>{
-        const jsondata = JSON.parse(data)
+      const handlemessage =(jsondata)=>{
+        console.log(jsondata)
         if(jsondata.type == 'response'){
           if(jsondata.permission === 'Acc')
           {

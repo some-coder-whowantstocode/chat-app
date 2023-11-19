@@ -24,8 +24,7 @@ const RequestBox = ({data}) => {
                 roomid:data.roomid,
                 response:res?'Acc' :'Dec'
             }
-            socket.send(JSON.stringify(resp));
-            console.log(resp)
+            socket.send(resp);
         }catch(err){
             console.log(err)
         }

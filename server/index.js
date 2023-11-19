@@ -1,12 +1,13 @@
-const http = require('http')
+const http = require('http');
 const {shakeHand} = require('./Controller/TokenController.js')
 const {
   bodyParser,
   defaultPage,
   errorHandler,
   applicationHeader
-}  = require('./middleware/index.js')
-require('dotenv').config()
+}  = require('./middleware/index.js');
+require('dotenv').config();
+const socketIo = require('socket.io');
 
 const jwt = require('jsonwebtoken')
 
@@ -15,7 +16,6 @@ const users_in_rooms = new Map(); //<id,[name,name.....]>
 const roomAdmin = new Map(); //<id,ws>
 const requesters = new Map(); //<id,[{name,ws},{name,ws}....]>
 
-const wss = require('./socket.js');
 const { 
     sendtoall,
     Createroom,
@@ -25,13 +25,13 @@ const {
  } = require('./wsmethods/index.js');
 const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js')
 
- const PORT = process.env.PORT || 3000
+ const PORT = process.env.PORT || 9310
 
  
 const server = http.createServer(async(req,res)=>{
    
     try{
-        res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT);
+        res.setHeader('Access-Control-Allow-Origin','http://localhost:5173');
         res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, POST, GET, DELETE');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -46,28 +46,6 @@ const server = http.createServer(async(req,res)=>{
         const body = await bodyParser(req);
         const {method} = req;
 
-      
-        // if(method == 'POST'){
-        //     switch(req.url){
-
-        //         default : 
-        //         defaultPage(res);
-        //     }
-        // }
-        // else if(method =='DELETE'){
-        //     switch(req.url){
-
-        //         default : 
-        //         defaultPage(res);
-        //     }
-        // }
-        // else if(method == 'PUT'){
-        //   switch(req.url){
-
-        //     default : 
-        //     defaultPage(res);
-        // }
-        // }
         if(method == 'GET'){
           switch(req.url){
 
@@ -88,93 +66,71 @@ const server = http.createServer(async(req,res)=>{
     }
 });
 
+const io = socketIo(server,{ transports: ['websocket'] });
 
-wss.on('connection',async(ws,req)=>{
+io.on('connection', async (socket) => {
+  console.log('a user connected');
 
-  const jwtToken = req.url.substring(1);
-  // console.log(jwtToken)
+  const jwtToken = socket.handshake.query.token;
   try{
     console.log(process.env.JWT_SECRET)
-    let data =jwt.verify(jwtToken,process.env.JWT_SECRET)
+    let data = jwt.verify(jwtToken, process.env.JWT_SECRET)
     console.log(data)
-    ws.send(JSON.stringify({
+    socket.emit('message', {
       type:'Authentication',
       status:'passed'
-    }))
-  }catch(err){
+    });
+  } catch(err) {
     console.log(err)
     
-    ws.send(JSON.stringify({
+    socket.emit('message', {
       type:'Authentication',
       status:'failed'
-    }))
-    ws.close()
+    });
+    socket.disconnect();
   }
-  console.log(jwtToken)
-    ws.onopen = () => {
-      console.log('WebSocket is connected');
-      ws.send('Hello, server!');
-    };
-    
-    ws.onmessage = ({data}) => {
-        try{
-            data = JSON.parse(data)
-            
-            if(data.create){
-            Createroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
-            }
-            else if(data.join){
-            joinroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
-            }
-            else if(data.response){
-            permission(data,rooms_id,users_in_rooms,requesters,jwtToken);
-            ws.send(JSON.stringify({
-              type:'removereq',
-              name:data.name
-            }));
-            }
-            else if(data.leave){
-              leaveroom(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken);
-            }
-            else if(data.cancel){
-              console.log(data)
-              cancelrequest(data,roomAdmin,requesters);
-            }
-            else{
-                let msg = {
-                    type:'message',
-                    msg:data.msg,
-                    name:data.name,
-                    Admin:data.Admin
-                }
-                console.log(data)
-               sendtoall(Array.from(rooms_id.get(data.roomid)),msg);
-            }
-            
-        }catch(err){
-            console.log(err)
+
+  socket.on('message', (data) => {
+    try{
+      if(data.create){
+        console.log(data)
+        Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
+      }
+      else if(data.join){
+        joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
+      }
+      else if(data.response){
+        permission(data, rooms_id, users_in_rooms, requesters, jwtToken);
+        socket.emit('message', {
+          type:'removereq',
+          name:data.name
+        });
+      }
+      else if(data.leave){
+        leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
+      }
+      else if(data.cancel){
+        console.log(data)
+        cancelrequest(data, roomAdmin, requesters);
+      }
+      else{
+        let msg = {
+          type:'message',
+          msg:data.msg,
+          name:data.name,
+          Admin:data.Admin
         }
-        
-    
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket encountered an error:', error);
-    };
-    
-    ws.onclose = (event) => {
-      console.log('WebSocket is closed with event:', event);
-      
-    };
-      })
+        // console.log(data)
+        sendtoall(Array.from(rooms_id.get(data.roomid)), msg);
+      }
+    } catch(err) {
+      console.log(err)
+    }
+  });
 
-
-
-
-
-
-
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
 
 server.listen(PORT,()=>console.log(`server is listening at ${PORT}`))
-
-

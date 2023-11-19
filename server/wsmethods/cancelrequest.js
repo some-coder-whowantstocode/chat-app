@@ -3,10 +3,10 @@ module.exports.cancelrequest =(data,roomAdmin,requesters)=>{
     let admin = roomAdmin.get(roomid);
     
     if(admin){
-        admin.send(JSON.stringify({
+        admin.send({
             type:'cancelrequest',
             name:name
-        }));
+        });
     }
     let reqs = requesters.get(roomid);
     if(reqs){

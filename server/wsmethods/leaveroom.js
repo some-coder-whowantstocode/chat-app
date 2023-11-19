@@ -39,12 +39,12 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,
                     msg:`${users[randomadmin]} is now the new Admin.`
                 }
                 let users = users_in_rooms.get(data.roomid);
-                room[randomadmin].send(JSON.stringify({
+                room[randomadmin].send({
                     type:'create',
                     roomid:data.roomid,
                     name:users[randomadmin],
                     Admin:true
-        }))
+        });
                 sendtoall(room,msg)
             }
         
@@ -61,14 +61,14 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,
                 roomid:data.roomid,
                 name:req.name
             }
-            req.ws.send((JSON.stringify(msg)));
+            req.ws.send((msg));
             
         })
        requesters.clear(data.roomid)
-        ws.send(JSON.stringify({
+        ws.send({
             type:'Announcement',
             msg:`You left the room ${data.roomid}`
-        }));
+        });
     }
    console.log(room.length)
     
