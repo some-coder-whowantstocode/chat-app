@@ -9,7 +9,7 @@ const {
 let sentData;
 
 const mws = {
-    send:jest.fn((data) => { sentData = JSON.parse(data); })
+    send:jest.fn((data) => { sentData = data })
 }
 
 describe('cancelrequest',()=>{
@@ -17,7 +17,7 @@ describe('cancelrequest',()=>{
         const data ={name:'rohit',roomid:'123'};
         roomAdmin.set(data.roomid,mws);
         requesters.set(data.roomid,[{name:data.name,ws:mws}]);
-        cancelrequest(data,mws,roomAdmin,requesters);
+        cancelrequest(data,roomAdmin,requesters);
         expect(requesters.get(data.roomid).length).toBe(0);
         expect(mws.send).toHaveBeenCalled();
         expect(sentData).toEqual({
@@ -28,6 +28,6 @@ describe('cancelrequest',()=>{
     });
     test('If room does not exist do nothing and do not through any error.',()=>{
         const data ={name:'rohit',roomid:'123'};
-        cancelrequest(data,mws,roomAdmin,requesters);
+        cancelrequest(data,roomAdmin,requesters);
     });
 })

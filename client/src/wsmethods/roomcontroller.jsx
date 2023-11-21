@@ -1,7 +1,7 @@
 const createRoom =(socket,name,roomid)=>{
     try{
         if(socket){
-            socket.send({create:true,roomid:roomid,name:name})
+            socket.send({type:'create',roomid:roomid,name:name})
         }
     }catch(err){
         console.log(err);
@@ -11,9 +11,9 @@ const createRoom =(socket,name,roomid)=>{
 
 const joinRoom =(socket,name,roomid)=>{
     try{
-        
+        console.log('hi')        
              if(socket){
-                socket.send({join:true,roomid:roomid,name:name})
+                socket.send({type:'join',roomid:roomid,name:name})
     
              }
               
@@ -23,15 +23,18 @@ const joinRoom =(socket,name,roomid)=>{
             
 }
 
-const leaveRoom = async(socket)=>{
+const leaveRoom = async(socket,temp)=>{
     try {
          await socket.send({
-              leave: true,
+              type: 'leave',
               name: sessionStorage.getItem('name'),
               roomid: sessionStorage.getItem('room')
           });
-          sessionStorage.removeItem('name');
-          sessionStorage.removeItem('room');
+          if(!temp){
+            sessionStorage.removeItem('name');
+            sessionStorage.removeItem('room');
+          }
+          
       } catch (err) {
           console.log(err);
       }
@@ -39,14 +42,13 @@ const leaveRoom = async(socket)=>{
 
 const cancelrequest =async(socket)=>{
     await socket.send({
-        cancel:true,
+        type:"cancel",
         name:sessionStorage.getItem('joinname'),
         roomid:sessionStorage.getItem('joinroom')
     })
     sessionStorage.removeItem('joinroom');
     sessionStorage.removeItem('joinname');
 }
-
 
 export {
     createRoom,

@@ -1,9 +1,16 @@
 const { sendtoall } = require("./senttoall");
 
-module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,jwtToken)=>{
+module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
 
 
     let room = Array.from(rooms_id.get(data.roomid));
+    if(!room){
+        ws.send({
+            type:'Announcement',
+            msg:`You left the room ${data.roomid}`
+        });
+        return;
+    }
    
     if(room.length>1){
        
@@ -16,11 +23,6 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,
             let i = users.indexOf(data.name);
             users.splice(i,1);
             
-            let msg = {
-                type:'Announcement',
-                msg:`${data.name} Left the room.`
-            };
-            sendtoall(Array.from(room),msg);
             rooms_id.set(data.roomid,room);
             users_in_rooms.set(data.roomid,users);
 
@@ -38,14 +40,13 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,
                     type:'Announcement',
                     msg:`${users[randomadmin]} is now the new Admin.`
                 }
-                let users = users_in_rooms.get(data.roomid);
                 room[randomadmin].send({
                     type:'create',
                     roomid:data.roomid,
                     name:users[randomadmin],
                     Admin:true
         });
-                sendtoall(room,msg)
+               
             }
         
     }
@@ -65,11 +66,19 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,
             
         })
        requesters.clear(data.roomid)
-        ws.send({
-            type:'Announcement',
-            msg:`You left the room ${data.roomid}`
-        });
+       
     }
-   console.log(room.length)
     
+    ws.send({
+        type:'Announcement',
+        msg:`You left the room ${data.roomid}`
+    });
+
+    let msg ={
+        type:'Announcement',
+        msg:`${data.name} left the room `
+    };
+
+    sendtoall(Array.from(room),msg);
+
 }

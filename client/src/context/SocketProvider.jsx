@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { cancelrequest, createRoom, joinRoom, leaveRoom } from '../wsmethods/roomcontroller';
 import { useNavigate } from 'react-router-dom';
-import notification from '../assets/notification.wav'
-import { gettoken } from '../utils/tokenhandler';
+import notification from '../assets/notification.wav';
+import axios from 'axios';
+import io from 'socket.io-client';
 
 
 const SocketContext = createContext();
@@ -20,12 +21,46 @@ export function SocketProvider({ children }) {
   const [creation,approvecreation] = useState();/* Notify user that room is created */
   const [entry,allowentry] = useState();/* Notify user that he has been allowed to the room he requested */
   const [Admin,setAdmin] = useState(false);/* To know if the user is the admin or not */
-  
+  const [rejoinmsg,setrem] = useState('want to rejoin room.') ;
   
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
 
   /* Frist get token for establising connection with websocket at backend.*/
+
+const gettoken = async () => {
+  
+const url = 'http://localhost:9310/handshake'
+// const url = 'https://instant-chat-backend.onrender.com/handshake'
+  const { data } = await axios.get(url).catch(err =>{
+    
+
+  });
+  
+  const { jwtToken } = data;
+  sessionStorage.setItem('jwtToken', jwtToken);
+
+  // `ws://instant-chat-backend.onrender.com`
+
+  let socket = io(`ws://localhost:9310`, { 
+    query: { token: jwtToken }, 
+    transports: ['websocket'],
+    withCredentials: true
+  });
+
+  socket.on('connect_error', (err) => {
+    setinchat(false);
+    approvecreation(false);
+    allowentry(false);
+    console.log(`connect_error due to ${err.message}`);
+    setrem('connection lost do you want to rejoin ?');
+    navigate('/rejoin')
+    
+  });
+
+  return socket;
+}
+
   
   useEffect(()=>{
     if(state === 'notauthenticated'){
@@ -60,6 +95,7 @@ export function SocketProvider({ children }) {
               setstate('Authenticated');
             })
             .catch(err=>{
+              console.log(err);
               setstate('Authfailed');
             })
             .finally(()=>{
@@ -82,12 +118,23 @@ export function SocketProvider({ children }) {
    
      joinRoom(socket,name,roomid);
    }
+
+   const wanttorejoin =async()=>{
+    setwaiting(true);
+    let name = sessionStorage.getItem('name');
+    let roomid = sessionStorage.getItem('room');
+  
+    joinRoom(socket,name,roomid);
+  }
+
  
-   const wanttoleave =async()=>{
+   const wanttoleave =async(temp)=>{
      
-     if(isinchat){
-       await leaveRoom(socket);
+     if(temp){
+      setrem('want to rejoin room.');
      }
+       await leaveRoom(socket,temp);
+     
      setinchat(false);
      approvecreation(false);
      allowentry(false);
@@ -113,12 +160,11 @@ export function SocketProvider({ children }) {
       };
 
       const handlemessage =(jsondata)=>{
-        console.log(jsondata)
         if(jsondata.type == 'response'){
           if(jsondata.permission === 'Acc')
           {
-          let name = sessionStorage.getItem('joinname');
-          let room = sessionStorage.getItem('joinroom');
+          let name = jsondata.name;
+          let room = jsondata.roomid;
           sessionStorage.setItem('name',name);
           sessionStorage.setItem('room',room);
               setwaiting(false);
@@ -130,7 +176,17 @@ export function SocketProvider({ children }) {
           {
             sessionStorage.removeItem('joinroom');
             sessionStorage.removeItem('joinname');
-              setwaiting(false);
+            let timeoutId;
+            seterrmsg(prevdata => {
+              const newMsg = { msg: 'Admin denied your access.', id: Date.now() };
+               timeoutId = setTimeout(() => {
+                seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
+              }, 3000);
+              return [...prevdata,{ ...newMsg, timeoutId }];
+            });
+            
+            setwaiting(false);
+            return()=> clearTimeout(timeoutId)
             
           }
       }
@@ -190,14 +246,14 @@ const reconnect =async()=>{
   setLoading(true);
   let name = sessionStorage.getItem('name');
   let roomid = sessionStorage.getItem('room');
-  await joinRoom(socket,name,roomid);
+  joinRoom(socket,name,roomid);
   setLoading(false);
 }
 
 
 
   return (
-    <SocketContext.Provider value={{ Admin,handleconnection,reconnect, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
+    <SocketContext.Provider value={{ Admin,rejoinmsg,handleconnection,reconnect,wanttorejoin, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
       {children}
     </SocketContext.Provider>
   );
