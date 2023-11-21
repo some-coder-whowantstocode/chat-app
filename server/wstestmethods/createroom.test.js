@@ -10,7 +10,7 @@ const {
 let sentData;
 
 const mws = {
-    send:jest.fn((data) => { sentData = JSON.parse(data); })
+    send:jest.fn((data) => { sentData = data })
 }
 
 
@@ -24,6 +24,7 @@ describe('Createroom', () => {
         expect(requesters.get(data.roomid)).toEqual([]);
         expect(mws.send).toHaveBeenCalled();
         expect(sentData).toStrictEqual({
+            Admin:true,
             type:'create',
             name:data.name,
             roomid:data.roomid

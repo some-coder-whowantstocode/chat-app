@@ -13,7 +13,7 @@ import {
   
 } from '../components/Chatpage/customstyles'
 import Loading from '../components/Loading';
-import { useNavigate } from 'react-router-dom';
+import { json, useNavigate } from 'react-router-dom';
 
 const Chatpage = () => {
 
@@ -27,6 +27,7 @@ const Chatpage = () => {
     const [msg,setmsg] = useState();
     const [reqdata,setreqdata] = useState([]);
     const [notificationsound] = useState(new Audio(notification));
+    const key = useRef(0);
    
 
     const inputref = useRef(null)
@@ -44,6 +45,9 @@ const Chatpage = () => {
 
       const handleMessage =(jsondata)=>{
         if(jsondata.type ==`message`){
+          let msg = {...jsondata};
+          msg.key = key.current;
+          key.current +=1;
           setmsgs(prevmsg=>[...prevmsg,jsondata])
         }else if(jsondata.type == 'request'){
           notificationsound.play()
@@ -88,7 +92,7 @@ const Chatpage = () => {
 
   useEffect(() => {
     const handler = async() => {
-        await wanttoleave();
+        await wanttoleave(false);
     };
 
     window.addEventListener('beforeunload', handler);
@@ -137,8 +141,8 @@ const Chatpage = () => {
 
         <Leave 
         onClick={async()=>{
-          await wanttoleave();
-          navigate('/landingpage')
+          await wanttoleave(true);
+          navigate('/rejoin')
         }}
         >
           Leave room
@@ -152,7 +156,7 @@ const Chatpage = () => {
       {
         
         msgs.map((msg)=>(
-          <Chat m={msg} me={username==msg.name}/>
+          <Chat key={msg.key} m={msg} me={username==msg.name}/>
         ))
       }
       </Chatbox>

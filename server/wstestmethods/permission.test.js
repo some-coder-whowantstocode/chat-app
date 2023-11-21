@@ -11,7 +11,7 @@ const {
 let sentData;
 
 const mws = {
-    send:jest.fn((data) => { sentData = JSON.parse(data); })
+    send:jest.fn((data) => { sentData = data })
 }
 
 describe('permission',()=>{
@@ -41,12 +41,12 @@ describe('permission',()=>{
         expect(users_in_rooms.get(data.roomid)).toContain(data.name);
         expect(rooms_id.get(data.roomid)).toContain(mws);
         expect(requesters.get(data.roomid)).toHaveLength(0);
-        expect(mws.send).toHaveBeenCalledWith(JSON.stringify({
+        expect(mws.send).toHaveBeenCalledWith({
             type:'response',
             permission:'Acc',
             roomid:data.roomid,
             name:data.name
-        }));
+        });
         clearmaps()
     });
 });

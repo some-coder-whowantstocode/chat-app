@@ -21,11 +21,12 @@ const {
     Createroom,
     joinroom,
     permission,
-    leaveroom
+    leaveroom,
+    message
  } = require('./wsmethods/index.js');
 const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js')
 
- const PORT = process.env.PORT || 3000
+ const PORT = process.env.PORT || 9310
 
  
 const server = http.createServer(async(req,res)=>{
@@ -90,37 +91,42 @@ io.on('connection', async (socket) => {
     socket.disconnect();
   }
 
-  socket.on('message', (data) => {
+  socket.on('message', async(data) => {
     try{
-      if(data.create){
-        Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
-      }
-      else if(data.join){
+
+      switch(data.type){
+        case 'create':
+        Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
+        break;
+
+        case 'join':
         joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
-      }
-      else if(data.response){
+        break;
+
+        case 'response':
         permission(data, rooms_id, users_in_rooms, requesters, jwtToken);
         socket.emit('message', {
           type:'removereq',
           name:data.name
         });
-      }
-      else if(data.leave){
-        leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
-      }
-      else if(data.cancel){
-        console.log(data)
+        break;
+
+        case 'leave':
+        leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
+        break;
+
+        case 'cancel':
         cancelrequest(data, roomAdmin, requesters);
-      }
-      else{
-        let msg = {
-          type:'message',
-          msg:data.msg,
-          name:data.name,
-          Admin:data.Admin
-        }
-        console.log(data)
-        sendtoall(Array.from(rooms_id.get(data.roomid)), msg);
+        break;
+
+        case 'rejoin':
+        rejoin(data,rooms_id,users_in_rooms);
+        break;
+
+        default:
+        message(data,rooms_id);
+        break;
+
       }
     } catch(err) {
       console.log(err)

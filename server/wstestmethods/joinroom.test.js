@@ -10,7 +10,7 @@ const {
 let sentData;
 
 const mws = {
-    send:jest.fn((data) => { sentData = JSON.parse(data); })
+    send:jest.fn((data) => { sentData =data; })
 }
 
 
@@ -25,7 +25,7 @@ describe('joinroom',()=>{
         expect(mws.send).toHaveBeenCalled();
         expect(sentData).toEqual({
             type:`error`,
-            msg:`${data.roomid} does not exist.`
+            msg:`room ${data.roomid} does not exist.`
     });
     clearmaps()
     });
@@ -45,7 +45,7 @@ describe('joinroom',()=>{
         expect(mws.send).toHaveBeenCalled();
         expect(sentData).toEqual({
             type:'error',
-            msg:`${data.name} already exists in this room please choose another name.`
+            msg:`some one with name ${data.name} already exists in this room please choose another name.`
         });
         clearmaps();
     });
@@ -65,7 +65,7 @@ describe('joinroom',()=>{
         expect(mws.send).toHaveBeenCalled();
         expect(sentData).toEqual({
             type:'error',
-            msg:`${data.name} already exists in this room please choose another name.`
+            msg:`some one with name ${data.name} already exists in this room please choose another name.`
         });
         clearmaps();
     });

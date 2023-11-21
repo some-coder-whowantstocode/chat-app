@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useSocket } from '../../context/SocketProvider';
 import {
   Requestcard,
@@ -22,6 +22,7 @@ const RequestBox = ({data}) => {
                 
                 name:data.name,
                 roomid:data.roomid,
+                type:'response',
                 response:res?'Acc' :'Dec'
             }
             socket.send(resp);
