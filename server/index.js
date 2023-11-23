@@ -15,6 +15,7 @@ const rooms_id = new Map(); //<id,[ws,ws.....]>
 const users_in_rooms = new Map(); //<id,[name,name.....]>
 const roomAdmin = new Map(); //<id,ws>
 const requesters = new Map(); //<id,[{name,ws},{name,ws}....]>
+const blocklist = new Map(); //<id,[ws,ws,ws,ws]>
 
 const { 
     sendtoall,
@@ -22,7 +23,8 @@ const {
     joinroom,
     permission,
     leaveroom,
-    message
+    message,
+    kickout
  } = require('./wsmethods/index.js');
 const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js')
 
@@ -69,73 +71,112 @@ const server = http.createServer(async(req,res)=>{
 
 const io = socketIo(server);
 
-io.on('connection', async (socket) => {
-  console.log('a user connected');
+try{
 
-  const jwtToken = socket.handshake.query.token;
-  try{
-    console.log(process.env.JWT_SECRET)
-    let data = jwt.verify(jwtToken, process.env.JWT_SECRET)
-    console.log(data)
-    socket.emit('message', {
-      type:'Authentication',
-      status:'passed'
-    });
-  } catch(err) {
-    console.log(err)
-    
-    socket.emit('message', {
-      type:'Authentication',
-      status:'failed'
-    });
-    socket.disconnect();
-  }
-
-  socket.on('message', async(data) => {
+  io.on('connection', async (socket) => {
+    console.log('a user connected');
+  
+    const jwtToken = socket.handshake.query.token;
     try{
-
-      switch(data.type){
-        case 'create':
-        Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
-        break;
-
-        case 'join':
-        joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
-        break;
-
-        case 'response':
-        permission(data, rooms_id, users_in_rooms, requesters, jwtToken);
-        socket.emit('message', {
-          type:'removereq',
-          name:data.name
-        });
-        break;
-
-        case 'leave':
-        leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
-        break;
-
-        case 'cancel':
-        cancelrequest(data, roomAdmin, requesters);
-        break;
-
-        case 'rejoin':
-        rejoin(data,rooms_id,users_in_rooms);
-        break;
-
-        default:
-        message(data,rooms_id);
-        break;
-
-      }
+      console.log(process.env.JWT_SECRET)
+      let data = jwt.verify(jwtToken, process.env.JWT_SECRET)
+      console.log(data)
+      socket.emit('message', {
+        type:'Authentication',
+        status:'passed'
+      });
     } catch(err) {
       console.log(err)
+      
+      socket.emit('message', {
+        type:'Authentication',
+        status:'failed'
+      });
+      socket.disconnect();
     }
-  });
 
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
-});
+    try{
+      socket.on('message', async(data) => {
+        try{
+    
+          switch(data.type){
+            case 'create':
+            Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
+            break;
+    
+            case 'join':
+            joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
+            break;
+    
+            case 'response':
+            permission(data, rooms_id, users_in_rooms, requesters, jwtToken);
+            socket.emit('message', {
+              type:'removereq',
+              name:data.name
+            });
+            break;
+    
+            case 'leave':
+            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
+            break;
+    
+            case 'cancel':
+            cancelrequest(data, roomAdmin, requesters);
+            break;
+    
+            case 'rejoin':
+            rejoin(data,rooms_id,users_in_rooms);
+            break;
+
+            case 'kickout':
+            kickout(data,socket,roomAdmin,rooms_id,users_in_rooms,blocklist);
+    
+            default:
+            message(data,rooms_id);
+            break;
+    
+          }
+        } catch(err) {
+          console.log(err)
+        }
+      });
+    
+      socket.on('disconnecting',(err)=>{
+        socket.send({
+          type:'Alert',
+          action_required:true,
+          msg:`server disconnected`
+        })
+      })
+      socket.on('error',(err)=>{
+        console.log(err)
+      })
+    
+      socket.on('disconnect', () => {
+        console.log('user disconnected');
+      });
+    
+    }catch(err){
+      console.log(err)
+    }
+  
+  
+    
+  })
+  io.on('disconnect',async()=>{
+    await io.send({
+      type:'Alert',
+      msg:`server disconnected`
+    })
+    rooms_id.clear();
+    roomAdmin.clear();
+    users_in_rooms.clear();
+    requesters.clear();
+
+  })
+  
+}catch(err){
+console.log(err)
+}
 
 server.listen(PORT,()=>console.log(`server is listening at ${PORT}`))

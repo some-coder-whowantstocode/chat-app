@@ -71,7 +71,12 @@ const Confirmation = () => {
           wanttorejoin()
           console.log('hi')
           }}>Rejoin</Btn>
-        <Btn  to={'/landingpage'}>Go back to Landing page</Btn>
+        <Btn onClick={()=>{
+          sessionStorage.removeItem('name');
+          sessionStorage.removeItem('joinname');
+          sessionStorage.removeItem('room');
+          sessionStorage.removeItem('joinroom');
+        }} to={'/landingpage'}>Go back to Landing page</Btn>
       </Custombox>
     </Rejoinpage>
   )

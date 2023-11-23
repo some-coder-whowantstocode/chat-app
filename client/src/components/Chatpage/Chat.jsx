@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Logo } from './customstyles'
 
 const Chatbox = styled.div`
+width: 100%;
     display: flex;
     flex-direction:${props =>props.me===true ? 'row-reverse' :'row'} ;
 `
@@ -14,7 +15,7 @@ const Smallbox = styled.div`
 `
 
 const Chatblock = styled.span`
-    background-color:${props =>props.left ?  `#00aeff`:'#06f187'} ;
+    background:${props =>props.left ?  `linear-gradient(343deg, rgba(0,60,255,1) 0%, rgba(12,135,169,1) 100%)`:'#06f187'} ;
     padding: 4px 8px;
     margin: 4px;
     border-radius:${props =>props.left ? `9px 0px 9px 9px` : `0px 9px 9px 9px`} ;
@@ -47,12 +48,6 @@ const Announcement = styled.div`
   max-width: 100%;
 `
 
-const Nameholder = styled.div`
-  display: flex;
-  flex-direction:${props =>props.left===true ? 'row-reverse' :'row'} ;
-
-  
-`
 
 const Chat = ({m,me}) => {
   return (

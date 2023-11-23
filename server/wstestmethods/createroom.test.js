@@ -27,7 +27,8 @@ describe('Createroom', () => {
             Admin:true,
             type:'create',
             name:data.name,
-            roomid:data.roomid
+            roomid:data.roomid,
+            mems:[data.name]
 });
         expect(mws.send).toHaveBeenCalled();
         clearmaps();

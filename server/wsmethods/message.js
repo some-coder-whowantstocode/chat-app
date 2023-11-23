@@ -1,6 +1,6 @@
 const { sendtoall } = require("./senttoall");
 
-const badword = ['fuck','dick','ass','rape']
+const badword = ['fuck','dick','ass','rape','aniket']
 
 
 const checkword =(message,ind,word,tempmsg)=>{
@@ -12,8 +12,8 @@ const checkword =(message,ind,word,tempmsg)=>{
             return;
         }
     }
-    let k = ind;
-    for(let i=0;i<word.length;i++){
+    let k = ind+1;
+    for(let i=1;i<word.length-1;i++){
         message[k]='*';
         k++;
     }

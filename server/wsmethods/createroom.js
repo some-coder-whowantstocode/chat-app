@@ -25,7 +25,8 @@ module.exports.Createroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters
             type:'create',
             Admin:true,
             name:data.name,
-            roomid:data.roomid
+            roomid:data.roomid,
+            mems:arr
 })
 }
 

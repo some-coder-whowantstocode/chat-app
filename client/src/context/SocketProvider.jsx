@@ -21,17 +21,19 @@ export function SocketProvider({ children }) {
   const [creation,approvecreation] = useState();/* Notify user that room is created */
   const [entry,allowentry] = useState();/* Notify user that he has been allowed to the room he requested */
   const [Admin,setAdmin] = useState(false);/* To know if the user is the admin or not */
-  const [rejoinmsg,setrem] = useState('want to rejoin room.') ;
+  const [rejoinmsg,setrem] = useState('want to rejoin room.');
+  const [members,setmembers] = useState([]);
+  
   
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
 
   /* Frist get token for establising connection with websocket at backend.*/
 
-const gettoken = async () => {
+  const gettoken = async () => {
   
-const url = 'http://localhost:9310/handshake'
-// const url = 'https://instant-chat-backend.onrender.com/handshake'
+  const url = 'http://localhost:9310/handshake'
+  // const url = 'https://instant-chat-backend.onrender.com/handshake'
   const { data } = await axios.get(url).catch(err =>{
     
 
@@ -49,12 +51,16 @@ const url = 'http://localhost:9310/handshake'
   });
 
   socket.on('connect_error', (err) => {
+    if(isinchat){
+      navigate('/rejoin')
+
+    }
     setinchat(false);
     approvecreation(false);
     allowentry(false);
     console.log(`connect_error due to ${err.message}`);
     setrem('connection lost do you want to rejoin ?');
-    navigate('/rejoin')
+    
     
   });
 
@@ -169,6 +175,7 @@ const url = 'http://localhost:9310/handshake'
           sessionStorage.setItem('room',room);
               setwaiting(false);
               setinchat(true);
+              setmembers(jsondata.mems)
               notificationsound.play();
               allowentry(true);
               setinchat(true);
@@ -212,6 +219,7 @@ const url = 'http://localhost:9310/handshake'
       sessionStorage.setItem('name',jsondata.name);
       sessionStorage.setItem('room',jsondata.roomid);
       setinchat(true);
+      setmembers(jsondata.mems);
       setAdmin(true);
       approvecreation(true);
     }
@@ -253,7 +261,7 @@ const reconnect =async()=>{
 
 
   return (
-    <SocketContext.Provider value={{ Admin,rejoinmsg,handleconnection,reconnect,wanttorejoin, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
+    <SocketContext.Provider value={{ members,Admin,rejoinmsg,handleconnection,reconnect,wanttorejoin, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
       {children}
     </SocketContext.Provider>
   );

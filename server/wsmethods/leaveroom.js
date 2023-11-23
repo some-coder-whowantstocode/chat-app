@@ -76,6 +76,8 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)
 
     let msg ={
         type:'Announcement',
+        left:true,
+        name:data.name,
         msg:`${data.name} left the room `
     };
 

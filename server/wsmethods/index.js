@@ -5,6 +5,7 @@ const { sendtoall } = require("./senttoall.js");
 const {leaveroom} = require('./leaveroom');
 const {cancelrequest} =require('./cancelrequest.js');
 const {message} = require('./message.js');
+const {kickout} = require('./kickout.js');
 
 module.exports =
 {
@@ -14,5 +15,6 @@ module.exports =
     sendtoall,
     leaveroom,
     cancelrequest,
-    message
+    message,
+    kickout
 }

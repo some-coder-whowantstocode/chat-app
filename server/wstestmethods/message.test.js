@@ -1,5 +1,6 @@
 const { message } = require('../wsmethods/index.js');
-const {sendtoall} = require('../wsmethods/senttoall.js')
+const {sendtoall} = require('../wsmethods/senttoall.js');
+const { clearmaps } = require('./testmaps.js');
 jest.mock('../wsmethods/senttoall.js');
 
 
@@ -30,7 +31,8 @@ describe('message',()=>{
         name: 'Test User',
         Admin: false
       }
-    );
+      );
+      clearmaps()
   });
 
   
@@ -48,14 +50,15 @@ describe('message',()=>{
     message(mockData, mockRoomsId);
   
     expect(sendtoall).toHaveBeenCalledWith(
-      Array.from(mockRoomsId.get(mockData.roomid)),
+      mockRoomsId.get(mockData.roomid),
       {
         type: 'message',
-        msg: 'Hello, this is a test message with badword ****',
+        msg: 'Hello, this is a test message with badword f**k',
         name: 'Test User',
         Admin: false
       }
     );
+    clearmaps()
   });
   
 })

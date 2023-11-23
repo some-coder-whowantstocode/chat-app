@@ -91,10 +91,7 @@ const LandingPage = () => {
 
     window.addEventListener('beforeunload', handler);
 
-    sessionStorage.removeItem('name');
-    sessionStorage.removeItem('joinname');
-    sessionStorage.removeItem('roomid');
-    sessionStorage.removeItem('joinroom');
+    
 
     return () => {
         window.removeEventListener('beforeunload', handler);

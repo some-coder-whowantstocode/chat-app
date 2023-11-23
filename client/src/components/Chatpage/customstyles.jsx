@@ -1,38 +1,73 @@
 import styled from 'styled-components';
 import { AiOutlineSend } from "react-icons/ai";
+import { FaPowerOff } from "react-icons/fa";
+
 
 
 const min = 750
 
+export const Room = styled.div`
+width: 100svw;
+max-width: 100%;
+display: flex;
+overflow-x: hidden;
+
+::-webkit-scrollbar{
+  display: none;
+}
+
+-ms-overflow-style: none;
+scrollbar-width: none;
+`
+
 export const Chatroom = styled.div`
-width: 100%;
-padding-top: 40px;
-padding-bottom: 65px;
+width: 69.5vw;
+display: flex;
+position: relative;
+height: 100vh;
+max-height: 100%;
+/* background-color: #d1d1d1; */
+flex-direction: column;
+box-sizing: border-box;
+flex-grow: 1;
+
 
 `
 
-export const CustomInput = styled.input`
+
+export const Chatbox = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 0px 5px;
+  min-height: calc(100vh - 75px);
+  overflow-y: scroll;
   
+::-webkit-scrollbar{
+  display: none;
+}
+
+-ms-overflow-style: none;
+scrollbar-width: none;
+`
+
+export const CustomInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
   height: 35px;
-  position: fixed;
-  bottom: 10px;
-  left: 1%;
+  bottom: 0px;
   font-size: 17px;
   box-shadow: rgba(189, 189, 189, 0.12)0px 2px 4px 0px, rgba(147, 147, 147, 0.32) 0px 2px 16px 0px;
   border: none;
-  border-radius: 20px;
   padding: 7px;
   background-color: #dbd4d4;
   ${
     innerWidth<min 
     ?
     ` 
-    width:98%;
     box-sizing: border-box;
     `
     :
     `
-    width: 98%;
     `
   }
 
@@ -41,12 +76,13 @@ export const CustomInput = styled.input`
   }
 `
 
+
 export const Send = styled(AiOutlineSend)`
   position: fixed;
   ${
  innerWidth<min ?
  `
- bottom: 17px;
+ bottom: 8px;
  `
  :
  `
@@ -54,35 +90,28 @@ export const Send = styled(AiOutlineSend)`
  `
   }
  
-  right: 15px;
+  right: 25px;
   font-size: 20px;
   cursor: pointer;
 `
 
-export const Chatbox = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 0px 5px;
-`
-
 export const Chathead = styled.div`
-  box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
-  width: 100%;
+  box-shadow: rgb(38,57,77) 0px 3px 14px -5px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   height: 40px;
   font-weight: 800;
   font-size: 20px;
-  position: fixed;
-  top: 0;
-  z-index: 1000;
+  width: 100%;
   background-color: white;
+  padding: 0px 10px;
+  box-sizing: border-box;
 `
 
-export const Leave = styled.div`
+export const Leave = styled(FaPowerOff)`
   color: #a70303;
-  position: fixed;
+  /* position: fixed; */
   top: 6px;
   right: 10px;
   padding: 4px ;
@@ -97,6 +126,9 @@ export const Leave = styled.div`
     background-color: #a70303;
   }
 `
+
+
+
 
 export const Requestcard = styled.div`
 height:140px ;
@@ -123,8 +155,8 @@ box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
   font-size: 16px;
   border: 2px solid gray;
   border-radius: 50%;
-  height: 16px;
-  width: 16px;
+  height: 26px;
+  width: 26px;
   padding: 1px;
   display: flex;
   align-items: center;
