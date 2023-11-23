@@ -32,8 +32,8 @@ export function SocketProvider({ children }) {
 
   const gettoken = async () => {
   
-  const url = 'http://localhost:9310/handshake'
-  // const url = 'https://instant-chat-backend.onrender.com/handshake'
+  // const url = 'http://localhost:9310/handshake'
+  const url = 'https://instant-chat-backend.onrender.com/handshake'
   const { data } = await axios.get(url).catch(err =>{
     
 
