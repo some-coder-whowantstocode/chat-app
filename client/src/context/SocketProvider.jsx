@@ -43,8 +43,9 @@ export function SocketProvider({ children }) {
   sessionStorage.setItem('jwtToken', jwtToken);
 
   // `ws://instant-chat-backend.onrender.com`
+  // ws://localhost:9310
 
-  let socket = io(`ws://localhost:9310`, { 
+  let socket = io(`ws://instant-chat-backend.onrender.com`, { 
     query: { token: jwtToken }, 
     transports: ['websocket'],
     withCredentials: true
