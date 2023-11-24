@@ -24,11 +24,10 @@ describe('Createroom', () => {
         expect(requesters.get(data.roomid)).toEqual([]);
         expect(mws.send).toHaveBeenCalled();
         expect(sentData).toStrictEqual({
-            Admin:true,
             type:'create',
+            response:true,
             name:data.name,
-            roomid:data.roomid,
-            mems:[data.name]
+            roomid:data.roomid
 });
         expect(mws.send).toHaveBeenCalled();
         clearmaps();

@@ -46,7 +46,6 @@ const server = http.createServer(async(req,res)=>{
             return;
         }
 
-        const body = await bodyParser(req);
         const {method} = req;
 
         if(method == 'GET'){
@@ -98,7 +97,7 @@ try{
     try{
       socket.on('message', async(data) => {
         try{
-    
+          console.log(data)
           switch(data.type){
             case 'create':
             Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
@@ -129,7 +128,8 @@ try{
             break;
 
             case 'kickout':
-            kickout(data,socket,roomAdmin,rooms_id,users_in_rooms,blocklist);
+              console.log(data)
+            kickout(data,socket,roomAdmin,rooms_id,users_in_rooms);
     
             default:
             message(data,rooms_id);

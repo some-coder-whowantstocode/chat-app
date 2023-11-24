@@ -42,41 +42,60 @@ const Chatpage = () => {
 
   useEffect(() => {
     const handleMessage = (jsondata) => {
-      if (jsondata.type == `message`) {
-        let msg = { ...jsondata };
-        msg.key = key.current;
-        key.current += 1;
-        setmsgs((prevmsg) => [...prevmsg, jsondata]);
-      } else if (jsondata.type == "request") {
-        notificationsound.play();
-        setreqdata((prevreqdata) => [jsondata, ...prevreqdata]);
-      } else if (jsondata.type == "removereq") {
-        setreqdata((prevreqdata) => {
-          let arr = prevreqdata.filter((r) => r.name != jsondata.name);
-          return arr;
-        });
-      } else if (jsondata.type == "cancelrequest") {
-        setreqdata((prevreqdata) => {
-          let arr = prevreqdata.filter((r) => r.name != jsondata.name);
-          return arr;
-        });
-      } else if (jsondata.type == "Announcement") {
-        if(jsondata.joined){
-          console.log(jsondata.name)
-          setmem(prevdata=>[...prevdata,jsondata.name]);
-        }
-        if(jsondata.left){
-          console.log(jsondata.name)
+      switch(jsondata.type){
 
-          setmem(prevdata=> prevdata.filter((d)=>d !== jsondata.name));
-          
+
+        case 'message':
+          let msg = { ...jsondata };
+          msg.key = key.current;
+          key.current += 1;
+          setmsgs((prevmsg) => [...prevmsg, jsondata]);
+        break;
+
+        case 'request':
+          notificationsound.play();
+          setreqdata((prevreqdata) => [jsondata, ...prevreqdata]);
+        break;
+
+        case 'removereq':
+          setreqdata((prevreqdata) => {
+            let arr = prevreqdata.filter((r) => r.name != jsondata.name);
+            return arr;
+          });
+        break;
+
+        case 'cancelrequest':
+          setreqdata((prevreqdata) => {
+            let arr = prevreqdata.filter((r) => r.name != jsondata.name);
+            return arr;
+          });
+        break;
+
+        case 'Announcement':
+       
+          if(jsondata.joined){
+            setmem(prevdata=>[...prevdata,jsondata.name]);
+          }
+          if(jsondata.left){
+  
+            setmem(prevdata=> prevdata.filter((d)=>d !== jsondata.name));
+            
+          }
+          setmsgs((prevmsg) => [...prevmsg, jsondata]);
+        
+        if(jsondata.type = 'Alert'){
+        
         }
-        setmsgs((prevmsg) => [...prevmsg, jsondata]);
-      }else if(jsondata.type = 'Alert'){
-        if(jsondata.action_required) wanttoleave(true);
-        navigate("/rejoin");
+        break;
+
+        case 'Alert':
+          if(jsondata.action_required) wanttoleave(true);
+          navigate("/rejoin");
+        break;
+
+
       }
-    };
+    }
 
     if (socket) {
       socket.addEventListener("message", handleMessage);
@@ -86,10 +105,6 @@ const Chatpage = () => {
       };
     }
   }, [socket]);
-
-  useEffect(()=>{
-    console.log(mem)
-  },[mem])
 
   const navigate = useNavigate();
 

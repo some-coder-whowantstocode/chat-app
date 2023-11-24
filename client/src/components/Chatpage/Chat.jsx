@@ -50,12 +50,13 @@ const Announcement = styled.div`
 
 
 const Chat = ({m,me}) => {
+
   return (
     <Chatbox me={me}>
     {
-      m.type === 'Announcement' ?
+      m.type === 'Alert' ?
 
-      <Announcement>
+      <Announcement >
         {m.msg}
       </Announcement>
 

@@ -22,6 +22,7 @@ const RequestBox = ({data}) => {
                 
                 name:data.name,
                 roomid:data.roomid,
+                admin:sessionStorage.getItem('name'),
                 type:'response',
                 response:res?'Acc' :'Dec'
             }

@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { GiHamburgerMenu } from "react-icons/gi";
+import { useSocket } from '../../context/SocketProvider';
+import { BsThreeDotsVertical } from "react-icons/bs";
+
+const Alter = styled(BsThreeDotsVertical)`
+  cursor: pointer;
+`
 
 const Mems = styled.div`
   display: flex;
@@ -26,7 +32,18 @@ const Mem = styled.div`
   align-items: center;
   padding-left: 5px;
   height: 50px;
-  color: white;
+  justify-content: space-between;
+  ${
+    props=>props.admin ?
+    `
+      color:gold;
+    `
+    :
+
+    `
+      color:white;
+    `
+  }
   transition-duration: 0.5s;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
   &:hover{
@@ -73,8 +90,9 @@ const Head = styled.div`
   display: flex;
   align-items: center;
   transition: all;
+  transition-delay: 0.2s;
   transition-duration: 1s;
-  /* ${props=>props.isclicked ? `justify-content: end` : `justify-content: center`} ; */
+  ${props=>props.isclicked ? `justify-content: end` : `justify-content: center`} ;
   justify-content:end;
   
   
@@ -85,6 +103,7 @@ const Head = styled.div`
 `
 
 const Members = ({mems}) => {
+  const {adminname,Admin,kickout} = useSocket();
   const [mem,setmem] = useState([]);
   const [isclicked,setisclicked] = useState(true);
 
@@ -116,9 +135,43 @@ const Members = ({mems}) => {
     >
       {
         mem.map((me)=>(
-          <Mem 
-          isclicked={isclicked}
-          >{me}</Mem>
+          <>
+          {
+            me === adminname 
+            
+            ?
+            <Mem 
+            admin
+            isclicked={isclicked}
+            key={Date.now()}
+            >{me}</Mem>
+            :
+           <>
+           {
+            Admin 
+            
+            ?
+            <Mem 
+            isclicked={isclicked}
+            key={Date.now()}
+            >{me}
+            <Alter onClick={()=>{
+              kickout(me);
+            }}/>
+            </Mem>
+            :
+
+            <Mem 
+            key={Date.now()}
+            isclicked={isclicked}
+            >{me}</Mem>
+           }
+         
+           </>
+          
+          }
+          </>
+         
         ))
       }
     </Mems>

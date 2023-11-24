@@ -1,9 +1,10 @@
 const { sendtoall } = require("./senttoall");
 
 module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
+console.log(data)
 
+    let room = rooms_id.get(data.roomid);
 
-    let room = Array.from(rooms_id.get(data.roomid));
     if(!room){
         ws.send({
             type:'Announcement',
@@ -11,20 +12,28 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)
         });
         return;
     }
-   
+
+  
+    console.log(room.length)
     if(room.length>1){
-       
-        const users = users_in_rooms.get(data.roomid); 
-    
-            
+        let users = users_in_rooms.get(data.roomid); 
             let index = room.indexOf(ws); 
             room.splice(index,1); 
-    
-            let i = users.indexOf(data.name);
-            users.splice(i,1);
+            users.splice(index,1);
             
             rooms_id.set(data.roomid,room);
             users_in_rooms.set(data.roomid,users);
+
+            console.log(users_in_rooms)
+            let leavemsg ={
+                type:'Announcement',
+                left:true,
+                name:data.name,
+                msg:`${data.name} left the room `
+            };
+        
+            sendtoall(room,leavemsg);
+
 
             if(roomAdmin.has(data.roomid) && roomAdmin.get(data.roomid)===ws){
 
@@ -36,16 +45,14 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)
                 let randomadmin = Math.floor(Math.random() * (e - s + 1)) + s;
                 roomAdmin.set(data.roomid,room[randomadmin]);
                 
-                let msg = {
+               let msg = {
                     type:'Announcement',
+                    change:true,
+                    newAdmin:users[randomadmin],
                     msg:`${users[randomadmin]} is now the new Admin.`
                 }
-                room[randomadmin].send({
-                    type:'create',
-                    roomid:data.roomid,
-                    name:users[randomadmin],
-                    Admin:true
-        });
+                sendtoall(room,msg);
+              
                
             }
         
@@ -60,12 +67,12 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)
                 type:'response',
                 permission:'Dec',
                 roomid:data.roomid,
-                name:req.name
+                name:data.name
             }
             req.ws.send((msg));
             
         })
-       requesters.clear(data.roomid)
+       requesters.delete(data.roomid)
        
     }
     
@@ -74,13 +81,6 @@ module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)
         msg:`You left the room ${data.roomid}`
     });
 
-    let msg ={
-        type:'Announcement',
-        left:true,
-        name:data.name,
-        msg:`${data.name} left the room `
-    };
-
-    sendtoall(Array.from(room),msg);
+  
 
 }

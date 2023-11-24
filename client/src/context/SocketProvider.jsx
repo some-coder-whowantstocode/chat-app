@@ -18,11 +18,12 @@ export function SocketProvider({ children }) {
   const [waiting,setwaiting] = useState(false);/* Make user wait */
   const [err,seterr] = useState(true);/* If error notify the user */
   const [errmsg,seterrmsg] = useState([]);/* store the content of the error here and show it to user */
-  const [creation,approvecreation] = useState();/* Notify user that room is created */
-  const [entry,allowentry] = useState();/* Notify user that he has been allowed to the room he requested */
+  const [creation,approvecreation] = useState(false);/* Notify user that room is created */
+  const [entry,allowentry] = useState(false);/* Notify user that he has been allowed to the room he requested */
   const [Admin,setAdmin] = useState(false);/* To know if the user is the admin or not */
   const [rejoinmsg,setrem] = useState('want to rejoin room.');
   const [members,setmembers] = useState([]);
+  const [adminname,setadminname] = useState();
   
   
   const [notificationsound] = useState(new Audio(notification));
@@ -42,10 +43,10 @@ export function SocketProvider({ children }) {
   const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
 
-  // `ws://instant-chat-backend.onrender.com`
-  // ws://localhost:9310
+  const wsurl =  `ws://instant-chat-backend.onrender.com`
+  // const wsurl =  `ws://localhost:9310`
 
-  let socket = io(`ws://instant-chat-backend.onrender.com`, { 
+  let socket = io(wsurl, { 
     query: { token: jwtToken }, 
     transports: ['websocket'],
     withCredentials: true
@@ -145,6 +146,18 @@ export function SocketProvider({ children }) {
      setinchat(false);
      approvecreation(false);
      allowentry(false);
+     setAdmin(false);
+     setadminname('');
+     setmembers([]);
+   }
+
+   const kickedout =async()=>{
+    setinchat(false);
+    approvecreation(false);
+    allowentry(false);
+    setAdmin(false);
+    setadminname('');
+    setmembers([]);
    }
    
  
@@ -152,6 +165,19 @@ export function SocketProvider({ children }) {
     await cancelrequest(socket);
      setwaiting(false);
     
+ }
+
+
+ const kickout = async(name)=>{
+  if(socket){
+
+    socket.send({
+      name:name,
+      roomid:sessionStorage.getItem('room'),
+      Admin:sessionStorage.getItem('name'),
+      type:'kickout'
+    })
+  }
  }
  
    
@@ -167,63 +193,89 @@ export function SocketProvider({ children }) {
       };
 
       const handlemessage =(jsondata)=>{
-        if(jsondata.type == 'response'){
-          if(jsondata.permission === 'Acc')
-          {
-          let name = jsondata.name;
-          let room = jsondata.roomid;
-          sessionStorage.setItem('name',name);
-          sessionStorage.setItem('room',room);
-              setwaiting(false);
+
+        let timeoutId;
+        switch(jsondata.type){
+          case "create":
+              sessionStorage.setItem('name',jsondata.name);
+              sessionStorage.setItem('room',jsondata.roomid);
+              setadminname(jsondata.name);
               setinchat(true);
-              setmembers(jsondata.mems)
-              notificationsound.play();
-              allowentry(true);
-              setinchat(true);
-          }else(jsondata.permission == 'Dec')
-          {
-            sessionStorage.removeItem('joinroom');
-            sessionStorage.removeItem('joinname');
-            let timeoutId;
+              setmembers([jsondata.name]);
+              setAdmin(true);
+              approvecreation(true);
+            
+          break;
+
+          case "response":
+           
+              if(jsondata.permission === 'Acc')
+              {
+              let name = jsondata.name;
+              let room = jsondata.roomid;
+              sessionStorage.setItem('name',name);
+              sessionStorage.setItem('room',room);
+                  setwaiting(false);
+                  setinchat(true);
+                  setadminname(jsondata.Admin);
+                  setmembers(jsondata.mems)
+                  notificationsound.play();
+                  allowentry(true);
+                  setinchat(true);
+              }
+              else if(jsondata.permission == 'Dec')
+              {
+                sessionStorage.removeItem('joinroom');
+                sessionStorage.removeItem('joinname');
+                let timeoutId;
+                seterrmsg(prevdata => {
+                  const newMsg = { msg: 'Admin denied your access.', id: Date.now() };
+                   timeoutId = setTimeout(() => {
+                    seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
+                  }, 3000);
+                  return [...prevdata,{ ...newMsg, timeoutId }];
+                });
+                
+                setwaiting(false);
+              
+                
+              }
+          break;
+
+          case 'error':
+            seterr(true);
+           
+            
             seterrmsg(prevdata => {
-              const newMsg = { msg: 'Admin denied your access.', id: Date.now() };
+              const newMsg = { msg: jsondata.msg, id: Date.now() };
                timeoutId = setTimeout(() => {
                 seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
               }, 3000);
               return [...prevdata,{ ...newMsg, timeoutId }];
             });
-            
             setwaiting(false);
-            return()=> clearTimeout(timeoutId)
-            
-          }
-      }
- 
-     else if(jsondata.type === 'error'){
-          seterr(true);
-          let timeoutId;
-          
-          seterrmsg(prevdata => {
-            const newMsg = { msg: jsondata.msg, id: Date.now() };
-             timeoutId = setTimeout(() => {
-              seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
-            }, 3000);
-            return [...prevdata,{ ...newMsg, timeoutId }];
-          });
-          setwaiting(false);
 
-          return()=> clearTimeout(timeoutId)
-      }
-  
+          break;
 
-    if(jsondata.type === 'create'){
-      sessionStorage.setItem('name',jsondata.name);
-      sessionStorage.setItem('room',jsondata.roomid);
-      setinchat(true);
-      setmembers(jsondata.mems);
-      setAdmin(true);
-      approvecreation(true);
-    }
+          case 'Announcement':
+            if(jsondata.change){
+              setadminname(jsondata.newAdmin)
+            }
+            if(jsondata.kickedout){
+              kickedout()
+              seterrmsg(prevdata => {
+                const newMsg = { msg: jsondata.msg, id: Date.now() };
+                 timeoutId = setTimeout(() => {
+                  seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
+                }, 3000);
+                return [...prevdata,{ ...newMsg, timeoutId }];
+              });
+            }
+          break;
+        }
+
+
+        return()=> clearTimeout(timeoutId)
       }
 
       const handleclose =()=>{
@@ -262,7 +314,7 @@ const reconnect =async()=>{
 
 
   return (
-    <SocketContext.Provider value={{ members,Admin,rejoinmsg,handleconnection,reconnect,wanttorejoin, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
+    <SocketContext.Provider value={{ kickout,members,Admin,adminname,rejoinmsg,handleconnection,reconnect,wanttorejoin, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
       {children}
     </SocketContext.Provider>
   );
