@@ -102,7 +102,7 @@ export const Chathead = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px;
+  height: 50px;
   font-weight: 800;
   font-size: 20px;
   width: 100%;

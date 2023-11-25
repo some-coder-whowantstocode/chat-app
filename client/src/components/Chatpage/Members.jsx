@@ -5,6 +5,8 @@ import { useSocket } from '../../context/SocketProvider';
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { RxCross2 } from "react-icons/rx";
 
+const min = 750;
+
 const Alter = styled(BsThreeDotsVertical)`
   cursor: pointer;
 `
@@ -15,7 +17,16 @@ const Mems = styled.div`
   min-height: 100vh;
   transition: all;
   transition-duration: 0.5s;
-  width:${props=>props.isclicked ? `29.5vw` : `70px`} ;
+ 
+  ${innerWidth<min ?
+  `
+  width:${props=>props.isclicked ? `29.5vw` : `10px`};
+  `
+:
+`
+width:${props=>props.isclicked ? `29.5vw` : `70px`};
+`
+}
   overflow-y: scroll;
   ::-webkit-scrollbar{
   display: none;
@@ -27,13 +38,14 @@ scrollbar-width: none;
 `
 
 const Mem = styled.div`
-  margin: 10px;
+  
   margin-top: 20px;
   display: flex;
   align-items: center;
   padding-left: 5px;
-  height: 50px;
+  
   justify-content: space-between;
+  overflow: hidden;
   position: relative;
   ${
     props=>props.admin ?
@@ -75,6 +87,23 @@ const Mem = styled.div`
   justify-content:center;
   border-radius:50%;
   `};
+
+
+${
+  innerWidth < min
+  ?
+  `
+    margin:5px;
+    height:30px;
+    font-size:13px;
+
+  `
+  :
+  `
+  margin: 10px;
+  height: 50px;
+  `
+}
   
 `
 
