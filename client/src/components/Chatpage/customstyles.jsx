@@ -26,12 +26,9 @@ display: flex;
 position: relative;
 height: 100vh;
 max-height: 100%;
-/* background-color: #d1d1d1; */
 flex-direction: column;
 box-sizing: border-box;
 flex-grow: 1;
-
-
 `
 
 
@@ -39,7 +36,7 @@ export const Chatbox = styled.div`
   display: flex;
   flex-direction: column;
   padding: 0px 5px;
-  min-height: calc(100vh - 75px);
+  min-height: calc(100vh - 70px);
   overflow-y: scroll;
   
 ::-webkit-scrollbar{
@@ -50,22 +47,26 @@ export const Chatbox = styled.div`
 scrollbar-width: none;
 `
 
+export const Messagebox = styled.div`
+position: relative;
+`
+
 export const CustomInput = styled.input`
   width: 100%;
   box-sizing: border-box;
-  height: 35px;
   bottom: 0px;
   font-size: 17px;
   box-shadow: rgba(189, 189, 189, 0.12)0px 2px 4px 0px, rgba(147, 147, 147, 0.32) 0px 2px 16px 0px;
   border: none;
   padding: 7px;
+  height: 39px;
   background-color: #dbd4d4;
   ${
     innerWidth<min 
     ?
     ` 
     box-sizing: border-box;
-    height:55px
+   
     `
 
     :
@@ -80,18 +81,9 @@ export const CustomInput = styled.input`
 
 
 export const Send = styled(AiOutlineSend)`
-  position: fixed;
-  ${
- innerWidth<min ?
- `
- bottom: 8px;
- `
- :
- `
-  bottom:23px
- `
-  }
- 
+  position: absolute;
+  bottom:50%;
+  transform:translateY(50%);
   right: 25px;
   font-size: 20px;
   cursor: pointer;

@@ -10,7 +10,8 @@ import {
   Send,
   CustomInput,
   Chatroom,
-  Room
+  Room,
+  Messagebox
 } from "../components/Chatpage/customstyles";
 import Loading from "../components/Loading";
 import { json, useNavigate } from "react-router-dom";
@@ -180,6 +181,7 @@ const Chatpage = () => {
           <Chat key={`${i}th message`} m={msg} me={username == msg.name} />
         ))}
       </Chatbox>
+      <Messagebox>
       <CustomInput
         placeholder="write here.."
         ref={inputref}
@@ -188,6 +190,8 @@ const Chatpage = () => {
         onKeyUp={(e) => e.key === "Enter" && sendmsg()}
       />
       <Send onClick={() => sendmsg()} />
+      </Messagebox>
+    
     </Chatroom>
 
     </Room>
