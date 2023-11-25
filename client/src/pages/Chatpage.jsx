@@ -38,7 +38,7 @@ const Chatpage = () => {
     setmem(members);
 
     return ()=>{
-      wanttoleave(false);
+      // wanttoleave(false);
     }
   }, []);
 
@@ -59,6 +59,7 @@ const Chatpage = () => {
         break;
 
         case 'removereq':
+          console.log('recieved',jsondata)
           setreqdata((prevreqdata) => {
             let arr = prevreqdata.filter((r) => r.name != jsondata.name);
             return arr;
@@ -89,27 +90,21 @@ const Chatpage = () => {
         }
         break;
 
-        case 'Alert':
-          if(jsondata.action_required) wanttoleave(true);
-          navigate("/rejoin");
-        break;
+        // case 'Alert':
+        //   if(jsondata.action_required) wanttoleave(true);
+        //   navigate("/rejoin");
+        // break;
 
 
       }
     }
 
-    let timeout;
+    // let timeout;
 
     if (socket) {
       socket.addEventListener("message", handleMessage);
-
-      timeout = setInterval(() => {
-        socket.emit('ping');
-      }, 10000);
-
       return () => {
         socket.removeEventListener("message", handleMessage);
-        clearInterval(timeout);
       };
     }
   }, [socket]);
@@ -154,7 +149,7 @@ const Chatpage = () => {
 
   useEffect(() => {
     if (state == "Authfailed" || state == "ConnectionLost") {
-      reconnect();
+      navigate('/landingpage')
     }
   }, [state]);
 

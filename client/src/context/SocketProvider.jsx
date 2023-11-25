@@ -33,8 +33,8 @@ export function SocketProvider({ children }) {
 
   const gettoken = async () => {
   
-  // const url = 'http://localhost:9310/handshake'
-  const url = 'https://instant-chat-backend.onrender.com/handshake'
+  const url = 'http://localhost:9310/handshake'
+  // const url = 'https://instant-chat-backend.onrender.com/handshake'
   const { data } = await axios.get(url).catch(err =>{
     
 console.log(err);
@@ -42,8 +42,8 @@ console.log(err);
    const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
 
-  const wsurl =  `wss://instant-chat-backend.onrender.com`
-  // const wsurl =  `ws://localhost:9310`
+  // const wsurl =  `wss://instant-chat-backend.onrender.com`
+  const wsurl =  `ws://localhost:9310`
 
   let socket = io(wsurl, { 
     query: { token: jwtToken },
@@ -274,6 +274,14 @@ console.log(err);
             }
           break;
 
+          case 'Alert':
+            console.log(jsondata)
+            if(jsondata.action_required){
+              setstate('ConnectionLost')
+              console.log('hi')
+            }
+          break;
+
           case 'Authentication':
             if(jsondata.status == 'failed'){
               setstate('Authfailed');
@@ -294,11 +302,25 @@ console.log(err);
       socket.addEventListener('open', handleOpen);
       socket.addEventListener('message',handlemessage);
       socket.addEventListener('close',handleclose);
+
+
+      let timeout;
+
+      if (socket) {
+       
+        timeout = setInterval(() => {
+          socket.emit('ping');
+          console.log('ping')
+        }, 10000);
+  
+      }
   
       return () => {
         socket.removeEventListener('open', handleOpen);
         socket.removeEventListener('message',handlemessage);
         socket.removeEventListener('close',handleclose);
+        // clearInterval(timeout);
+
       };
     }
     

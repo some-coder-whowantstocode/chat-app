@@ -16,6 +16,7 @@ const users_in_rooms = new Map(); //<id,[name,name.....]>
 const roomAdmin = new Map(); //<id,ws>
 const requesters = new Map(); //<id,[{name,ws},{name,ws}....]>
 const blocklist = new Map(); //<id,[ws,ws,ws,ws]>
+const connections = new Map(); //<ws,{roomid,name}>
 
 const { 
     sendtoall,
@@ -78,11 +79,11 @@ const server = http.createServer(async(req,res)=>{
 });
 
 const io = socketIo(server);
-let clients = {};
-
 try{
 
   io.on('connection', async (socket) => {
+  let active = true;
+
     const jwtToken = socket.handshake.query.token;
     try{
       jwt.verify(jwtToken, process.env.JWT_SECRET)
@@ -92,6 +93,7 @@ try{
       });
     } catch(err) {
      
+
      await socket.emit('message', {
         type:'Authentication',
         status:'failed'
@@ -106,21 +108,22 @@ try{
     }
 
     try{
-    clients[socket.id] = { lastPing: Date.now() };
 
       socket.on('message', async(data) => {
+        active = true;
+
         try{
           switch(data.type){
             case 'create':
-            Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
+            Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters,connections);
             break;
     
             case 'join':
-            joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, jwtToken);
+            joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters,connections);
             break;
     
             case 'response':
-            permission(data, rooms_id, users_in_rooms, requesters, jwtToken);
+            permission(data, rooms_id, users_in_rooms, requesters, connections);
             socket.emit('message', {
               type:'removereq',
               name:data.name
@@ -132,7 +135,7 @@ try{
             break;
     
             case 'cancel':
-            cancelrequest(data, roomAdmin, requesters);
+            cancelrequest(data,socket, roomAdmin, requesters,connections);
             break;
     
             case 'rejoin':
@@ -159,7 +162,7 @@ try{
       
 
       socket.on('ping', () => {
-        clients[socket.id].lastPing = Date.now();
+       active = true;
       });
     
       socket.on('disconnecting',(err)=>{
@@ -181,15 +184,30 @@ try{
         console.log('user disconnected');
       });
 
-      setInterval(() => {
-        const now = Date.now();
-        for (let clientId in clients) {
-          if (now - clients[clientId].lastPing > 20000) {
-            io.sockets.sockets.get(clientId).disconnect();
-            delete clients[clientId];
+    let interid =   setInterval(async() => {
+       if(active){
+        active = false;
+       }else{
+         if(connections.has(socket.id)){
+          const data = connections.get(socket.id);
+          if(data.requester){
+            cancelrequest(data,socket, roomAdmin, requesters,connections)
+          }else{
+            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters)
           }
-        }
-      }, 15000);
+          await socket.send({
+            type:'Alert',
+            action_required:true,
+            msg:`server disconnected`
+          })
+            connections.delete(socket.id);
+            socket.disconnect();
+            setTimeout(() => {
+              clearInterval(interid)
+            }, (1000*2));
+         }
+       }
+      }, 1000 * 60);
     
     }catch(err){
       Logger.log({

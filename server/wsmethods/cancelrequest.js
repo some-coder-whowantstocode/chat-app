@@ -1,4 +1,4 @@
-module.exports.cancelrequest =(data,roomAdmin,requesters)=>{
+module.exports.cancelrequest =(data,socket,roomAdmin,requesters,connections)=>{
     const {name,roomid} = data;
     let admin = roomAdmin.get(roomid);
     
@@ -9,6 +9,7 @@ module.exports.cancelrequest =(data,roomAdmin,requesters)=>{
         });
     }
     let reqs = requesters.get(roomid);
+    connections.delete(socket.id)
     if(reqs){
         reqs = reqs.filter((r)=>r.name !== name);
         requesters.set(roomid,reqs);

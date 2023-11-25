@@ -1,6 +1,13 @@
-module.exports.joinroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
+module.exports.joinroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,connections)=>{
+
+    if(!rooms_id.has(data.roomid)){
+        ws.send({
+            type:`error`,
+            msg:`room ${data.roomid} does not exist.`
+    })
+
+    }
     
-    if(rooms_id.has(data.roomid)){
         let members = users_in_rooms.get(data.roomid);
         let already_exists = members.find(m=>m === data.name);
         let requester = requesters.get(data.roomid);
@@ -20,21 +27,14 @@ module.exports.joinroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=
             name:data.name,
             roomid:data.roomid
         };
+        connections.set(ws.id,{roomid:data.roomid,name:data.name,requester:true})
         // store requesters who want to join so that you can accept or decline when more than one wants to join
-
+        
             requester.push({name:data.name,ws:ws});
+            requesters.set(data.roomid,requester);
+
 
         Admin.send(request);
-  
-    }else{
-        ws.send({
-            type:`error`,
-            msg:`room ${data.roomid} does not exist.`
-    })
-
-
-    
-    }
 }
 
 

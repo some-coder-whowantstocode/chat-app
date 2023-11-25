@@ -1,4 +1,4 @@
-module.exports.Createroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
+module.exports.Createroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters,connections)=>{
     if(data.roomid =='' || data.name =='' ){
         ws.send({
             type:`error`,
@@ -21,6 +21,7 @@ module.exports.Createroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters
     users_in_rooms.set(data.roomid,[data.name]);
     roomAdmin.set(data.roomid,ws);
     requesters.set(data.roomid,[]);
+    connections.set(ws.id,{roomid:data.roomid,name:data.name,requester:false})
     ws.send({
             type:'create',
             response:true,
