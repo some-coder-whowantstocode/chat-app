@@ -78,11 +78,11 @@ const server = http.createServer(async(req,res)=>{
 });
 
 const io = socketIo(server);
+let clients = {};
 
 try{
 
   io.on('connection', async (socket) => {
-  
     const jwtToken = socket.handshake.query.token;
     try{
       jwt.verify(jwtToken, process.env.JWT_SECRET)
@@ -106,6 +106,8 @@ try{
     }
 
     try{
+    clients[socket.id] = { lastPing: Date.now() };
+
       socket.on('message', async(data) => {
         try{
           switch(data.type){
@@ -153,6 +155,12 @@ try{
           })
         }
       });
+
+      
+
+      socket.on('ping', () => {
+        clients[socket.id].lastPing = Date.now();
+      });
     
       socket.on('disconnecting',(err)=>{
         socket.send({
@@ -172,6 +180,16 @@ try{
       socket.on('disconnect', () => {
         console.log('user disconnected');
       });
+
+      setInterval(() => {
+        const now = Date.now();
+        for (let clientId in clients) {
+          if (now - clients[clientId].lastPing > 20000) {
+            io.sockets.sockets.get(clientId).disconnect();
+            delete clients[clientId];
+          }
+        }
+      }, 15000);
     
     }catch(err){
       Logger.log({
@@ -184,18 +202,6 @@ try{
   
   
     
-  })
-  
-  io.on('disconnect',async()=>{
-    await io.send({
-      type:'Alert',
-      msg:`server disconnected`
-    })
-    rooms_id.clear();
-    roomAdmin.clear();
-    users_in_rooms.clear();
-    requesters.clear();
-
   })
   
 }catch(err){

@@ -36,6 +36,10 @@ const Chatpage = () => {
     setname(sessionStorage.getItem("name"));
     setroomid(sessionStorage.getItem("room"));
     setmem(members);
+
+    return ()=>{
+      wanttoleave(false);
+    }
   }, []);
 
 
@@ -94,11 +98,18 @@ const Chatpage = () => {
       }
     }
 
+    let timeout;
+
     if (socket) {
       socket.addEventListener("message", handleMessage);
 
+      timeout = setInterval(() => {
+        socket.emit('ping');
+      }, 10000);
+
       return () => {
         socket.removeEventListener("message", handleMessage);
+        clearInterval(timeout);
       };
     }
   }, [socket]);
