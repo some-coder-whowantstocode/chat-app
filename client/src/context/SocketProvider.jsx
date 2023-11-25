@@ -33,21 +33,20 @@ export function SocketProvider({ children }) {
 
   const gettoken = async () => {
   
-  // const url = 'http://localhost:9310/handshake'
-  const url = 'https://instant-chat-backend.onrender.com/handshake'
+  const url = 'http://localhost:9310/handshake'
+  // const url = 'https://instant-chat-backend.onrender.com/handshake'
   const { data } = await axios.get(url).catch(err =>{
     
-
+console.log(err);
   });
-  
-  const { jwtToken } = data;
+   const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
 
-  const wsurl =  `ws://instant-chat-backend.onrender.com`
-  // const wsurl =  `ws://localhost:9310`
+  // const wsurl =  `ws://instant-chat-backend.onrender.com`
+  const wsurl =  `ws://localhost:9310`
 
   let socket = io(wsurl, { 
-    query: { token: jwtToken }, 
+    query: { token: jwtToken },
     transports: ['websocket'],
     withCredentials: true
   });
@@ -67,6 +66,7 @@ export function SocketProvider({ children }) {
   });
 
   return socket;
+
 }
 
   
@@ -259,6 +259,7 @@ export function SocketProvider({ children }) {
 
           case 'Announcement':
             if(jsondata.change){
+              if(sessionStorage.getItem('name') === jsondata.newAdmin) setAdmin(true);
               setadminname(jsondata.newAdmin)
             }
             if(jsondata.kickedout){
@@ -270,6 +271,14 @@ export function SocketProvider({ children }) {
                 }, 3000);
                 return [...prevdata,{ ...newMsg, timeoutId }];
               });
+            }
+          break;
+
+          case 'Authentication':
+            if(jsondata.status == 'failed'){
+              setstate('Authfailed');
+            }else{
+              setstate('Authenticated')
             }
           break;
         }

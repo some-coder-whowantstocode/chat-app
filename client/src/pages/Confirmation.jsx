@@ -69,7 +69,6 @@ const Confirmation = () => {
         <Styledtext>{rejoinmsg}</Styledtext>
         <Btn colour={'blue'} onClick={()=>{
           wanttorejoin()
-          console.log('hi')
           }}>Rejoin</Btn>
         <Btn onClick={()=>{
           sessionStorage.removeItem('name');

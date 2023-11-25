@@ -11,7 +11,6 @@ const createRoom =(socket,name,roomid)=>{
 
 const joinRoom =(socket,name,roomid)=>{
     try{
-        console.log('hi')        
              if(socket){
                 socket.send({type:'join',roomid:roomid,name:name})
     

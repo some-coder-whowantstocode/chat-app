@@ -2,7 +2,6 @@ const { sendtoall } = require("./senttoall");
 
 module.exports.kickout =async(data,ws,roomAdmin,rooms_id,users_in_rooms)=>{
     const {roomid,name,Admin} = data;
-    // console.log(data)
     if(!roomid || !name || !Admin){
         ws.send({
             type:'error',
@@ -47,5 +46,4 @@ module.exports.kickout =async(data,ws,roomAdmin,rooms_id,users_in_rooms)=>{
 
     rooms_id.set(roomid,room);
     users_in_rooms.set(roomid,users);
-    console.log(rooms_id,users_in_rooms)
 }

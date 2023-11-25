@@ -101,9 +101,9 @@ const LandingPage = () => {
   return (
     <>
       {
-        errmsg.map((em)=>(
+        errmsg.map((em,i)=>(
           
-          <CustomErrbox msg={em.msg}/>
+          <CustomErrbox key={`${i}th error`} msg={em.msg}/>
         ))
       }
       <Reqprocessing />

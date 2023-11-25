@@ -46,10 +46,7 @@ const Chatpage = () => {
 
 
         case 'message':
-          let msg = { ...jsondata };
-          msg.key = key.current;
-          key.current += 1;
-          setmsgs((prevmsg) => [...prevmsg, jsondata]);
+          setmsgs((prevmsg) => [...prevmsg,jsondata]);
         break;
 
         case 'request':
@@ -173,8 +170,8 @@ const Chatpage = () => {
         <RequestBox key={rd.name} data={rd} />
       ))}
       <Chatbox>
-        {msgs.map((msg) => (
-          <Chat key={msg.key} m={msg} me={username == msg.name} />
+        {msgs.map((msg,i) => (
+          <Chat key={`${i}th message`} m={msg} me={username == msg.name} />
         ))}
       </Chatbox>
       <CustomInput

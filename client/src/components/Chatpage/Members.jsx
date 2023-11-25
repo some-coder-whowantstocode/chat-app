@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { GiHamburgerMenu } from "react-icons/gi";
 import { useSocket } from '../../context/SocketProvider';
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { RxCross2 } from "react-icons/rx";
 
 const Alter = styled(BsThreeDotsVertical)`
   cursor: pointer;
@@ -33,6 +34,7 @@ const Mem = styled.div`
   padding-left: 5px;
   height: 50px;
   justify-content: space-between;
+  position: relative;
   ${
     props=>props.admin ?
     `
@@ -44,6 +46,17 @@ const Mem = styled.div`
       color:white;
     `
   }
+  &:hover{
+    div{
+      ${props=>props.isclicked !==false  && `display:block; `}
+    }
+  }
+  div{
+    display:none;
+    position:absolute;
+    right:2px;
+    top:15px;
+  }
   transition-duration: 0.5s;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
   &:hover{
@@ -51,7 +64,7 @@ const Mem = styled.div`
     
   }
   ${props=>props.isclicked ? `
-  width: 25.5vw;
+  width: 20vw;
   
   ` 
   : 
@@ -79,7 +92,17 @@ scrollbar-width: none;
 
 const Menu = styled(GiHamburgerMenu)`
   margin-right: 10px;
+  cursor: pointer;
+  transition: all;
+  transition-duration: 0.6s;
  
+`
+
+const ActiveMenu = styled(RxCross2)`
+  margin-right: 10px;
+  cursor: pointer;
+  transition: all;
+  transition-duration: 0.6s;
 `
 
 const Head = styled.div`
@@ -105,15 +128,11 @@ const Head = styled.div`
 const Members = ({mems}) => {
   const {adminname,Admin,kickout} = useSocket();
   const [mem,setmem] = useState([]);
-  const [isclicked,setisclicked] = useState(true);
+  const [isclicked,setisclicked] = useState(false);
 
   useEffect(()=>{
     setmem(mems)
   },[mems])
-
-  useEffect(()=>{
-    console.log(isclicked)
-  },[isclicked])
 
 
   return (
@@ -123,19 +142,34 @@ const Members = ({mems}) => {
         isclicked={isclicked}
       
       >
-        <Menu
-        size={30}
-        onClick={()=>{
-          setisclicked(!isclicked)
-        }}
-        />
+        {
+          isclicked === false ?
+          <Menu
+          size={30}
+          onClick={()=>{
+            setisclicked(!isclicked)
+          }}
+          />
+          :
+          <ActiveMenu
+          size={30}
+          onClick={()=>{
+            setisclicked(!isclicked)
+          }}
+          />
+
+        }
+       
       </Head>
     <Mems
     isclicked={isclicked}
     >
       {
-        mem.map((me)=>(
-          <>
+        mem.map((me,i)=>(
+          <React.Fragment
+          key={`${i}th mem`}
+          
+          >
           {
             me === adminname 
             
@@ -143,8 +177,7 @@ const Members = ({mems}) => {
             <Mem 
             admin
             isclicked={isclicked}
-            key={Date.now()}
-            >{me}</Mem>
+            >{ isclicked ? me : String(me).slice(0,2) }</Mem>
             :
            <>
            {
@@ -153,24 +186,22 @@ const Members = ({mems}) => {
             ?
             <Mem 
             isclicked={isclicked}
-            key={Date.now()}
-            >{me}
-            <Alter onClick={()=>{
+            >{ isclicked ? me : String(me).slice(0,2) }
+           <div> <Alter onClick={()=>{
               kickout(me);
-            }}/>
+            }}/></div>
             </Mem>
             :
 
             <Mem 
-            key={Date.now()}
             isclicked={isclicked}
-            >{me}</Mem>
+            >{ isclicked ? me : String(me).slice(0,2) }</Mem>
            }
          
            </>
           
           }
-          </>
+          </React.Fragment>
          
         ))
       }

@@ -65,7 +65,9 @@ export const CustomInput = styled.input`
     ?
     ` 
     box-sizing: border-box;
+    height:55px
     `
+
     :
     `
     `

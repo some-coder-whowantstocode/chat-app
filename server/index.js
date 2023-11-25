@@ -26,7 +26,11 @@ const {
     message,
     kickout
  } = require('./wsmethods/index.js');
-const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js')
+const {Admin, cancelrequest } = require('./wsmethods/cancelrequest.js');
+const chatLogger = require('./Logger/index.js');
+
+
+const Logger = chatLogger();
 
  const PORT = process.env.PORT || 9310
 
@@ -64,6 +68,11 @@ const server = http.createServer(async(req,res)=>{
         }
 
     }catch(error){
+      Logger.log({
+        level:'error',
+        label: 'handshake',
+        message:error
+      })
        errorHandler(error,res)
     }
 });
@@ -73,31 +82,32 @@ const io = socketIo(server);
 try{
 
   io.on('connection', async (socket) => {
-    console.log('a user connected');
   
     const jwtToken = socket.handshake.query.token;
     try{
-      console.log(process.env.JWT_SECRET)
-      let data = jwt.verify(jwtToken, process.env.JWT_SECRET)
-      console.log(data)
+      jwt.verify(jwtToken, process.env.JWT_SECRET)
       socket.emit('message', {
         type:'Authentication',
         status:'passed'
       });
     } catch(err) {
-      console.log(err)
-      
-      socket.emit('message', {
+     
+     await socket.emit('message', {
         type:'Authentication',
         status:'failed'
       });
       socket.disconnect();
+
+      Logger.log({
+        level:'error',
+        label: 'Authentication',
+        message:err
+      })
     }
 
     try{
       socket.on('message', async(data) => {
         try{
-          console.log(data)
           switch(data.type){
             case 'create':
             Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters);
@@ -128,7 +138,6 @@ try{
             break;
 
             case 'kickout':
-              console.log(data)
             kickout(data,socket,roomAdmin,rooms_id,users_in_rooms);
     
             default:
@@ -137,7 +146,11 @@ try{
     
           }
         } catch(err) {
-          console.log(err)
+          Logger.log({
+            level:'error',
+            label: 'socket',
+            message:err
+          })
         }
       });
     
@@ -149,7 +162,11 @@ try{
         })
       })
       socket.on('error',(err)=>{
-        console.log(err)
+        Logger.log({
+          level:'error',
+          label: 'socket',
+          message:err
+        })
       })
     
       socket.on('disconnect', () => {
@@ -157,12 +174,18 @@ try{
       });
     
     }catch(err){
-      console.log(err)
+      Logger.log({
+        level:'error',
+        label: 'socket',
+        message:err
+      })
+      
     }
   
   
     
   })
+  
   io.on('disconnect',async()=>{
     await io.send({
       type:'Alert',
@@ -176,7 +199,11 @@ try{
   })
   
 }catch(err){
-console.log(err)
+  Logger.log({
+    level:'error',
+    label: 'io',
+    message:err
+  })
 }
 
 server.listen(PORT,()=>console.log(`server is listening at ${PORT}`))

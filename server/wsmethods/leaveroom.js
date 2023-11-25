@@ -1,7 +1,6 @@
 const { sendtoall } = require("./senttoall");
 
 module.exports.leaveroom =(data,ws,rooms_id,users_in_rooms,roomAdmin,requesters)=>{
-console.log(data)
 
     let room = rooms_id.get(data.roomid);
 
@@ -14,7 +13,6 @@ console.log(data)
     }
 
   
-    console.log(room.length)
     if(room.length>1){
         let users = users_in_rooms.get(data.roomid); 
             let index = room.indexOf(ws); 
@@ -24,7 +22,6 @@ console.log(data)
             rooms_id.set(data.roomid,room);
             users_in_rooms.set(data.roomid,users);
 
-            console.log(users_in_rooms)
             let leavemsg ={
                 type:'Announcement',
                 left:true,

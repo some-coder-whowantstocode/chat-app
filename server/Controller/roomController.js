@@ -69,7 +69,6 @@ module.exports.roomLeave = async(req,res,rooms_id,users_in_rooms,jsonbody)=>{
         if(!correctheader){
          throw new Customerr('Please provide correct type of data and header.',400)
         }
-        console.log(jsonbody)
         if (!jsonbody.name || !jsonbody.roomcode) {
             throw new Customerr('Missing credentials.',400)
         }

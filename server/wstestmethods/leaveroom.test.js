@@ -28,7 +28,7 @@ describe('leaveroom', () => {
         leaveroom(data,mws,rooms_id,users_in_rooms,roomAdmin,requesters,recentlyremoved);
         expect(sentData).toEqual({
                 type:'Announcement',
-                msg:`${data.name} left the room `
+                msg:`You left the room ${data.roomid}`
         })
         expect(rooms_id.size).toBe(0);
         expect(users_in_rooms.size).toBe(0);
@@ -44,7 +44,7 @@ describe('leaveroom', () => {
         leaveroom(data,mws,rooms_id,users_in_rooms,roomAdmin,requesters,recentlyremoved);
         expect(sentData).toEqual({
             type:'Announcement',
-            msg:`${data.name} left the room `
+            msg:`You left the room ${data.roomid}`
         })
         expect(rooms_id.get(data.roomid).length).toBe(1);
         expect(users_in_rooms.get(data.roomid).length).toBe(1);
@@ -60,7 +60,7 @@ describe('leaveroom', () => {
         leaveroom(data,mws,rooms_id,users_in_rooms,roomAdmin,requesters,recentlyremoved);
         expect(sentData).toEqual({
             type:'Announcement',
-            msg:`${data.name} left the room `
+            msg:`You left the room ${data.roomid}`
         })
         expect(rooms_id.get(data.roomid).length).toBe(1);
         expect(users_in_rooms.get(data.roomid).length).toBe(1);

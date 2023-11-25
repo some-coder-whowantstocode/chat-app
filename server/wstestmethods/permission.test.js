@@ -14,6 +14,9 @@ const mws = {
     send:jest.fn((data) => { sentData = data })
 }
 
+const adws = {
+    send:jest.fn((data) => { sentData = data })
+}
 describe('permission',()=>{
     beforeEach(() => {
        
@@ -38,10 +41,11 @@ describe('permission',()=>{
 
     test('User joins room and announcement is sent', () => {
         clearmaps()
-        const data = { name: 'testUser', roomid: '125',response:'Acc' };
-        rooms_id.set(data.roomid,[mws])
+        const data = { name: 'testUser', roomid: '125',response:'Acc',admin:'testUser' };
+        rooms_id.set(data.roomid,[adws])
         users_in_rooms.set(data.roomid,[data.name])
         requesters.set(data.roomid, [{ name: data.name, ws: mws }]);
+        roomAdmin.set(data.roomid,adws)
         permission(data,rooms_id,users_in_rooms,requesters);
         expect(users_in_rooms.get(data.roomid)).toContain(data.name);
         expect(rooms_id.get(data.roomid)).toContain(mws);
@@ -52,11 +56,12 @@ describe('permission',()=>{
             permission:'Acc',
             roomid:data.roomid,
             name:data.name,
+            Admin:data.name,
             mems:[data.name,data.name]
         });
         expect(mws.send).toHaveBeenNthCalledWith(2,{
-            mems:[data.name,data.name],
-            name:'testuser',
+            name:data.name,
+            joined:true,
             type:'Announcement',
             msg:`${data.name} joined the room.`
         });
