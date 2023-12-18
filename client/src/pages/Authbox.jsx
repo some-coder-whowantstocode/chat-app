@@ -18,6 +18,7 @@ const Authbox = () => {
     const [dir,setdir] =useState(true);
 
     const {loading,state,reopensocket} =useSocket()
+
    
     const navigate = useNavigate();
 
@@ -33,7 +34,6 @@ const remove =()=>{
 
 
 }
-
 
   return (
     <>

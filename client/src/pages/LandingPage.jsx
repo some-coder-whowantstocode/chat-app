@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Nav from "../components/landingpage/Nav";
 import image from "../assets/chatgroup.jpg";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ const LandingPage = () => {
     if (state == "Authfailed" || state == "ConnectionLost") {
       handleconnection()
     }
-  },[state])
+  },[state,handleconnection])
 
   useEffect(() => {
     if (pageref.current) {
@@ -82,7 +82,7 @@ const LandingPage = () => {
     if (creation === true || entry === true) {
       navigate("/chat");
     }
-  }, [creation,entry]);
+  }, [creation,entry,navigate]);
 
   useEffect(() => {
     const handler = () => {

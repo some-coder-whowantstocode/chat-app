@@ -3,8 +3,9 @@ import { useSocket } from "../context/SocketProvider";
 import RequestBox from "../components/Chatpage/RequestBox";
 import Chat from "../components/Chatpage/Chat";
 import notification from "../assets/notification.wav";
+import { FaPowerOff,FaVideo } from "react-icons/fa";
 import {
-  Leave,
+  Option,
   Chathead,
   Chatbox,
   Send,
@@ -14,22 +15,21 @@ import {
   Messagebox
 } from "../components/Chatpage/customstyles";
 import Loading from "../components/Loading";
-import { json, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Members from "../components/Chatpage/Members";
 
 const Chatpage = () => {
-  const { socket, state, wanttoleave, Admin, reconnect, creation, entry , members } =
+  const { socket, state, wanttoleave, Admin, creation, entry , members } =
     useSocket();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
   const [msgs, setmsgs] = useState([]);
-  const [msg, setmsg] = useState();
+  const msg = useRef('');
   const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
   const [mem, setmem] = useState([]);
 
-  const key = useRef(0);
 
   const inputref = useRef(null);
 
@@ -39,9 +39,9 @@ const Chatpage = () => {
     setmem(members);
 
     return ()=>{
-      // wanttoleave(false);
     }
   }, []);
+  const navigate = useNavigate();
 
 
 
@@ -86,21 +86,18 @@ const Chatpage = () => {
           }
           setmsgs((prevmsg) => [...prevmsg, jsondata]);
         
-        if(jsondata.type = 'Alert'){
         
-        }
         break;
 
-        // case 'Alert':
-        //   if(jsondata.action_required) wanttoleave(true);
-        //   navigate("/rejoin");
-        // break;
+        case 'Alert':
+          if(jsondata.action_required) wanttoleave(true);
+          navigate("/rejoin");
+        break;
 
 
       }
     }
 
-    // let timeout;
 
     if (socket) {
       socket.addEventListener("message", handleMessage);
@@ -108,15 +105,14 @@ const Chatpage = () => {
         socket.removeEventListener("message", handleMessage);
       };
     }
-  }, [socket]);
+  }, [socket,notificationsound,navigate,wanttoleave]);
 
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (creation !== true && entry !== true) {
       navigate("/landingpage");
     }
-  }, [creation, entry]);
+  }, [creation, entry,navigate]);
 
   useEffect(() => {
     const handler = async () => {
@@ -132,15 +128,15 @@ const Chatpage = () => {
 
   const sendmsg = async () => {
     try {
-      if (msg != "") {
+      if (msg.current != "") {
         socket.send({
           create: false,
-          msg: msg,
+          msg: msg.current,
           Admin: Admin,
           name: sessionStorage.getItem("name"),
           roomid: sessionStorage.getItem("room"),
         });
-        setmsg("");
+        msg.current = '';
         inputref.current.value = "";
       }
     } catch (err) {
@@ -152,7 +148,7 @@ const Chatpage = () => {
     if (state == "Authfailed" || state == "ConnectionLost") {
       navigate('/landingpage')
     }
-  }, [state]);
+  }, [state,navigate]);
 
   return (
     <Room>
@@ -161,13 +157,25 @@ const Chatpage = () => {
      
       
       <Chathead>{roomid}
+
+      <Option pos={{top:0,right:40}} colorschema={{col:'black',bac:'green'}}
       
-      <Leave
+      onClick={async () => {
+       navigate('/wait')
+      }}
+    >
+      <FaVideo/>
+    </Option>
+      
+      <Option pos={{top:0,right:10}} colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
+      
         onClick={async () => {
           await wanttoleave(true);
           navigate("/rejoin");
         }}
-      />
+      >
+        <FaPowerOff/>
+      </Option>
       
       </Chathead>
       <Loading />
@@ -185,8 +193,8 @@ const Chatpage = () => {
       <CustomInput
         placeholder="write here.."
         ref={inputref}
-        defaultValue={msg}
-        onChange={(e) => setmsg(e.target.value)}
+        defaultValue={msg.current}
+        onChange={(e) => msg.current = e.target.value}
         onKeyUp={(e) => e.key === "Enter" && sendmsg()}
       />
       <Send onClick={() => sendmsg()} />

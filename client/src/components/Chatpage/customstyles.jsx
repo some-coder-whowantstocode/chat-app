@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 import { AiOutlineSend } from "react-icons/ai";
-import { FaPowerOff } from "react-icons/fa";
 
 
 
@@ -103,12 +102,17 @@ export const Chathead = styled.div`
   box-sizing: border-box;
 `
 
-export const Leave = styled(FaPowerOff)`
-  color: #a70303;
-  /* position: fixed; */
-  top: 6px;
-  right: 10px;
-  padding: 4px ;
+export const Option = styled.div`
+  
+  position: absolute;
+  top: ${props=>`${props.pos.top}px`};
+  right: ${props=>`${props.pos.right}px`};
+  ${
+    props=>`
+    color: ${props.colorschema.col};
+    `
+  }
+  padding: 2px 4px ;
   border-radius: 10px;
   cursor: pointer;
   transition-duration: 0.3s;
@@ -117,7 +121,11 @@ export const Leave = styled(FaPowerOff)`
   z-index: 1001;
   &:hover{
     color: white;
-    background-color: #a70303;
+    ${
+    props=>`
+    background-color: ${props.colorschema.bac};
+    `
+  }
   }
 `
 
