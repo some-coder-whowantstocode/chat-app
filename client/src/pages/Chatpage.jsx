@@ -17,10 +17,14 @@ import {
 import Loading from "../components/Loading";
 import { useNavigate } from "react-router-dom";
 import Members from "../components/Chatpage/Members";
+import Waitingroom from "./Waitingroom";
+import { useVideo } from "../context/Videochatcontroller";
+import VideochatPage from "./VideochatPage";
 
 const Chatpage = () => {
   const { socket, state, wanttoleave, Admin, creation, entry , members } =
     useSocket();
+  const { videocallstatus , change_videocall_status } = useVideo();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
@@ -29,9 +33,11 @@ const Chatpage = () => {
   const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
   const [mem, setmem] = useState([]);
-
+  
 
   const inputref = useRef(null);
+
+  
 
   useEffect(() => {
     setname(sessionStorage.getItem("name"));
@@ -161,7 +167,7 @@ const Chatpage = () => {
       <Option pos={{top:0,right:40}} colorschema={{col:'black',bac:'green'}}
       
       onClick={async () => {
-       navigate('/wait')
+        change_videocall_status('preparing_to_join');
       }}
     >
       <FaVideo/>
@@ -201,7 +207,14 @@ const Chatpage = () => {
       </Messagebox>
     
     </Chatroom>
+    {
+      videocallstatus === 'preparing_to_join' &&  <Waitingroom/>
+    }
 
+    {
+      videocallstatus === 'in_video_call' && <VideochatPage/>
+    }
+    
     </Room>
   );
 };

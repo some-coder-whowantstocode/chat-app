@@ -1,4 +1,5 @@
 const { sendtoall } = require("./senttoall");
+const { leavecall } = require("./videocall/leavecall");
 
 module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall) => {
     try {
@@ -57,7 +58,7 @@ module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, reque
             roomAdmin.delete(data.roomid);
             rooms_id.delete(data.roomid);
             users_in_rooms.delete(data.roomid);
-            users_in_videocall.delete(data.roomid);
+            leavecall(data, users_in_videocall);
             // connections.find(data.roomid) && connections.delete(data.roomid);
             let reqs = requesters.get(data.roomid);
             reqs.map((req) => {

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { getPeer, getAnswer , getOffer, closePeer } from "../services/peer";
 import { useSocket } from "./SocketProvider";
+import { Mediacleanup } from "../utils/mediahandler";
 
 
 const Videocontext = createContext(null);
@@ -8,16 +9,25 @@ const Videocontext = createContext(null);
 export function Videochatcontroller({ children }) {
     
     const [pc,setpc] = useState([]);//[{name of the other user,peer}]
-  const [icecandidates,setice] = useState([]);
-  const [mystreams,setmystreams] = useState();
-  const media = useRef({mic:true,cam:true});
-  const [remoteVideo,setremote] = useState([]); // [{name , stream}]
+    const [icecandidates,setice] = useState([]);
+    const [mystreams,setmystreams] = useState();
+    const media = useRef({mic:true,cam:true});
+    const [remoteVideo,setremote] = useState([]); // [{name , stream}]
     const {socket} = useSocket();
+    const [videocallstatus , changestatus] = useState('not_in_call');/* [ not_in_call , preparing_to_join , in_video_call ] */
+    const [toggle,settoggle] = useState(true);
+
+    const change_toggle =()=>{
+      settoggle(!toggle);
+    }
+
+    const change_videocall_status =(value)=>{
+      changestatus(value);
+    }
 
     const findpeer = useCallback((name)=>{
     
         if(pc){
-          // console.log(pc)
           return pc.find(p=>p.name === name).peer;
         }
       },[pc])
@@ -55,37 +65,12 @@ export function Videochatcontroller({ children }) {
 
     //media department ---------------------------
 
-    const Mediacleanup =(stream)=>{
-        return new Promise((resolve,reject)=>{
-          let prevstreams = stream;
-          if(prevstreams){
-            try{
-              prevstreams.getTracks()
-              .forEach((track)=>{
-                if(track.kind === 'audio' || track.kind === 'video'){
-                  track.stop();
-                }
-              })
-              resolve();
-            }catch(err){
-               
-                    reject("Error occured in Mediacleanup :"+err.name);
-                
-                // reject("Error occured in Mediacleanup :"+err);
-
-            }
-           
-          }else{
-            resolve();
-          }
-        })
-        
-      };
-      
+   
       const Getmedia =useCallback(()=>{
         const {cam,mic} = media.current;
         
         return new Promise((resolve,reject)=>{
+          let copy = mystreams;
           navigator.mediaDevices.getUserMedia({audio:mic,video:cam})
           .then((stream)=>{
               resolve(stream);
@@ -104,16 +89,25 @@ export function Videochatcontroller({ children }) {
           
           })
           .finally(()=>{
-            Mediacleanup(mystreams)
+            Mediacleanup(copy)
           })
-        })
-      },[media,mystreams])
+         })
+      },[mystreams])
       
-      const addTrackstoPeer = useCallback(async(peer)=>{
+      const addTrackstoPeer = useCallback(async(peer,change,givenstream)=>{
         try{
           let stream;
-          
-            stream = await Getmedia();
+          if(change){
+            if(givenstream){
+              stream = givenstream;
+            }else{
+              stream = await Getmedia();
+
+            }
+          }else{
+            stream = mystreams;
+          }
+           
            
            stream.getTracks()
            .forEach(async(track)=>{
@@ -129,7 +123,7 @@ export function Videochatcontroller({ children }) {
           console.log(err)
         }
        
-      },[Getmedia])
+      },[Getmedia,mystreams])
 
     
       const handlevideo =  async(which)=>{
@@ -137,16 +131,21 @@ export function Videochatcontroller({ children }) {
           let {mic,cam} = media.current;
           if(which){
             media.current.cam = !cam;
-          Getmedia()
+            settoggle(!toggle);
+          
 
           }else{
             media.current.mic = !mic;
-          Getmedia()
+          
 
           }
+          Getmedia(true)
+          .then((stream)=>{
             pc.forEach(({peer})=>{
-                addTrackstoPeer(peer);
-            })
+              addTrackstoPeer(peer,true,stream);
+          })
+          })
+           
          
         }catch(err){
           console.log(err);
@@ -249,7 +248,7 @@ useEffect(()=>{
            try{
              let copy = [...remoteVideo];
              let found = copy.find(v=>v.name === p.name);
-            //  console.log('got tracks')
+             console.log('got tracks')
              if(streams.length >0){
                if(found ){
                 //  console.log('found',found.stream.getTracks(),streams[0].getTracks())
@@ -296,8 +295,7 @@ useEffect(()=>{
                       { 
                        try{
                        let peer = getPeer();
-                       setpc(prevstate=>[...prevstate,{name:data.from,peer:peer}]);
-                      await addTrackstoPeer(peer);
+                      await addTrackstoPeer(peer,false);
                       let ans =  await getAnswer(peer,data.des)
                        
                        socket.send({
@@ -308,6 +306,7 @@ useEffect(()=>{
                        des:ans,
                        to:data.from
                        })   
+                       setpc(prevstate=>[...prevstate,{name:data.from,peer:peer}]);
                     
                        }catch(err){
                           console.log(err);
@@ -320,8 +319,7 @@ useEffect(()=>{
                       { 
                        try{
                          let pc = getPeer();
-                         setpc(prevstate=>[...prevstate,{name:data.name,peer:pc}]);
-                         await addTrackstoPeer(pc);
+                         await addTrackstoPeer(pc,false);
                          let offer = await getOffer(pc)
                            socket.send({
                             roomid:sessionStorage.getItem('room'),
@@ -331,6 +329,7 @@ useEffect(()=>{
                              des:offer,
                              to:data.name
                            })
+                           setpc(prevstate=>[...prevstate,{name:data.name,peer:pc}]);
                  
                         
                        }catch(err){
@@ -474,7 +473,7 @@ useEffect(()=>{
 
 
     return(
-        <Videocontext.Provider value={{goback,mystreams,remoteVideo,media,handlevideo,joincall,leavecall,Getmedia}}>
+        <Videocontext.Provider value={{goback,mystreams,remoteVideo,media,handlevideo,joincall,leavecall,Getmedia,videocallstatus,change_videocall_status,change_toggle,toggle}}>
         {children}
         </Videocontext.Provider>
     )

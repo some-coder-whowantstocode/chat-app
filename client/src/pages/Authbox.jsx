@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 import back from '../assets/back.jpg'
 import  {
     Loading,

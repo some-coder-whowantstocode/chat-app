@@ -1,13 +1,16 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useVideo } from '../context/Videochatcontroller';
 import { MdCallEnd } from "react-icons/md";
 import { IoVideocam , IoVideocamOff } from "react-icons/io5";
 import { IoMdMic , IoIosMicOff } from "react-icons/io";
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-import { CustomPoster } from '../components/videocall/Customstyles';
 import { useSocket } from '../context/SocketProvider';
 
+const Page = styled.div`
+width: 50vw;
+height: 100vh;
+position: relative;
+`
 
 
 const Controls = styled.div`
@@ -69,11 +72,58 @@ height: 20px;
   cursor: pointer;
 `
 
+const Remoteuser = styled.video`
+  height: 100px;
+  width: 100px;
+`
+
+const Myvideo = styled.video`
+  position: absolute;
+    bottom: 10px;
+    right: 10px;
+    height: 100px;
+    width: 160px;
+
+    &:hover{
+      cursor: move;
+    }
+`
+
+const CustomPoster = styled.div`
+  position: absolute;
+    bottom: 10px;
+    right: 10px;
+     height: 100px;
+    width: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #d1cece;
+    border-radius: 20px;
+    div{
+        color: white;
+        height: 50%;
+        width: 40%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        background-color: gray;
+        border-radius: 50%;
+    }
+
+    &:hover{
+      cursor: move;
+    }
+`
+
 const VideochatPage = () => {
-  const {remoteVideo,mystreams,handlevideo,media,goback,leavecall} = useVideo();
+  const {remoteVideo,mystreams,handlevideo,media,goback,leavecall,change_videocall_status,toggle} = useVideo();
   const {wanttoleave} = useSocket();
   const username = sessionStorage.getItem('name')
   const videoref = useRef(null);
+  const posterref = useRef(null);
+  const lastpos = useRef({x:innerWidth,y:innerHeight});
 
   useEffect(()=>{
     if(videoref.current){
@@ -82,12 +132,14 @@ const VideochatPage = () => {
       video.autoplay = true;
       video.onloadedmetadata =()=>{
         video.play();
+        
       }
     }
   },[videoref,mystreams])
 
   useEffect(()=>{
     const handler = async () => {
+     
       await wanttoleave(false);
     };
 
@@ -98,28 +150,90 @@ const VideochatPage = () => {
     };
   },[])
 
-  const navigate = useNavigate();
 
   const backtochat =async()=>{
 
     goback();
     if(videoref.current){
-        videoref.current.srcObject = null;
+        videoref.current = null;
+        
+    }
+    if(posterref.current){
+      posterref.current = null;
     }
     
     await leavecall()
-    navigate('/chat')
+    change_videocall_status('not_in_call');
 
 }
+
+
+useEffect(()=>{
+
+  let Drag = false;
+  let animationId;
+
+  const releasevideo =()=>{
+    Drag = false;
+  }
+
+  const lockvideo =()=>{
+    Drag = true;
+  }
+ 
+  
+ if(videoref.current  && media.current){
+  const videoelement = videoref.current;
+  videoelement.style.top = lastpos.current.y;
+  videoelement.style.left = lastpos.current.x;
+  
+  const handlemousemove =(e)=>{
+    if(Drag === true){
+      console.log(e.clientX,e.clientY)
+      cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(() => {
+      lastpos.current.y =  videoelement.style.top = `${e.clientY - videoelement.offsetHeight / 2}px`;
+      lastpos.current.x = videoelement.style.left = `${e.clientX - videoelement.offsetWidth / 2}px`;
+      
+    });
+    }else{
+      if(Number(videoelement.style.top.slice(0,-2)) < 0) videoelement.style.top = '0px'
+      if(Number((videoelement.style.top ).slice(0,-2) )+ videoelement.offsetHeight > window.innerHeight) videoelement.style.top = `${window.innerHeight - videoelement.offsetHeight}px`
+      if(Number(videoelement.style.left.slice(0,2)) < 0) videoelement.style.left = '0px'
+      if(Number((videoelement.style.left).slice(0,-2) ) + videoelement.offsetWidth > window.innerWidth) videoelement.style.left = `${window.innerWidth - videoelement.offsetWidth}px`
+    }
+  }
+
+
+  window.addEventListener('mouseup',releasevideo);
+  window.addEventListener('mouseleave',releasevideo);
+    window.addEventListener('mousemove',handlemousemove);
+  videoelement.addEventListener('mousedown',lockvideo);
+
+  return(()=>{
+    window.removeEventListener('mouseup',releasevideo);
+    window.removeEventListener('mouseleave',releasevideo);
+    window.removeEventListener('mousemove',handlemousemove);
+    videoelement.removeEventListener('mousedown',lockvideo);
+  })
+ }
+
+ 
+  
+ },[videoref,media,toggle])
+
+
  
   return (
-    <div>
+    <Page>
       {
         media.current.cam ?
-        <video ref={videoref}>
-        </video>
+        <Myvideo ref={videoref}>
+        </Myvideo>
         :
-        <CustomPoster><div>{username.slice(0,2)}</div></CustomPoster>
+        <CustomPoster
+        ref={videoref}
+        ><div>{username.slice(0,2)}</div></CustomPoster>
       }
      
 
@@ -150,23 +264,24 @@ const VideochatPage = () => {
 
       </Controls>
        {
-        remoteVideo.map(({stream},index)=>{
-            return React.createElement('video', { key: index, ref: video => {
-                if (video) {
-                  stream.getTracks().forEach((track)=>{
-                    track.enabled = true;
-                  })
-                  video.srcObject = stream
-                  video.autoPlay = true
-                  video.onloadedmetadata = () => {
-                    video.play();
-                  };
-               
-                }
-              }});
-        })
+        remoteVideo.map(({stream},index)=>(
+          <Remoteuser key={index} ref={(video)=>{
+            if (video) {
+              stream.getTracks().forEach((track)=>{
+                track.enabled = true;
+              })
+              video.srcObject = stream
+              video.autoPlay = true
+              video.onloadedmetadata = () => {
+                video.play();
+              };
+           
+            }
+          }}/>
+          
+        ))
     }
-    </div>
+    </Page>
   )
 }
 

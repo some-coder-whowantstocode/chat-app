@@ -11,18 +11,16 @@ import { useSocket } from '../context/SocketProvider';
 
 
 const CustomVideo =styled.video`
-    height: 50vh;
-    width: 60vw;
+    height: 50%;
+    width: 60%;
     border-radius: 18px;
 `
 
 const VideoHolder = styled.div`
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    display: flex;
   
+    width: inherit;
+    display: flex;
+  flex-direction: column;
     
 `
 
@@ -97,9 +95,19 @@ const CustomJoin = styled.div`
     }
 `
 
+const WaitingRoom = styled.div`
+  position: relative;
+  border: 2px solid black;
+  height: 100vh;
+  width: 50vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
+
 const Waitingroom = () => {
 
-    const { goback , handlevideo , media , joincall , mystreams , Getmedia } = useVideo();
+    const { goback , handlevideo , media , joincall , mystreams , Getmedia , change_videocall_status } = useVideo();
     const { wanttoleave } = useSocket();
     const videoref = useRef(null);
     const username = sessionStorage.getItem('name');
@@ -143,66 +151,16 @@ const Waitingroom = () => {
         if(videoref.current){
             videoref.current.srcObject = null;
         }
-        navigate('/chat')
+        change_videocall_status('not_in_call')
+        // navigate('/chat')
 
     }
 
-    useEffect(()=>{
-
-        let Drag = false;
-        let animationId;
-      
-        const releasevideo =()=>{
-          Drag = false;
-        }
-      
-        const lockvideo =()=>{
-          Drag = true;
-        }
-      
-       
-        
-       if(videoref.current){
-        const element = videoref.current;
-      
-        const handlemousemove =(e)=>{
-          if(Drag === true){
-            cancelAnimationFrame(animationId);
-          animationId = requestAnimationFrame(() => {
-            element.style.top = `${e.clientY - element.offsetHeight / 2}px`;
-            element.style.left = `${e.clientX - element.offsetWidth / 2}px`;
-          });
-          }else{
-            if(Number(element.style.top.slice(0,-2)) < 0) element.style.top = '0px'
-            if(Number((element.style.top ).slice(0,-2) )+ element.offsetHeight > window.innerHeight) element.style.top = `${window.innerHeight - element.offsetHeight}px`
-            if(Number(element.style.left.slice(0,2)) < 0) element.style.left = '0px'
-            if(Number((element.style.left).slice(0,-2) ) + element.offsetWidth > window.innerWidth) element.style.left = `${window.innerWidth - element.offsetWidth}px`
-          }
-        }
-      
-      
-        window.addEventListener('mouseup',releasevideo);
-        window.addEventListener('mouseleave',releasevideo);
-          window.addEventListener('mousemove',handlemousemove);
-        element.addEventListener('mousedown',lockvideo);
-      
-        return(()=>{
-          window.removeEventListener('mouseup',releasevideo);
-          window.removeEventListener('mouseleave',releasevideo);
-          window.removeEventListener('mousemove',handlemousemove);
-          element.removeEventListener('mousedown',lockvideo);
-        })
-       }
-      
-       
-        
-       },[videoref])
-      
       
   
 
   return (
-    <>
+    <WaitingRoom>
    
     <VideoHolder>
       
@@ -253,7 +211,8 @@ const Waitingroom = () => {
       <div>
       <CustomJoin color='#009dff' onClick={()=>{
         joincall()
-        navigate('/videochat')
+        change_videocall_status('in_video_call')
+        // navigate('/videochat')
       }}>
         join now
     </CustomJoin>
@@ -268,7 +227,7 @@ const Waitingroom = () => {
     </Join>
     
     </VideoHolder>
-    </>
+    </WaitingRoom>
   )
 }
 
