@@ -24,7 +24,7 @@ import VideochatPage from "./VideochatPage";
 const Chatpage = () => {
   const { socket, state, wanttoleave, Admin, creation, entry , members } =
     useSocket();
-  const { videocallstatus , change_videocall_status } = useVideo();
+  const { videocallstatus , change_videocall_status , goback } = useVideo();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
@@ -122,7 +122,9 @@ const Chatpage = () => {
 
   useEffect(() => {
     const handler = async () => {
+      await goback();
       await wanttoleave(false);
+
     };
 
     window.addEventListener("beforeunload", handler);
@@ -131,6 +133,7 @@ const Chatpage = () => {
       window.removeEventListener("beforeunload", handler);
     };
   }, []);
+  
 
   const sendmsg = async () => {
     try {
@@ -176,6 +179,7 @@ const Chatpage = () => {
       <Option pos={{top:0,right:10}} colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
       
         onClick={async () => {
+          await goback();
           await wanttoleave(true);
           navigate("/rejoin");
         }}

@@ -118,53 +118,56 @@ const CustomPoster = styled.div`
 `
 
 const VideochatPage = () => {
-  const {remoteVideo,mystreams,handlevideo,media,goback,leavecall,change_videocall_status,toggle} = useVideo();
-  const {wanttoleave} = useSocket();
+  const {remoteVideo,Mediacontroller,media,goback,myvideo,myaudio,toggle} = useVideo();
   const username = sessionStorage.getItem('name')
   const videoref = useRef(null);
+  const audioref = useRef(null);
   const posterref = useRef(null);
   const lastpos = useRef({x:innerWidth,y:innerHeight});
 
+  
+
   useEffect(()=>{
-    if(videoref.current){
-      const video = videoref.current;
-      video.srcObject = mystreams;
-      video.autoplay = true;
-      video.onloadedmetadata =()=>{
-        video.play();
-        
-      }
+    if(videoref.current && myvideo){
+        const video = videoref.current;
+        console.log(myvideo);
+        video.srcObject = myvideo
+        video.autoPlay = true
+        video.onloadedmetadata = () => {
+            video.play();
+          };
     }
-  },[videoref,mystreams])
+},[videoref,myvideo])
+
+useEffect(()=>{
+  if(videoref.current && myaudio){
+    const audio = audioref.current;
+    console.log(myaudio);
+    audio.srcObject = myaudio
+    audio.autoPlay = true
+    audio.onloadedmetadata = () => {
+        audio.play();
+      };
+}
+},[audioref,myaudio]);
 
   useEffect(()=>{
-    const handler = async () => {
-     
-      await wanttoleave(false);
-    };
-
-    window.addEventListener("beforeunload", handler);
-
-    return () => {
-      window.removeEventListener("beforeunload", handler);
-    };
-  },[])
+  if(videoref.current && posterref.current){
+    return(()=>{
+      videoref.current = null;
+      audioref.current = null;
+      posterref.current = null;
+      goback()
+    })
+  }
+  },[videoref,posterref])
 
 
   const backtochat =async()=>{
-
+    videoref.current = null;
+    audioref.current = null;
+    posterref.current = null;
     goback();
-    if(videoref.current){
-        videoref.current = null;
-        
-    }
-    if(posterref.current){
-      posterref.current = null;
-    }
-    
-    await leavecall()
-    change_videocall_status('not_in_call');
-
 }
 
 
@@ -189,11 +192,11 @@ useEffect(()=>{
   
   const handlemousemove =(e)=>{
     if(Drag === true){
-      console.log(e.clientX,e.clientY)
+      // console.log(e.clientX,e.clientY)
       cancelAnimationFrame(animationId);
     animationId = requestAnimationFrame(() => {
-      lastpos.current.y =  videoelement.style.top = `${e.clientY - videoelement.offsetHeight / 2}px`;
-      lastpos.current.x = videoelement.style.left = `${e.clientX - videoelement.offsetWidth / 2}px`;
+      lastpos.current.y =  videoelement.style.top = `${e.clientY - (videoelement.offsetHeight/2)}px`;
+      lastpos.current.x = videoelement.style.left = `${e.clientX - ((innerWidth /2) + (videoelement.offsetWidth*(3/2)))}px`;
       
     });
     }else{
@@ -227,25 +230,25 @@ useEffect(()=>{
   return (
     <Page>
       {
-        media.current.cam ?
-        <Myvideo ref={videoref}>
+        // media.current.cam ?
+        <Myvideo ref={videoref} poster=''>
         </Myvideo>
-        :
-        <CustomPoster
-        ref={videoref}
-        ><div>{username.slice(0,2)}</div></CustomPoster>
+        // :
+        // <CustomPoster
+        // ref={videoref}
+        // ><div>{username.slice(0,2)}</div></CustomPoster>
       }
-     
+     <audio ref={audioref}/>
 
       <Controls>
         {
           media.current.cam ?
           <Cam 
-          onClick={()=>handlevideo(true)}
+          onClick={()=>Mediacontroller("remove_video")}
           />
           :
           <Camoff
-          onClick={()=>handlevideo(true)}
+          onClick={()=>Mediacontroller("add_video")}
           />
         }
         <Quit
@@ -254,17 +257,19 @@ useEffect(()=>{
         {
           media.current.mic ?
           <Mic 
-          onClick={()=>handlevideo(false)}
+          onClick={()=>Mediacontroller("remove_audio")}
           />
           :
           <Micoff
-          onClick={()=>handlevideo(false)}
+          onClick={()=>Mediacontroller("add_audio")}
           />
         }    
 
       </Controls>
        {
         remoteVideo.map(({stream},index)=>(
+          <>
+         { console.log(stream.getTracks())}
           <Remoteuser key={index} ref={(video)=>{
             if (video) {
               stream.getTracks().forEach((track)=>{
@@ -278,7 +283,7 @@ useEffect(()=>{
            
             }
           }}/>
-          
+          </>
         ))
     }
     </Page>

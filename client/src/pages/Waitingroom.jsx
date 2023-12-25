@@ -107,40 +107,36 @@ const WaitingRoom = styled.div`
 
 const Waitingroom = () => {
 
-    const { goback , handlevideo , media , joincall , mystreams , Getmedia , change_videocall_status } = useVideo();
-    const { wanttoleave } = useSocket();
+    const { goback , Mediacontroller , media , joincall , mystreams ,change_videocall_status , myvideo , myaudio } = useVideo();
     const videoref = useRef(null);
+    const audioref = useRef(null);
     const username = sessionStorage.getItem('name');
 
-
-    useEffect(()=>{
-      Getmedia();
-      const handler = async () => {
-        await wanttoleave(false);
-      };
-  
-      window.addEventListener("beforeunload", handler);
-  
-      return () => {
-        window.removeEventListener("beforeunload", handler);
-      };
-    },[])
    
 
     useEffect(()=>{
-        if(videoref.current){
+        if(videoref.current && myvideo){
             const video = videoref.current;
-            video.srcObject = mystreams
+            console.log(myvideo);
+            video.srcObject = myvideo
             video.autoPlay = true
             video.onloadedmetadata = () => {
                 video.play();
               };
         }
-    },[videoref,mystreams])
+    },[videoref,myvideo])
 
     useEffect(()=>{
-
-    },[media]);
+      if(videoref.current && myaudio){
+        const audio = audioref.current;
+        console.log(myaudio);
+        audio.srcObject = myaudio
+        audio.autoPlay = true
+        audio.onloadedmetadata = () => {
+            audio.play();
+          };
+    }
+    },[audioref,myaudio]);
    
     const navigate = useNavigate();
 
@@ -168,9 +164,12 @@ const Waitingroom = () => {
             media.current.cam ?
             <CustomVideo ref={videoref} poster={defaultimage} />
             :
+            <>
             <CustomPoster><div>{username.slice(0,2)}</div></CustomPoster>
+            </>
             
         }
+            <audio ref={audioref}/>
     
       <VideoOption
       pos ={{bottom:`20px`,right:`50%`}}
@@ -179,12 +178,12 @@ const Waitingroom = () => {
             media.current.cam ?
             <IoVideocam
             size={30}
-            onClick={()=>handlevideo(true)}
+            onClick={()=>Mediacontroller("remove_video")}
             />
             :
             <IoVideocamOff
             size={30}
-            onClick={()=>handlevideo(true)}
+            onClick={()=>Mediacontroller("add_video")}
             />
         }
        
@@ -197,12 +196,12 @@ const Waitingroom = () => {
             media.current.mic === true ?
             <IoIosMic
             size={30}
-            onClick={()=>handlevideo(false)}
+            onClick={()=>Mediacontroller("remove_audio")}
             />
             :
             <IoIosMicOff
             size={30}
-            onClick={()=>handlevideo(false)}
+            onClick={()=>Mediacontroller("add_audio")}
             />
         }
       </VideoOption>
