@@ -1,7 +1,8 @@
 const { sendtoall } = require("./senttoall");
 const { leavecall } = require("./videocall/leavecall");
 
-module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall) => {
+module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall) => {
+    let wasincall = false;
     try {
         let room = rooms_id.get(data.roomid);
 
@@ -12,7 +13,7 @@ module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, reque
             });
             return;
         }
-
+        console.log('this')
 
         if (room.length > 1) {
             let users = users_in_rooms.get(data.roomid);
@@ -31,12 +32,13 @@ module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, reque
             };
 
             sendtoall(room, leavemsg);
+            console.log('then this')
 
 
             if (roomAdmin.has(data.roomid) && roomAdmin.get(data.roomid) === ws) {
 
                 roomAdmin.delete(data.roomid);
-
+                console.log('may be this')
                 let s = 0;
 
                 let e = room.length - 1;
@@ -58,7 +60,7 @@ module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, reque
             roomAdmin.delete(data.roomid);
             rooms_id.delete(data.roomid);
             users_in_rooms.delete(data.roomid);
-            leavecall(data, users_in_videocall);
+            await leavecall(data, users_in_videocall);
             // connections.find(data.roomid) && connections.delete(data.roomid);
             let reqs = requesters.get(data.roomid);
             reqs.map((req) => {
@@ -71,12 +73,14 @@ module.exports.leaveroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, reque
                 req.ws.send((msg));
 
             })
+            console.log('else this')
             requesters.delete(data.roomid)
 
         }
 
         ws.send({
             type: 'Announcement',
+            leftroom: true,
             msg: `You left the room ${data.roomid}`
         });
 

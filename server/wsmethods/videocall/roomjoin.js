@@ -17,6 +17,7 @@ module.exports.joincall = (data, ws, users_in_videocall) => {
 
     roomoffer.push(clientoffer);
     users_in_videocall.set(roomid, roomoffer)
+    console.log(roomoffer)
     ws.send({
         type: 'videocall',
         msg: 'you joined the call'

@@ -12,10 +12,10 @@ function App() {
   return (
     <Routes>
       <Route path='/' element={<Authbox/>}/>
+      <Route path='/videochat' element={<VideochatPage/>}/>
       <Route path='/landingpage' element={<LandingPage/>}/>
       <Route path='/chat' element={<Chatpage/>}/>
       <Route path='/rejoin' element={<Confirmation/>}/>
-      <Route path='/videochat' element={<VideochatPage/>}/>
       <Route path='/wait' element={<Waitingroom/>}/>
     </Routes>
   )

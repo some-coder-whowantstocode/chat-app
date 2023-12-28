@@ -107,7 +107,7 @@ const WaitingRoom = styled.div`
 
 const Waitingroom = () => {
 
-    const { goback , Mediacontroller , media , joincall , mystreams ,change_videocall_status , myvideo , myaudio } = useVideo();
+    const { goback , Mediacontroller , media , joincall  ,change_videocall_status , myvideo , myaudio } = useVideo();
     const videoref = useRef(null);
     const audioref = useRef(null);
     const username = sessionStorage.getItem('name');

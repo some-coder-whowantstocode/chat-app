@@ -3,7 +3,8 @@ import { useSocket } from "../context/SocketProvider";
 import RequestBox from "../components/Chatpage/RequestBox";
 import Chat from "../components/Chatpage/Chat";
 import notification from "../assets/notification.wav";
-import { FaPowerOff,FaVideo } from "react-icons/fa";
+import { MdCall , MdCallEnd } from "react-icons/md";
+import { FaPowerOff } from "react-icons/fa";
 import {
   Option,
   Chathead,
@@ -24,7 +25,7 @@ import VideochatPage from "./VideochatPage";
 const Chatpage = () => {
   const { socket, state, wanttoleave, Admin, creation, entry , members } =
     useSocket();
-  const { videocallstatus , change_videocall_status , goback } = useVideo();
+  const { videocallstatus , change_videocall_status , LeaveCall } = useVideo();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
@@ -122,7 +123,7 @@ const Chatpage = () => {
 
   useEffect(() => {
     const handler = async () => {
-      await goback();
+      await LeaveCall();
       await wanttoleave(false);
 
     };
@@ -167,19 +168,25 @@ const Chatpage = () => {
       
       <Chathead>{roomid}
 
-      <Option pos={{top:0,right:40}} colorschema={{col:'black',bac:'green'}}
+      <Option pos={{top:0,right:40}}colorschema={{col:'black',bac: 'green'}}
       
       onClick={async () => {
-        change_videocall_status('preparing_to_join');
+        if(videocallstatus === "not_in_call"){
+          change_videocall_status('preparing_to_join');
+
+        }
+      
       }}
     >
-      <FaVideo/>
+     
+        
+        <MdCall/>
     </Option>
       
       <Option pos={{top:0,right:10}} colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
       
         onClick={async () => {
-          await goback();
+          await LeaveCall();
           await wanttoleave(true);
           navigate("/rejoin");
         }}

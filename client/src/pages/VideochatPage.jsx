@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useVideo } from '../context/Videochatcontroller';
 import { MdCallEnd } from "react-icons/md";
 import { IoVideocam , IoVideocamOff } from "react-icons/io5";
 import { IoMdMic , IoIosMicOff } from "react-icons/io";
 import styled from 'styled-components';
-import { useSocket } from '../context/SocketProvider';
+import RemoteVideos from '../components/videocall/RemoteVideos';
 
 const Page = styled.div`
 width: 50vw;
@@ -72,11 +72,6 @@ height: 20px;
   cursor: pointer;
 `
 
-const Remoteuser = styled.video`
-  height: 100px;
-  width: 100px;
-`
-
 const Myvideo = styled.video`
   position: absolute;
     bottom: 10px;
@@ -117,28 +112,19 @@ const CustomPoster = styled.div`
     }
 `
 
+
 const VideochatPage = () => {
-  const {remoteVideo,Mediacontroller,media,goback,myvideo,myaudio,toggle} = useVideo();
+  const {Mediacontroller,media,LeaveCall,myvideo,myaudio,remoteVideo} = useVideo();
   const username = sessionStorage.getItem('name')
   const videoref = useRef(null);
   const audioref = useRef(null);
   const posterref = useRef(null);
   const lastpos = useRef({x:innerWidth,y:innerHeight});
+  const Drag = useRef(false);
+  const [toggle,change] = useState(media.current.cam);
 
-  
 
-  useEffect(()=>{
-    if(videoref.current && myvideo){
-        const video = videoref.current;
-        console.log(myvideo);
-        video.srcObject = myvideo
-        video.autoPlay = true
-        video.onloadedmetadata = () => {
-            video.play();
-          };
-    }
-},[videoref,myvideo])
-
+console.log('why are you rerenderning')
 useEffect(()=>{
   if(videoref.current && myaudio){
     const audio = audioref.current;
@@ -151,92 +137,138 @@ useEffect(()=>{
 }
 },[audioref,myaudio]);
 
-  useEffect(()=>{
-  if(videoref.current && posterref.current){
-    return(()=>{
-      videoref.current = null;
-      audioref.current = null;
-      posterref.current = null;
-      goback()
-    })
-  }
-  },[videoref,posterref])
-
-
   const backtochat =async()=>{
     videoref.current = null;
     audioref.current = null;
     posterref.current = null;
-    goback();
+    LeaveCall();
 }
 
 
-useEffect(()=>{
-
-  let Drag = false;
-  let animationId;
-
-  const releasevideo =()=>{
-    Drag = false;
-  }
-
-  const lockvideo =()=>{
-    Drag = true;
-  }
- 
+const handleMousemove = (animationId,element)=>{
+  console.log(element)
+  return function(e){
+    if(element){
+      if(Drag.current === true){
+        // console.log( e.clientX , e.clientY )
+        cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(() => {
+        lastpos.current.y =  element.style.top = `${e.clientY - (element.offsetHeight/2)}px`;
+        lastpos.current.x = element.style.left = `${e.clientX - ((innerWidth /2) + (element.offsetWidth*(3/2)))}px`;
+      });
+      }else{
   
- if(videoref.current  && media.current){
-  const videoelement = videoref.current;
-  videoelement.style.top = lastpos.current.y;
-  videoelement.style.left = lastpos.current.x;
-  
-  const handlemousemove =(e)=>{
-    if(Drag === true){
-      // console.log(e.clientX,e.clientY)
-      cancelAnimationFrame(animationId);
-    animationId = requestAnimationFrame(() => {
-      lastpos.current.y =  videoelement.style.top = `${e.clientY - (videoelement.offsetHeight/2)}px`;
-      lastpos.current.x = videoelement.style.left = `${e.clientX - ((innerWidth /2) + (videoelement.offsetWidth*(3/2)))}px`;
-      
-    });
-    }else{
-      if(Number(videoelement.style.top.slice(0,-2)) < 0) videoelement.style.top = '0px'
-      if(Number((videoelement.style.top ).slice(0,-2) )+ videoelement.offsetHeight > window.innerHeight) videoelement.style.top = `${window.innerHeight - videoelement.offsetHeight}px`
-      if(Number(videoelement.style.left.slice(0,2)) < 0) videoelement.style.left = '0px'
-      if(Number((videoelement.style.left).slice(0,-2) ) + videoelement.offsetWidth > window.innerWidth) videoelement.style.left = `${window.innerWidth - videoelement.offsetWidth}px`
+        if(Number(element.style.top.slice(0,-2)) < 0) element.style.top = '0px';
+        if(Number((element.style.top ).slice(0,-2) )+ element.offsetHeight > window.innerHeight) element.style.top = `${window.innerHeight - element.offsetHeight}px`;
+        if(Number(element.style.left.slice(0,2)) < 0) element.style.left = '0px';
+        if(Number((element.style.left).slice(0,-2) ) + element.offsetWidth > window.innerWidth) element.style.left = `${window.innerWidth - element.offsetWidth}px`;
+      }
     }
+ 
+  }
+
+};
+
+useEffect(()=>{
+  const releasevideo =()=>{
+    Drag.current = false;
   }
 
 
   window.addEventListener('mouseup',releasevideo);
   window.addEventListener('mouseleave',releasevideo);
-    window.addEventListener('mousemove',handlemousemove);
-  videoelement.addEventListener('mousedown',lockvideo);
 
   return(()=>{
     window.removeEventListener('mouseup',releasevideo);
     window.removeEventListener('mouseleave',releasevideo);
-    window.removeEventListener('mousemove',handlemousemove);
-    videoelement.removeEventListener('mousedown',lockvideo);
-  })
- }
+    })
+   
+  
+},[])
 
+
+useEffect(()=>{
+  if(videoref.current)
+  {
+    if(myvideo){
+      const video = videoref.current;
+      console.log(myvideo);
+      video.srcObject = myvideo
+      video.autoPlay = true
+      video.onloadedmetadata = () => {
+          video.play();
+        };
+  }
+    console.log('video')
+    const lockvideo =()=>{
+      Drag.current = true;
+    }
+    let videoelement = videoref.current
+  
+    videoelement.style.top = lastpos.current.y;
+    videoelement.style.left = lastpos.current.x;
+  
+  
+   
+    window.addEventListener('mousemove',handleMousemove(null,videoelement));
+    videoelement.addEventListener('mousedown',lockvideo);
+  
+    return(()=>{
+    window.removeEventListener('mousemove',handleMousemove);
+    videoelement.removeEventListener('mousedown',lockvideo);
+    videoref.current = null;
+    })
+   
+  
+  }
+ 
  
   
- },[videoref,media,toggle])
+},[videoref,toggle,myvideo])
+
+
+
+useEffect(()=>{
+  if(posterref.current){
+    console.log('poster')
+    const lockvideo =()=>{
+      Drag.current = true;
+    }
+    let videoelement = posterref.current
+  
+    videoelement.style.top = lastpos.current.y;
+    videoelement.style.left = lastpos.current.x;
+  
+  
+   
+    window.addEventListener('mousemove',handleMousemove(null,videoelement));
+    videoelement.addEventListener('mousedown',lockvideo);
+  
+    return(()=>{
+    window.removeEventListener('mousemove',handleMousemove);
+    videoelement.removeEventListener('mousedown',lockvideo);
+    posterref.current = null
+    })
+   
+  
+   
+  }
+ 
+  
+},[posterref,toggle])
 
 
  
   return (
     <Page>
       {
-        // media.current.cam ?
+        media.current.cam ?
         <Myvideo ref={videoref} poster=''>
         </Myvideo>
-        // :
-        // <CustomPoster
-        // ref={videoref}
-        // ><div>{username.slice(0,2)}</div></CustomPoster>
+        :
+        <CustomPoster
+        ref={posterref}
+        ><div>{username.slice(0,2)}</div></CustomPoster>
       }
      <audio ref={audioref}/>
 
@@ -244,11 +276,17 @@ useEffect(()=>{
         {
           media.current.cam ?
           <Cam 
-          onClick={()=>Mediacontroller("remove_video")}
+          onClick={()=>{
+            change(!toggle);
+            Mediacontroller("remove_video")
+          }}
           />
           :
           <Camoff
-          onClick={()=>Mediacontroller("add_video")}
+          onClick={()=>{
+            change(!toggle);
+            Mediacontroller("add_video")
+        }}
           />
         }
         <Quit
@@ -266,26 +304,10 @@ useEffect(()=>{
         }    
 
       </Controls>
-       {
-        remoteVideo.map(({stream},index)=>(
-          <>
-         { console.log(stream.getTracks())}
-          <Remoteuser key={index} ref={(video)=>{
-            if (video) {
-              stream.getTracks().forEach((track)=>{
-                track.enabled = true;
-              })
-              video.srcObject = stream
-              video.autoPlay = true
-              video.onloadedmetadata = () => {
-                video.play();
-              };
-           
-            }
-          }}/>
-          </>
-        ))
-    }
+      {
+        <RemoteVideos remoteVideo ={remoteVideo}/>
+
+      }
     </Page>
   )
 }

@@ -10,19 +10,41 @@ export function Videochatcontroller({ children }) {
     
     const [pc,setpc] = useState([]);//[{name of the other user,peer}]
     const [icecandidates,setice] = useState([]);
-    const [mystreams,setmystreams] = useState();
+    // const [mystreams,setmystreams] = useState();
     const media = useRef({mic:true,cam:true});
     const [remoteVideo,setremote] = useState([]); // [{name , stream}]
     const {socket} = useSocket();
     const [videocallstatus , changestatus] = useState('not_in_call');/* [ not_in_call , preparing_to_join , in_video_call ] */
     const [myaudio,setmyaudio] = useState();
     const [myvideo,setmyvideo] = useState();
-   
-    const [toggle,settoggle] = useState(true);
+    // const [toggle,settoggle] = useState(true);
+    const [ leaving , gonnaleave] = useState(false);
+    const remote_stream_list = useRef(new Map());//{username,streamId}
 
-    const change_toggle =()=>{
-      settoggle(!toggle);
+    // const change_toggle =useCallback(()=>{
+    //   settoggle(!toggle);
+    // },[remoteVideo])
+
+
+    const LeaveCall =()=>{
+      gonnaleave(true);
     }
+
+    const getmystream =useCallback(()=>{
+      return new Promise((resolve,reject)=>{
+        try{
+          let videotracks = myvideo ? myvideo.getTracks() : [];
+          let audiotracks = myaudio ? myaudio.getTracks() : [];
+          console.log(videotracks,audiotracks)
+          let stream = new MediaStream([...videotracks,...audiotracks]) 
+          
+          resolve(stream);
+        }catch(err){
+          reject('error while getting my stream -> ',err);
+        }
+      })
+   
+    },[myvideo,myaudio]);
 
     const change_videocall_status =(value)=>{
       changestatus(value);
@@ -121,7 +143,9 @@ const Mediacontroller =useCallback(async(use)=>{
           let peers = [...pc];
         switch(use){
           case "add_video":
-            
+            // peers.forEach(({peer})=>{
+            //   addTrackstoPeer(peer)
+            // })
             navigator.mediaDevices.getUserMedia({audio:false,video:true})
             .then(async(stream)=>{
               let tracks = stream.getTracks();
@@ -129,12 +153,16 @@ const Mediacontroller =useCallback(async(use)=>{
               setmyvideo(new MediaStream([...tracks]))
               peers = peers.map(async({peer})=>{
                 const senderexists =await peer.getSenders().find((sender)=>sender.track && sender.track.kind === 'video');
+                // console.log(peer,senderexists,tracks)
                   if(senderexists){
                     senderexists.replaceTrack(tracks[0]);
 
                   }else{
+                    
                     let othertracks = myaudio ? [...myaudio.getTracks()] : [];
+                    // console.log(tracks[0])
                    await peer.addTrack(tracks[0],new MediaStream([...tracks,...othertracks]))
+                   //console.log(peer.getSenders())
                   }
               
               })
@@ -284,22 +312,40 @@ const Mediacontroller =useCallback(async(use)=>{
 
       
       const addTrackstoPeer = useCallback(async(peer)=>{
-        try{          
-            let stream = await Getmedia();
-          console.log('addtrack',stream)
-           stream.getTracks()
-           .forEach(async(track)=>{
-            const senders = peer.getSenders();
-            const senderexists = senders.find((sender)=>sender.track === track);
-            if(!senderexists){
-              await peer.addTrack(track,stream);
-             }else{
-               await peer.replaceTrack(track,stream);
-             } 
-           })
-        }catch(err){
-          console.log(err)
-        }
+        return new Promise((resolve,reject)=>{
+          getmystream()
+          .then((stream)=>{
+            console.log(stream , "got from mystream");
+            let tracks = stream.getTracks()
+            tracks = tracks.map(async(track)=>{
+             const senders = peer.getSenders();
+             const senderexists = senders.find((sender)=>sender.track === track);
+             console.log(peer,senderexists,'exists or not')
+             if(!senderexists){
+               await peer.addTrack(track,stream) 
+               console.log(peer.getSenders())
+              }else{
+                await peer.removeTrack(senderexists);
+                // await senderexists.replaceTrack(track);
+                await peer.addTrack(track,stream)
+              } 
+          })
+
+          Promise.all(tracks)
+          .then(()=>{
+            resolve();
+          })
+          .catch((err)=>{
+            reject(err);
+          })
+          
+        
+          })
+          .catch((err)=>{
+            // reject(err);
+            console.log(err);
+          })
+        })
        
       },[Getmedia])
 
@@ -315,21 +361,38 @@ const Mediacontroller =useCallback(async(use)=>{
 /*----------------------------------------------------------------------------------------------------------------*/
 
 /*Leave video call */
-const goback =async()=>{
-  await Mediacleanup(myvideo);
-  await Mediacleanup(myaudio);
-  leavecall();
-  setremote([]);
-  changestatus('not_in_call');
-}
 
 useEffect(()=>{
-  console.log(pc)
+  if(leaving){
+      Mediacleanup(myvideo)
+      .then(()=>{
+        Mediacleanup(myaudio);
+      })
+      .then(()=>{
+        leavecall();
+      })
+      .then(()=>{
+        setremote([]);
+        changestatus('not_in_call');
+      })
+      .catch((err)=>{
+        console.log('error while leaving call : ',err);
+      })
+  }
+},[leaving]);
+
+
+useEffect(()=>{
+  console.log("number of participants",pc)
+ 
 },[pc])
 
+useEffect(()=>{
+  console.log('number of streams',remoteVideo)
+},[remoteVideo])
 
 
-const leavecall =()=>{
+const leavecall = ()=>{
   if(socket ){
     try{
       let copy = [...pc];
@@ -348,6 +411,7 @@ const leavecall =()=>{
     })
 
     setpc([]);
+    gonnaleave(false);
   })
   .catch((err)=>{
     console.log(err);
@@ -439,7 +503,9 @@ useEffect(()=>{
                let copymedia = [...remoteVideo];
                await Mediacleanup(copymedia.find(c=>c.name === p.name).stream);
                copymedia = copymedia.filter(c=>c.name !== p.name);
+               remote_stream_list.current.delete(p.name)
                setremote(copymedia);
+            console.log('list update',remote_stream_list,copy)
              }catch(err){
                console.log(err);
              }
@@ -452,7 +518,7 @@ useEffect(()=>{
          };
    
          p.peer.onsignalingstatechange =async(e)=>{
-          console.log(e.currentTarget.signalingState)
+          //console.log(e.currentTarget.signalingState)
         
          }
 
@@ -466,73 +532,54 @@ useEffect(()=>{
           
          
          }
+         /* 
+    */
    
-         p.peer.ontrack =({streams})=>{
-          
-             let copystreams = [...remoteVideo];
-            //  console.log(p.name)
-             let found = false;
-             let givenstreams = streams
-           
-              copystreams = copystreams.map((copy)=>{
-                return new Promise((resolve,reject)=>{
-                  console.log(p.name,copy.name)
-                  if(copy.name === p.name){
+         p.peer.ontrack =async({streams})=>{
+           console.log('triggered ontrack')
+          let copystreams = [...remoteVideo];
+          //  let found = false;
+           streams = streams[0];
 
-                    try{
-                      found = true;
-                      console.log(copy,givenstreams)
-                      let remotePerson = copy.stream.getTracks();
-                      console.log(remotePerson)
-                      let existingvideo = remotePerson ? remotePerson.find((t)=> t.kind === 'video') : [];
-                      let existingaudio = remotePerson ? remotePerson.find((t)=>t.kind === 'audio') : [];
-                      console.log('got tracks',givenstreams.getTracks())
-                      givenstreams.getTracks().forEach(({track})=>{
-                        console.log(track)
-                        if(track && track.kind ==='audio'){
-                          if(track.id !== existingaudio.id) existingaudio = track;
-                        }
-                        if(track && track.kind === 'video'){
-                          if(track.id !== existingvideo.id) existingvideo = track;
-                        }
-                      })
-    
-                      copy.stream = new MediaStream([existingaudio,existingvideo]);
-                      console.log(copy);
-                      resolve(copy);
-      
-                    }catch(err){
-                      reject(err);
-                    }
-                    
-                  }
+           let istheone = copystreams.find((copy)=>copy.name === p.name);
+           console.log(istheone)
 
-                })
-              
-                
-               })
+          if(istheone){
+            let remotePerson = istheone.stream.getTracks();
+            let existingvideo = remotePerson ? remotePerson.find((t)=> t.kind === 'video') : [];
+            let existingaudio = remotePerson ? remotePerson.find((t)=>t.kind === 'audio') : [];
 
-               Promise.all(copystreams)
-               .then(()=>{
-                if(!found){
-                  copystreams.push({name:p.name,stream:streams[0]});
-  
-                 }
-
-                 setremote(copystreams)
-               })
-               .catch((err)=>{
-                
-                console.log('error while handeling tracks :', err);
-               })
-              
-             
+            streams.getTracks().forEach((track)=>{
+              if(track.kind === 'audio'){
+                if(existingvideo === undefined || track.id !== existingaudio.id) existingaudio = track;
+              }
+              if(track.kind === 'video'){
+                if(existingvideo === undefined || track.id !== existingvideo.id) existingvideo = track;
+              }
+            })
+            existingaudio = existingaudio ? [existingaudio ] : []
+            existingvideo = existingvideo ? [existingvideo ] : []
             
-          
-          
-         }
-   
-       })
+            istheone.stream = new MediaStream([ ...existingaudio, ...existingvideo ])
+
+            copystreams = copystreams.map((copy)=>{
+              if(copy.name === istheone.name) copy.stream = istheone.stream;
+
+              return copy;
+            })
+
+          }else{
+            remote_stream_list.current.set(p.name,null);
+            copystreams.push({name:p.name,stream:streams});
+
+            console.log('list update',remote_stream_list)
+          }
+          console.log(copystreams)
+          setremote(copystreams)
+        
+       }
+ 
+     })
    
    
        
@@ -543,7 +590,7 @@ useEffect(()=>{
 
 /*------------------------------------------------------------*/
 
-
+console.log('video controller rerendering')
    
     
 
@@ -558,8 +605,8 @@ useEffect(()=>{
                       { 
                        try{
                        let peer = getPeer();
-                      await addTrackstoPeer(peer);
-                      let ans =  await getAnswer(peer,data.des)
+                       await addTrackstoPeer(peer);
+                       let ans =  await getAnswer(peer,data.des)
                        
                        socket.send({
                         roomid:sessionStorage.getItem('room'),
@@ -581,9 +628,9 @@ useEffect(()=>{
          case "newmem":
                       { 
                        try{
-                         let pc = getPeer();
-                         await addTrackstoPeer(pc);
-                         let offer = await getOffer(pc)
+                         let peer = getPeer();
+                        
+                         let offer = await getOffer(peer)
                            socket.send({
                             roomid:sessionStorage.getItem('room'),
                             from:sessionStorage.getItem('name'),
@@ -592,7 +639,7 @@ useEffect(()=>{
                              des:offer,
                              to:data.name
                            })
-                           setpc(prevstate=>[...prevstate,{name:data.name,peer:pc}]);
+                           setpc(prevstate=>[...prevstate,{name:data.name,peer:peer}]);
                  
                         
                        }catch(err){
@@ -606,7 +653,7 @@ useEffect(()=>{
                          try{
                            let peer = findpeer(data.from);
                            if(peer){
-                            await addTrackstoPeer(peer);
+                             await addTrackstoPeer(peer);
                              await peer.setRemoteDescription(data.des);
                            }      
                          }catch(err){
@@ -621,7 +668,7 @@ useEffect(()=>{
                         try{
                         let peer = findpeer(data.from);
                         if(peer.signalingState !== 'stable'){
-                          console.log('can not insitiate not stable')
+                          // console.log('can not insitiate not stable')
                           return;
                         }
         
@@ -657,9 +704,10 @@ useEffect(()=>{
                       }
                     break;
 
-                    case "left":
+                    case "leftcall":
                       {
-                          console.log('left waaaah')
+                        console.log('hi')
+                        // leavecall();
                           
                       }
                     break;
@@ -671,9 +719,9 @@ useEffect(()=>{
                       }
                     break;
         
-                    default:
-                        console.log(data);
-                    break;
+                    // default:
+                    //     console.log(data);
+                    // break;
                 }
             
             }catch(err){
@@ -689,7 +737,7 @@ useEffect(()=>{
                 socket.removeEventListener('message',handlecall)
             }
         }
-    },[socket,pc,addTrackstoPeer,findpeer,remoteVideo])
+    },[socket,pc,addTrackstoPeer,findpeer])
 
 
  const joincall =()=>{
@@ -705,7 +753,7 @@ useEffect(()=>{
 
 
     return(
-        <Videocontext.Provider value={{goback,mystreams,remoteVideo,media,Mediacontroller,joincall,leavecall,Getmedia,videocallstatus,change_videocall_status,change_toggle,toggle,myvideo,myaudio}}>
+        <Videocontext.Provider value={{LeaveCall,remote_stream_list, remoteVideo,media,Mediacontroller,joincall,leavecall,Getmedia,videocallstatus,change_videocall_status,myvideo,myaudio}}>
         {children}
         </Videocontext.Provider>
     )

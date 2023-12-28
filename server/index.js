@@ -222,6 +222,7 @@ try {
                             action_required: true,
                             msg: `server disconnected`
                         })
+                        console.log('fuck')
                         connections.delete(socket.id);
                         socket.disconnect();
                         setTimeout(() => {
@@ -229,7 +230,7 @@ try {
                         }, (1000 * 2));
                     }
                 }
-            }, 1000 * 60);
+            }, 1000 * 100);
 
         } catch (err) {
             const stackLines = err.stack.split('\n');
@@ -261,3 +262,6 @@ try {
 }
 
 server.listen(PORT, () => console.log(`server is listening at ${PORT}`))
+
+
+// some isssue with ping pong

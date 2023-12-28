@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { cancelrequest, createRoom, joinRoom, leaveRoom } from '../wsmethods/roomcontroller';
 import { useNavigate } from 'react-router-dom';
 import notification from '../assets/notification.wav';
@@ -28,6 +28,7 @@ export function SocketProvider({ children }) {
   
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
+  console.log('socket rerendering')
 
   /* Frist get token for establising connection with websocket at backend.*/
 
@@ -258,6 +259,7 @@ console.log(err);
           break;
 
           case 'Announcement':
+            /* change to admin if you are selected as admin */
             if(jsondata.change){
               if(sessionStorage.getItem('name') === jsondata.newAdmin) setAdmin(true);
               setadminname(jsondata.newAdmin)
@@ -272,6 +274,13 @@ console.log(err);
                 return [...prevdata,{ ...newMsg, timeoutId }];
               });
             }
+            /* remove user if left the room */
+            if(jsondata.left){
+              let copymems = [...members];
+              copymems = copymems.filter((m)=>jsondata.name !== m.name)
+              setmembers(copymems)
+            }
+
           break;
 
           case 'Alert':
@@ -308,7 +317,7 @@ console.log(err);
        
         timeout = setInterval(() => {
           socket.emit('ping');
-          // console.log('ping')
+          console.log('ping')
         }, 10000);
   
       }
