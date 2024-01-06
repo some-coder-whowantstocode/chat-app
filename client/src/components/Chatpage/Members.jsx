@@ -110,7 +110,7 @@ ${
 const MemBox = styled.div`
  max-height: 100vh;
  overflow: scroll;
- background-color: #444444;
+ background-color: #2D2D2D;
  ::-webkit-scrollbar{
   display: none;
 }

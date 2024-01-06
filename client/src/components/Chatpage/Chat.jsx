@@ -16,11 +16,12 @@ const Smallbox = styled.div`
 
 const Chatblock = styled.span`
     background:${props =>props.left ?  `linear-gradient(343deg, rgba(0,60,255,1) 0%, rgba(12,135,169,1) 100%)`:'#06f187'} ;
+    /* background-color: #000000; */
     padding: 4px 8px;
     margin: 4px;
     border-radius:${props =>props.left ? `9px 0px 9px 9px` : `0px 9px 9px 9px`} ;
     max-width: 50vw;
-    color: white;
+    color:#FFFFFF ;
     width: fit-content;
     text-overflow: clip;
     word-break: break-all;

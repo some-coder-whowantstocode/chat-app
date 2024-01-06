@@ -28,6 +28,7 @@ max-height: 100%;
 flex-direction: column;
 box-sizing: border-box;
 flex-grow: 1;
+background-color: #F5F5F5;
 `
 
 
@@ -35,8 +36,9 @@ export const Chatbox = styled.div`
   display: flex;
   flex-direction: column;
   padding: 0px 5px;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 78px);
   overflow-y: scroll;
+  
   
 ::-webkit-scrollbar{
   display: none;
@@ -102,11 +104,14 @@ export const Chathead = styled.div`
   box-sizing: border-box;
 `
 
+export const Options = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
+
 export const Option = styled.div`
   
-  position: absolute;
-  top: ${props=>`${props.pos.top}px`};
-  right: ${props=>`${props.pos.right}px`};
   ${
     props=>`
     color: ${props.colorschema.col};

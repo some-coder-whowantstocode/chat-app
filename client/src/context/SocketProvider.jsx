@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { cancelrequest, createRoom, joinRoom, leaveRoom } from '../wsmethods/roomcontroller';
 import { useNavigate } from 'react-router-dom';
 import notification from '../assets/notification.wav';
@@ -10,21 +10,86 @@ const SocketContext = createContext(null);
 
 export function SocketProvider({ children }) {
 
+  const CHAT_METHODS = {
+    CREATE:"create",
+    JOIN_RESPONSE:"response",
+    ERROR:"error",
+    ANNOUNCEMENT:"Announcement",
+    ALERT:"Alert",
+    AUTHENTICATION:"Authentication",
+    KICKOUT:"kickout"
+  }
+
 
   const [socket, setSocket] = useState(); /* websocket */
   const [loading, setLoading] = useState(true); /* To show the user when something is going on during which the app can not be used */
   const [state,setstate] = useState('notauthenticated');/* To check if the app is authenticatd or not. */
-  const [isinchat,setinchat] = useState(false);/* To know if user is currntly in chat or not */
   const [waiting,setwaiting] = useState(false);/* Make user wait */
   const [err,seterr] = useState(true);/* If error notify the user */
   const [errmsg,seterrmsg] = useState([]);/* store the content of the error here and show it to user */
-  const [creation,approvecreation] = useState(false);/* Notify user that room is created */
-  const [entry,allowentry] = useState(false);/* Notify user that he has been allowed to the room he requested */
   const [Admin,setAdmin] = useState(false);/* To know if the user is the admin or not */
   const [rejoinmsg,setrem] = useState('want to rejoin room.');
   const [members,setmembers] = useState([]);
   const [adminname,setadminname] = useState();
+  const [ room_status , set_room_status ] = useState("not in room");/* [not in room,waiting,in room] */
+  const [videocallstatus , setstatus] = useState('not_in_call');/* [ not_in_call , preparing_to_join , in_video_call ] */
+  const [myaudio,addaudio] = useState();
+  const [myvideo,addvideo] = useState();
+  const [leavecall,setleave] = useState(false);
+  // const [pc,addpc] = useState([]);//[{name of the other user,peer}]
+  const pc = useRef([]);
+
+  const setmyaudio =(data)=>{
+    addaudio(data);
+  }
+  const setmyvideo =(data)=>{
+    addvideo(data);
+  }
+  const setpc =(data)=>{
+    pc.current.push(data);
+    // addpc(data);
+  }
+
+ 
+
+  const removepc =(all,name,Id)=>{
+    try{
+      if(all){
+        pc.current = [];
+       }else{
+         if(name){
+           let copy = pc.current;
+           let index = -1 ;
+           for(let i = 0;i<copy.length;i++){
+            if(copy[i].name === name && copy[i].Id === Id){
+              index = i;
+              break;
+            }
+           }
+           
+           console.log(copy,name,index)
+           if(index != -1){
+             copy.splice(index,1);
+             pc.current = copy;
+             console.log(copy);
+           }
+          
+         }
+        
+       }
+    }catch(err){
+      console.log(err);
+    }
+   
+   
+  }
+
+
+  // const [request_processing , req_res ] = useState(false);
   
+  const changestatus =(value)=>{
+    setstatus(value);
+  }
   
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
@@ -53,13 +118,11 @@ console.log(err);
   });
 
   socket.on('connect_error', (err) => {
-    if(isinchat){
+    if(room_status === "in room"){
       navigate('/rejoin')
 
     }
-    setinchat(false);
-    approvecreation(false);
-    allowentry(false);
+    set_room_status('not in room');
     console.log(`connect_error due to ${err.message}`);
     setrem('connection lost do you want to rejoin ?');
     
@@ -121,6 +184,7 @@ console.log(err);
    }
  
    const wanttojoin =async(name,roomid)=>{
+    set_room_status('waiting');
      setwaiting(true);
      sessionStorage.setItem('joinname',name);
      sessionStorage.setItem('joinroom',roomid);
@@ -129,6 +193,7 @@ console.log(err);
    }
 
    const wanttorejoin =async()=>{
+    set_room_status('waiting');
     setwaiting(true);
     let name = sessionStorage.getItem('name');
     let roomid = sessionStorage.getItem('room');
@@ -137,25 +202,39 @@ console.log(err);
   }
 
  
-   const wanttoleave =async(temp)=>{
-     
-     if(temp){
-      setrem('want to rejoin room.');
-     }
-       await leaveRoom(socket,temp);
-     
-     setinchat(false);
-     approvecreation(false);
-     allowentry(false);
-     setAdmin(false);
-     setadminname('');
-     setmembers([]);
-   }
+useEffect(()=>{
+
+  if(leavecall === true && socket && room_status === "in room")
+  {
+    try{
+        console.log('hmm in call')
+        console.log(leavecall,room_status)
+        leaveRoom(socket,true)
+        .then(()=>{
+          
+            setrem('want to rejoin room.');
+           setAdmin(false);
+           setadminname('');
+           setmembers([]);
+           set_room_status('not in room');
+           setleave(false);
+           console.log('setroom', 'not in room')
+        })
+        .catch((err)=>{
+          throw Error(err);
+        })
+       
+        
+      }
+ catch(err){
+  console.log(err);
+ }
+  }
+
+},[leavecall,socket,room_status])
 
    const kickedout =async()=>{
-    setinchat(false);
-    approvecreation(false);
-    allowentry(false);
+    set_room_status('not in room');
     setAdmin(false);
     setadminname('');
     setmembers([]);
@@ -164,6 +243,7 @@ console.log(err);
  
    const wanttocancel =async()=>{
     await cancelrequest(socket);
+    set_room_status('not in room');
      setwaiting(false);
     
  }
@@ -176,7 +256,7 @@ console.log(err);
       name:name,
       roomid:sessionStorage.getItem('room'),
       Admin:sessionStorage.getItem('name'),
-      type:'kickout'
+      type:CHAT_METHODS.KICKOUT
     })
   }
  }
@@ -185,30 +265,37 @@ console.log(err);
  
 
   useEffect(()=>{
-    if(socket && socket.readyState ==0) setwaiting(true);
+    if(socket && socket.readyState ==0) {
+      set_room_status('waiting');
+      setwaiting(true);
+
+    }
     if(socket){
 
 
       const handleOpen = () => {
+        set_room_status('not in room');
        setwaiting(false);
       };
 
+
+     
       const handlemessage =(jsondata)=>{
 
         let timeoutId;
         switch(jsondata.type){
-          case "create":
+          case CHAT_METHODS.CREATE:
               sessionStorage.setItem('name',jsondata.name);
               sessionStorage.setItem('room',jsondata.roomid);
               setadminname(jsondata.name);
-              setinchat(true);
+              set_room_status('in room');
+              console.log('in room')
               setmembers([jsondata.name]);
               setAdmin(true);
-              approvecreation(true);
             
           break;
 
-          case "response":
+          case CHAT_METHODS.JOIN_RESPONSE:
            
               if(jsondata.permission === 'Acc')
               {
@@ -216,13 +303,12 @@ console.log(err);
               let room = jsondata.roomid;
               sessionStorage.setItem('name',name);
               sessionStorage.setItem('room',room);
+              set_room_status('in room');
                   setwaiting(false);
-                  setinchat(true);
+                  set_room_status('in room');
                   setadminname(jsondata.Admin);
                   setmembers(jsondata.mems)
                   notificationsound.play();
-                  allowentry(true);
-                  setinchat(true);
               }
               else if(jsondata.permission == 'Dec')
               {
@@ -236,14 +322,14 @@ console.log(err);
                   }, 3000);
                   return [...prevdata,{ ...newMsg, timeoutId }];
                 });
-                
+                set_room_status('not in room');
                 setwaiting(false);
               
                 
               }
           break;
 
-          case 'error':
+          case CHAT_METHODS.ERROR:
             seterr(true);
            
             
@@ -258,38 +344,48 @@ console.log(err);
 
           break;
 
-          case 'Announcement':
+          case CHAT_METHODS.ANNOUNCEMENT:
+            try{
+              if(jsondata.change){
+                if(sessionStorage.getItem('name') === jsondata.newAdmin) setAdmin(true);
+                setadminname(jsondata.newAdmin)
+              }
+              if(jsondata.kickedout){
+                kickedout()
+                seterrmsg(prevdata => {
+                  const newMsg = { msg: jsondata.msg, id: Date.now() };
+                   timeoutId = setTimeout(() => {
+                    seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
+                  }, 3000);
+                  return [...prevdata,{ ...newMsg, timeoutId }];
+                });
+              }
+              /* remove user if left the room */
+              if(jsondata.left){
+                console.log('left')
+                  setrem('want to rejoin room.');
+                  set_room_status('not in room');
+                 setAdmin(false);
+                 setadminname('');
+                 setmembers([]);
+               
+              }
+            
+  
+            }catch(err){
+              console.log('error at socketprovider/announcement :' , err)
+            }
             /* change to admin if you are selected as admin */
-            if(jsondata.change){
-              if(sessionStorage.getItem('name') === jsondata.newAdmin) setAdmin(true);
-              setadminname(jsondata.newAdmin)
-            }
-            if(jsondata.kickedout){
-              kickedout()
-              seterrmsg(prevdata => {
-                const newMsg = { msg: jsondata.msg, id: Date.now() };
-                 timeoutId = setTimeout(() => {
-                  seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
-                }, 3000);
-                return [...prevdata,{ ...newMsg, timeoutId }];
-              });
-            }
-            /* remove user if left the room */
-            if(jsondata.left){
-              let copymems = [...members];
-              copymems = copymems.filter((m)=>jsondata.name !== m.name)
-              setmembers(copymems)
-            }
-
+           
           break;
 
-          case 'Alert':
+          case CHAT_METHODS.ALERT:
             if(jsondata.action_required){
               setstate('ConnectionLost')
             }
           break;
 
-          case 'Authentication':
+          case CHAT_METHODS.AUTHENTICATION:
             if(jsondata.status == 'failed'){
               setstate('Authfailed');
             }else{
@@ -318,7 +414,7 @@ console.log(err);
         timeout = setInterval(() => {
           socket.emit('ping');
           console.log('ping')
-        }, 10000);
+        }, 1000 * 5);
   
       }
   
@@ -336,8 +432,7 @@ console.log(err);
 
 
 const handleconnection =()=>{
-  allowentry(false);
-  approvecreation(false);
+  set_room_status("not in call")
   navigate('/')
 }
 
@@ -352,7 +447,40 @@ const reconnect =async()=>{
 
 
   return (
-    <SocketContext.Provider value={{ kickout,members,Admin,adminname,rejoinmsg,handleconnection,reconnect,wanttorejoin, entry, wanttocancel, wanttojoin , wanttocreate , wanttoleave, creation, socket: socket, loading: loading,state,reopensocket,isinchat,waiting,err,errmsg }}>
+    <SocketContext.Provider value={
+      {
+        room_status,
+        myaudio,
+        myvideo,
+        setmyaudio,
+        setmyvideo,
+        changestatus,
+        videocallstatus,
+        kickout,
+        members,
+        Admin,
+        adminname,
+        rejoinmsg,
+        handleconnection,
+        reconnect,
+        wanttorejoin,
+        wanttocancel,
+        wanttojoin,
+        wanttocreate,
+        setleave,
+        leavecall,
+        socket,
+        loading,
+        state,
+        reopensocket,
+        waiting,
+        err,
+        errmsg,
+        pc:pc.current,
+        setpc,
+        removepc
+        }
+        }>
       {children}
     </SocketContext.Provider>
   );

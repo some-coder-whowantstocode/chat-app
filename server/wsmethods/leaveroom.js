@@ -1,19 +1,19 @@
 const { sendtoall } = require("./senttoall");
 const { leavecall } = require("./videocall/leavecall");
 
-module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall) => {
-    let wasincall = false;
+module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, timeout) => {
     try {
         let room = rooms_id.get(data.roomid);
 
         if (!room) {
             ws.send({
                 type: 'Announcement',
-                msg: `You left the room ${data.roomid}`
+                left: true,
+                msg: `You left the room ${data.roomid} ${timeout=== true && 'due to timeout'}`
             });
             return;
         }
-        console.log('this')
+        console.log('this', ws)
 
         if (room.length > 1) {
             let users = users_in_rooms.get(data.roomid);
@@ -26,13 +26,13 @@ module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, 
 
             let leavemsg = {
                 type: 'Announcement',
-                left: true,
+                leftroom: true,
                 name: data.name,
-                msg: `${data.name} left the room `
+                msg: `${data.name} left the room ${timeout=== true && 'due to timeout'}`
             };
 
             sendtoall(room, leavemsg);
-            console.log('then this')
+            console.log('then this', room)
 
 
             if (roomAdmin.has(data.roomid) && roomAdmin.get(data.roomid) === ws) {
@@ -49,7 +49,7 @@ module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, 
                     type: 'Announcement',
                     change: true,
                     newAdmin: users[randomadmin],
-                    msg: `${users[randomadmin]} is now the new Admin.`
+                    msg: `${users[randomadmin]} is now the new Admin.${timeout=== true && 'due to timeout'}`
                 }
                 sendtoall(room, msg);
 
@@ -61,7 +61,6 @@ module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, 
             rooms_id.delete(data.roomid);
             users_in_rooms.delete(data.roomid);
             await leavecall(data, users_in_videocall);
-            // connections.find(data.roomid) && connections.delete(data.roomid);
             let reqs = requesters.get(data.roomid);
             reqs.map((req) => {
                 let msg = {
@@ -80,8 +79,8 @@ module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, 
 
         ws.send({
             type: 'Announcement',
-            leftroom: true,
-            msg: `You left the room ${data.roomid}`
+            left: true,
+            msg: `You left the room ${data.roomid}${timeout=== true && 'due to timeout'}`
         });
 
 

@@ -5,24 +5,41 @@ import defaultimage from  '../assets/default.png'
 import styled from 'styled-components';
 import { IoVideocam,IoVideocamOff  } from "react-icons/io5";
 import { IoIosMic,IoIosMicOff } from "react-icons/io";
-import { CustomPoster } from '../components/videocall/Customstyles';
+// import { CustomPoster } from '../components/videocall/Customstyles';
 import { useSocket } from '../context/SocketProvider';
+import Loading from '../components/Loading';
 
 
 
 const CustomVideo =styled.video`
-    height: 50%;
-    width: 60%;
+    height: 100%;
+    width: 100%;
     border-radius: 18px;
+    background-color: #d1cece;
 `
 
-const VideoHolder = styled.div`
-  
-    width: inherit;
+
+ const CustomPoster = styled.div`
+    height: 100%;
+    width: 100%;
     display: flex;
-  flex-direction: column;
-    
+    align-items: center;
+    justify-content: center;
+    background-color: #d1cece;
+    border-radius: 20px;
+    div{
+        color: white;
+        height: 100px;
+        width: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        background-color: gray;
+        border-radius: 50%;
+    }
 `
+
 
 const VideoOption = styled.div`
     position: absolute;
@@ -97,7 +114,6 @@ const CustomJoin = styled.div`
 
 const WaitingRoom = styled.div`
   position: relative;
-  border: 2px solid black;
   height: 100vh;
   width: 50vw;
   display: flex;
@@ -105,9 +121,16 @@ const WaitingRoom = styled.div`
   justify-content: center;
 `
 
+const Videoholder = styled.div`
+ height: 50%;
+    width: 60%;
+    position: relative;
+`
+
 const Waitingroom = () => {
 
-    const { goback , Mediacontroller , media , joincall  ,change_videocall_status , myvideo , myaudio } = useVideo();
+    const { goback , Mediacontroller ,medialoading, media , joincall } = useVideo();
+    const {changestatus, myvideo , myaudio} =useSocket()
     const videoref = useRef(null);
     const audioref = useRef(null);
     const username = sessionStorage.getItem('name');
@@ -138,7 +161,7 @@ const Waitingroom = () => {
     }
     },[audioref,myaudio]);
    
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
 
     const backtochat =()=>{
@@ -147,20 +170,20 @@ const Waitingroom = () => {
         if(videoref.current){
             videoref.current.srcObject = null;
         }
-        change_videocall_status('not_in_call')
-        // navigate('/chat')
+        console.log('is this runnerd')
+        changestatus('not_in_call')
 
     }
 
-      
+      // console.log('hi waiting mf')
   
 
   return (
     <WaitingRoom>
    
-    <VideoHolder>
-      
-        {
+      <Videoholder>
+
+      {
             media.current.cam ?
             <CustomVideo ref={videoref} poster={defaultimage} />
             :
@@ -172,7 +195,7 @@ const Waitingroom = () => {
             <audio ref={audioref}/>
     
       <VideoOption
-      pos ={{bottom:`20px`,right:`50%`}}
+      pos ={{bottom:`20px`,right:`53%`}}
       >
         {
             media.current.cam ?
@@ -189,7 +212,7 @@ const Waitingroom = () => {
        
       </VideoOption>
       <VideoOption
-            pos ={{bottom:`20px`,right:`40%`}}
+            pos ={{bottom:`20px`,right:`35%`}}
       
       >
         {
@@ -205,27 +228,40 @@ const Waitingroom = () => {
             />
         }
       </VideoOption>
+
+      </Videoholder>
+       
     <Join>
       <p>Ready to join ?</p>
       <div>
-      <CustomJoin color='#009dff' onClick={()=>{
-        joincall()
-        change_videocall_status('in_video_call')
-        // navigate('/videochat')
-      }}>
-        join now
-    </CustomJoin>
-    <CustomJoin color='#949494'
-    onClick={()=>backtochat()}
-    >
-      cancel
-    </CustomJoin>
+        {
+          medialoading ? 
+
+          <Loading/>
+
+          :
+          <>
+          <CustomJoin color='#009dff' onClick={()=>{
+          joincall()
+          changestatus('in_video_call')
+          // navigate('/videochat')
+        }}>
+          join now
+      </CustomJoin>
+      <CustomJoin color='#949494'
+      onClick={()=>backtochat()}
+      >
+        cancel
+      </CustomJoin>
+        </>
+      
+        }
+    
       </div>
     
 
     </Join>
     
-    </VideoHolder>
     </WaitingRoom>
   )
 }

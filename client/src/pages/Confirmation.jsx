@@ -46,20 +46,20 @@ const Styledtext = styled.p`
 
 const Confirmation = () => {
 
-  const {entry,wanttorejoin,errmsg,rejoinmsg} = useSocket()
+  const {room_status,wanttorejoin,errmsg,rejoinmsg,leavecall} = useSocket()
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (entry === true) {
+    if (room_status === "in room" && !leavecall) {
       navigate("/chat");
     }
-  }, [entry]);
+  }, [room_status,leavecall]);
   return (
     <Rejoinpage>
         {
-        errmsg.map((em)=>(
+        errmsg.map((em,index)=>(
           
-          <CustomErrbox msg={em.msg}/>
+          <CustomErrbox key={index} msg={em.msg}/>
         ))
       }
       <Reqprocessing />

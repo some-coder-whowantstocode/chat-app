@@ -88,7 +88,7 @@ const io = socketIo(server);
 try {
 
     io.on('connection', async(socket) => {
-        let active = true;
+
 
         const jwtToken = socket.handshake.query.token;
         try {
@@ -119,7 +119,7 @@ try {
                 active = true;
 
                 try {
-                    console.log(data)
+                    // console.log(data)
 
                     switch (data.type) {
                         case 'create':
@@ -139,7 +139,7 @@ try {
                             break;
 
                         case 'leave':
-                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall);
+                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, false);
                             break;
 
                         case 'cancel':
@@ -156,13 +156,28 @@ try {
                             break;
 
                         case 'videocall':
+
                             if (data.enter) {
                                 joincall(data, socket, users_in_videocall);
                             }
                             if (data.command === 'leavecall') {
                                 leavecall(data, users_in_videocall);
                             } else {
-                                forward(data, users_in_videocall);
+                                if (data.command === 'media') {
+                                    console.log(data)
+                                    let list = users_in_videocall.get(data.roomid);
+                                    list.map(({ name, ws }) => {
+                                            if (name !== data.from) {
+                                                console.log(name)
+                                                ws.send(data)
+                                            }
+
+                                        })
+                                        // sendtoall(, data)
+                                } else {
+                                    forward(data, users_in_videocall);
+
+                                }
                             }
                             break;
 
@@ -183,9 +198,6 @@ try {
 
 
 
-            socket.on('ping', () => {
-                active = true;
-            });
 
             socket.on('disconnecting', (err) => {
                 socket.send({
@@ -205,32 +217,36 @@ try {
             socket.on('disconnect', () => {
                 console.log('user disconnected');
             });
+            let active;
 
-            let interid = setInterval(async() => {
+            socket.on('ping', () => {
+                active = true;
+                console.log(active)
+            });
+            let interid;
+
+            interid = setInterval(async() => {
+                console.log("check : ", active)
+
                 if (active) {
                     active = false;
+
                 } else {
                     if (connections.has(socket.id)) {
                         const data = connections.get(socket.id);
                         if (data.requester) {
                             cancelrequest(data, socket, roomAdmin, requesters, connections)
                         } else {
-                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall)
+                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, true)
                         }
-                        await socket.send({
-                            type: 'Alert',
-                            action_required: true,
-                            msg: `server disconnected`
-                        })
-                        console.log('fuck')
-                        connections.delete(socket.id);
-                        socket.disconnect();
-                        setTimeout(() => {
-                            clearInterval(interid)
-                        }, (1000 * 2));
+
                     }
+                    setTimeout(() => {
+                        clearInterval(interid)
+                    }, (1));
                 }
-            }, 1000 * 100);
+
+            }, 1000 * 15);
 
         } catch (err) {
             const stackLines = err.stack.split('\n');

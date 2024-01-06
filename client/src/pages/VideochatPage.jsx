@@ -5,6 +5,7 @@ import { IoVideocam , IoVideocamOff } from "react-icons/io5";
 import { IoMdMic , IoIosMicOff } from "react-icons/io";
 import styled from 'styled-components';
 import RemoteVideos from '../components/videocall/RemoteVideos';
+import { useSocket } from '../context/SocketProvider';
 
 const Page = styled.div`
 width: 50vw;
@@ -114,14 +115,14 @@ const CustomPoster = styled.div`
 
 
 const VideochatPage = () => {
-  const {Mediacontroller,media,LeaveCall,myvideo,myaudio,remoteVideo} = useVideo();
+  const {Mediacontroller,media,gonnaleave} = useVideo();
+  const {myvideo,myaudio} = useSocket();
   const username = sessionStorage.getItem('name')
   const videoref = useRef(null);
   const audioref = useRef(null);
   const posterref = useRef(null);
   const lastpos = useRef({x:innerWidth,y:innerHeight});
   const Drag = useRef(false);
-  const [toggle,change] = useState(media.current.cam);
 
 
 console.log('why are you rerenderning')
@@ -141,7 +142,7 @@ useEffect(()=>{
     videoref.current = null;
     audioref.current = null;
     posterref.current = null;
-    LeaveCall();
+    gonnaleave(true);
 }
 
 
@@ -224,7 +225,7 @@ useEffect(()=>{
  
  
   
-},[videoref,toggle,myvideo])
+},[videoref,myvideo])
 
 
 
@@ -255,7 +256,7 @@ useEffect(()=>{
   }
  
   
-},[posterref,toggle])
+},[posterref])
 
 
  
@@ -277,14 +278,14 @@ useEffect(()=>{
           media.current.cam ?
           <Cam 
           onClick={()=>{
-            change(!toggle);
+            // change(!toggle);
             Mediacontroller("remove_video")
           }}
           />
           :
           <Camoff
           onClick={()=>{
-            change(!toggle);
+            // change(!toggle);
             Mediacontroller("add_video")
         }}
           />
@@ -305,7 +306,7 @@ useEffect(()=>{
 
       </Controls>
       {
-        <RemoteVideos remoteVideo ={remoteVideo}/>
+        <RemoteVideos/>
 
       }
     </Page>

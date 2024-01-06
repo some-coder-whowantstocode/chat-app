@@ -41,10 +41,10 @@ export const getAnswer = async(peer, offer) => {
 export const closePeer = async(peer) => {
     if (peer) {
         try {
-            const senders = peer.getSenders();
-            senders.forEach((s) => {
-                peer.removeTrack(s);
-            })
+            // const senders = peer.getSenders();
+            // senders.forEach((s) => {
+            //     peer.removeTrack(s);
+            // })
             await peer.close();
         } catch (err) {
             console.log(err);

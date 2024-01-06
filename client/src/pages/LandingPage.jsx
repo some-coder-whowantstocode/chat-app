@@ -22,9 +22,8 @@ const LandingPage = () => {
 
   const navigate = useNavigate();
 
-  const { wanttojoin,errmsg,handleconnection,wanttocancel , wanttocreate, creation, entry, state } = useSocket();
+  const { wanttojoin , errmsg , handleconnection , wanttocancel , wanttocreate , state , room_status } = useSocket();
 
- 
   useEffect(()=>{
     if (state == "Authfailed" || state == "ConnectionLost") {
       handleconnection()
@@ -79,10 +78,10 @@ const LandingPage = () => {
   }, [pageref]);
 
   useEffect(() => {
-    if (creation === true || entry === true) {
+    if (room_status === 'in room') {
       navigate("/chat");
     }
-  }, [creation,entry,navigate]);
+  }, [room_status,navigate]);
 
   useEffect(() => {
     const handler = () => {

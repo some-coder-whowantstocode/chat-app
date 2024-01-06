@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../context/SocketProvider";
 import RequestBox from "../components/Chatpage/RequestBox";
 import Chat from "../components/Chatpage/Chat";
 import notification from "../assets/notification.wav";
-import { MdCall , MdCallEnd } from "react-icons/md";
+import { MdCall  } from "react-icons/md";
 import { FaPowerOff } from "react-icons/fa";
 import {
   Option,
@@ -13,7 +13,8 @@ import {
   CustomInput,
   Chatroom,
   Room,
-  Messagebox
+  Messagebox,
+  Options
 } from "../components/Chatpage/customstyles";
 import Loading from "../components/Loading";
 import { useNavigate } from "react-router-dom";
@@ -23,9 +24,9 @@ import { useVideo } from "../context/Videochatcontroller";
 import VideochatPage from "./VideochatPage";
 
 const Chatpage = () => {
-  const { socket, state, wanttoleave, Admin, creation, entry , members } =
+  const { socket, state,room_status, setleave, Admin , members,changestatus,videocallstatus } =
     useSocket();
-  const { videocallstatus , change_videocall_status , LeaveCall } = useVideo();
+  const { gonnaleave } = useVideo();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
@@ -43,11 +44,14 @@ const Chatpage = () => {
   useEffect(() => {
     setname(sessionStorage.getItem("name"));
     setroomid(sessionStorage.getItem("room"));
-    setmem(members);
-
+    setmem([...members]);
     return ()=>{
     }
   }, []);
+
+  useEffect(()=>{
+    console.log(mem)
+  },[mem])
   const navigate = useNavigate();
 
 
@@ -86,10 +90,13 @@ const Chatpage = () => {
           if(jsondata.joined){
             setmem(prevdata=>[...prevdata,jsondata.name]);
           }
-          if(jsondata.left){
-  
-            setmem(prevdata=> prevdata.filter((d)=>d !== jsondata.name));
-            
+          if(jsondata.leftroom){
+            console.log('leftroom',jsondata)
+            let copymems = [...mem];
+            console.log(copymems,mem)
+            copymems = copymems.filter((m)=>jsondata.name !== m)
+            console.log(copymems)
+            setmem(copymems)
           }
           setmsgs((prevmsg) => [...prevmsg, jsondata]);
         
@@ -97,7 +104,7 @@ const Chatpage = () => {
         break;
 
         case 'Alert':
-          if(jsondata.action_required) wanttoleave(true);
+          if(jsondata.action_required) setleave(true);
           navigate("/rejoin");
         break;
 
@@ -112,19 +119,22 @@ const Chatpage = () => {
         socket.removeEventListener("message", handleMessage);
       };
     }
-  }, [socket,notificationsound,navigate,wanttoleave]);
+  }, [socket,notificationsound,navigate,setleave,mem]);
 
 
   useEffect(() => {
-    if (creation !== true && entry !== true) {
+    if (room_status=== "not in room") {
       navigate("/landingpage");
     }
-  }, [creation, entry,navigate]);
+  }, [navigate,room_status]);
 
   useEffect(() => {
     const handler = async () => {
-      await LeaveCall();
-      await wanttoleave(false);
+      console.log('hmm')
+      await gonnaleave(true);
+      console.log('leavecall')
+      await setleave(true);
+      console.log('leaveroom')
 
     };
 
@@ -168,11 +178,12 @@ const Chatpage = () => {
       
       <Chathead>{roomid}
 
-      <Option pos={{top:0,right:40}}colorschema={{col:'black',bac: 'green'}}
+      <Options>
+      <Option colorschema={{col:'black',bac: 'green'}}
       
       onClick={async () => {
         if(videocallstatus === "not_in_call"){
-          change_videocall_status('preparing_to_join');
+          changestatus('preparing_to_join');
 
         }
       
@@ -183,17 +194,20 @@ const Chatpage = () => {
         <MdCall/>
     </Option>
       
-      <Option pos={{top:0,right:10}} colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
+      <Option colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
       
         onClick={async () => {
-          await LeaveCall();
-          await wanttoleave(true);
+          console.log('hmm')
+          await gonnaleave(true);
+          console.log('leavecall')
+          await setleave(true);
+          console.log('leaveroom')
           navigate("/rejoin");
         }}
       >
         <FaPowerOff/>
       </Option>
-      
+      </Options>
       </Chathead>
       <Loading />
 
