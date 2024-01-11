@@ -18,9 +18,12 @@ const roomAdmin = new Map(); //<id,ws>
 const requesters = new Map(); //<id,[{name,ws},{name,ws}....]>
 /*to handle users requesting to join room */
 // const blocklist = new Map(); //<id,[ws,ws,ws,ws]>
-const connections = new Map(); //<ws,{roomid,name}>
+const connections = new Map(); //<ws.id,{roomid,name,key,active,ws}>
 const users_in_videocall = new Map(); //<id,[{name,ws},{name,ws}]>
 /*to handle all the users for video call */
+const room_key = new Map(); //<id,key>
+let interval;
+let offduty = true;
 
 const {
     sendtoall,
@@ -123,15 +126,19 @@ try {
 
                     switch (data.type) {
                         case 'create':
-                            Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, connections, users_in_videocall);
+
+                            Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, room_key, connections);
+                            if (offduty) {
+                                inspector();
+                            }
                             break;
 
                         case 'join':
-                            joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, connections);
+                            joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, connections, room_key);
                             break;
 
                         case 'response':
-                            permission(data, rooms_id, users_in_rooms, requesters, connections);
+                            permission(data, rooms_id, users_in_rooms, requesters, connections, room_key);
                             socket.emit('message', {
                                 type: 'removereq',
                                 name: data.name
@@ -139,15 +146,11 @@ try {
                             break;
 
                         case 'leave':
-                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, false);
+                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, false, room_key, connections);
                             break;
 
                         case 'cancel':
                             cancelrequest(data, socket, roomAdmin, requesters, connections);
-                            break;
-
-                        case 'rejoin':
-                            rejoin(data, rooms_id, users_in_rooms);
                             break;
 
                         case 'kickout':
@@ -166,7 +169,7 @@ try {
                                 if (data.command === 'media') {
                                     console.log(data)
                                     let list = users_in_videocall.get(data.roomid);
-                                    list.map(({ name, ws }) => {
+                                    list && list.map(({ name, ws }) => {
                                             if (name !== data.from) {
                                                 console.log(name)
                                                 ws.send(data)
@@ -217,36 +220,28 @@ try {
             socket.on('disconnect', () => {
                 console.log('user disconnected');
             });
-            let active;
 
-            socket.on('ping', () => {
-                active = true;
-                console.log(active)
-            });
-            let interid;
+            socket.on('ping', ({ key, roomid }) => {
+                if (roomid && key) {
+                    const roomkey = room_key.get(roomid);
+                    console.log(roomid, key, socket.id)
 
-            interid = setInterval(async() => {
-                console.log("check : ", active)
-
-                if (active) {
-                    active = false;
-
-                } else {
-                    if (connections.has(socket.id)) {
-                        const data = connections.get(socket.id);
-                        if (data.requester) {
-                            cancelrequest(data, socket, roomAdmin, requesters, connections)
-                        } else {
-                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, true)
+                    if (roomkey === key) {
+                        let conn = connections.get(socket.id);
+                        if (conn) {
+                            conn.active = true;
+                            connections.set(socket.id, conn);
                         }
+                        console.log(connections.get(socket.id).active);
+
 
                     }
-                    setTimeout(() => {
-                        clearInterval(interid)
-                    }, (1));
                 }
 
-            }, 1000 * 15);
+
+                // console.log(active)
+            });
+
 
         } catch (err) {
             const stackLines = err.stack.split('\n');
@@ -278,6 +273,32 @@ try {
 }
 
 server.listen(PORT, () => console.log(`server is listening at ${PORT}`))
+
+
+//check for active or not active connections 
+const inspector = () => {
+    interval = setInterval(() => {
+        connections.forEach((values, key) => {
+            if (values.active === true) {
+                values.active = false;
+
+            } else {
+                const { ws } = values
+                leaveroom(values, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, false, room_key, connections)
+                connections.delete(key);
+
+            }
+        })
+
+        console.log(connections)
+        if (connections.size === 0) {
+            offduty = true;
+            clearInterval(interval)
+        }
+    }, [1000 * 60]);
+}
+
+
 
 
 // some isssue with ping pong

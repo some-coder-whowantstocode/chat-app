@@ -36,8 +36,9 @@ export function SocketProvider({ children }) {
   const [myaudio,addaudio] = useState();
   const [myvideo,addvideo] = useState();
   const [leavecall,setleave] = useState(false);
+  const [ leaving , gonnaleave] = useState(false);
   // const [pc,addpc] = useState([]);//[{name of the other user,peer}]
-  const pc = useRef([]);
+  const pc = useRef([]);//<name,peer,Id,incall>
 
   const setmyaudio =(data)=>{
     addaudio(data);
@@ -77,6 +78,7 @@ export function SocketProvider({ children }) {
          }
         
        }
+       console.log(pc.current)
     }catch(err){
       console.log(err);
     }
@@ -192,11 +194,17 @@ console.log(err);
      joinRoom(socket,name,roomid);
    }
 
-   const wanttorejoin =async()=>{
+   const wanttorejoin =async(rejoin)=>{
     set_room_status('waiting');
     setwaiting(true);
     let name = sessionStorage.getItem('name');
     let roomid = sessionStorage.getItem('room');
+    console.log(rejoin)
+    if(rejoin){
+    let key = sessionStorage.getItem('roomkey');
+    socket && socket.send({type:'join',name,roomid,rejoin,key});
+    return ;
+    }
   
     joinRoom(socket,name,roomid);
   }
@@ -219,6 +227,9 @@ useEffect(()=>{
            set_room_status('not in room');
            setleave(false);
            console.log('setroom', 'not in room')
+          //  sessionStorage.removeItem('name');
+          //  sessionStorage.removeItem('room');
+          //  sessionStorage.removeItem('roomkey');
         })
         .catch((err)=>{
           throw Error(err);
@@ -287,9 +298,9 @@ useEffect(()=>{
           case CHAT_METHODS.CREATE:
               sessionStorage.setItem('name',jsondata.name);
               sessionStorage.setItem('room',jsondata.roomid);
+              sessionStorage.setItem('roomkey',jsondata.key);
               setadminname(jsondata.name);
               set_room_status('in room');
-              console.log('in room')
               setmembers([jsondata.name]);
               setAdmin(true);
             
@@ -299,10 +310,10 @@ useEffect(()=>{
            
               if(jsondata.permission === 'Acc')
               {
-              let name = jsondata.name;
-              let room = jsondata.roomid;
+                const {name,roomid,key} = jsondata;
               sessionStorage.setItem('name',name);
-              sessionStorage.setItem('room',room);
+              sessionStorage.setItem('room',roomid);
+              sessionStorage.setItem('roomkey',key)
               set_room_status('in room');
                   setwaiting(false);
                   set_room_status('in room');
@@ -362,7 +373,7 @@ useEffect(()=>{
               }
               /* remove user if left the room */
               if(jsondata.left){
-                console.log('left')
+                  gonnaleave(true)
                   setrem('want to rejoin room.');
                   set_room_status('not in room');
                  setAdmin(false);
@@ -412,8 +423,13 @@ useEffect(()=>{
       if (socket) {
        
         timeout = setInterval(() => {
-          socket.emit('ping');
-          console.log('ping')
+          const key = sessionStorage.getItem('roomkey');
+          const roomid = sessionStorage.getItem('room');
+          if(room_status === 'in room'){
+            socket.emit('ping',{key,roomid});
+          }
+          
+         
         }, 1000 * 5);
   
       }
@@ -428,7 +444,7 @@ useEffect(()=>{
     }
     
 
-},[socket,notificationsound])
+},[socket,notificationsound,room_status,videocallstatus])
 
 
 const handleconnection =()=>{
@@ -478,7 +494,9 @@ const reconnect =async()=>{
         errmsg,
         pc:pc.current,
         setpc,
-        removepc
+        removepc,
+        leaving,
+        gonnaleave
         }
         }>
       {children}

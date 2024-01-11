@@ -27,12 +27,10 @@ const leaveRoom = async(socket,temp)=>{
          await socket.send({
               type: 'leave',
               name: sessionStorage.getItem('name'),
-              roomid: sessionStorage.getItem('room')
+              roomid: sessionStorage.getItem('room'),
+              key:sessionStorage.getItem('roomkey')
           });
-          if(!temp){
-            sessionStorage.removeItem('name');
-            sessionStorage.removeItem('room');
-          }
+      
           
       } catch (err) {
           console.log(err);

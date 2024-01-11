@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useVideo } from '../../context/Videochatcontroller'
+import Remotevideo from '../Remotevideo'
 
 const Videoholder =styled.div`
   height: 100vh;
@@ -14,26 +15,6 @@ const Videoholder =styled.div`
   grid-gap: 10px;
 `
 
-const Remoteuser = styled.video`
-  max-height: 100vh;
-  width: 100%;
-  border: 2px solid black;
-`
-
-const Remoteuser_poster = styled.div`
-  background-color: gray;
-  max-height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  div{
-    background-color: black;
-    color: white;
-    border-radius: 50%;
-    padding: 10px;
-  }
-`
 
 const RemoteVideos = () => {
 
@@ -53,31 +34,8 @@ const RemoteVideos = () => {
       remoteVideo.map((r,index)=> {
           console.log(r)
           return (
+           <Remotevideo key={index} r={r}/>
            
-            r.cam ?
-            <Remoteuser key={index}
-              ref={(video)=>{
-                try{
-                  if (video) {
-                   
-                  
-                    video.srcObject = r.stream
-                    video.autoPlay = true
-                    video.onloadedmetadata = () => {
-                      video.play();
-                    };
-                  }
-                }catch(err){
-                  console.log('error while using remotevideo : ',err)
-                }
-              }}
-            />
-            :
-            <Remoteuser_poster> 
-            <div>
-            {r.name.substr(0,2)}
-            </div>
-            </Remoteuser_poster>
           )
         })
       }

@@ -16,38 +16,128 @@ export function Videochatcontroller({ children }) {
       NEGO_DONE: 'negodone',
       ICE:'icecandidate',
       MEDIA:'media',
-      LEFT:'left'
+      LEFT:'leftcall',
+      LEAVE:'leavecall'
     }
 
-    // const REDUCER_ACTIONS = {
-    //   CREATE:"create",
-    //   UPDATE:"update",
-    //   DELETE:"delete"
-    // }
+    const REDUCER_ACTIONS = {
+      CREATE:"create",
+      UPDATETRACK:"update",
+      UPDATEVISIBILITY:"updatemedia",
+      DELETE:"delete",
+      CLEAR:"clear"
+    }
+
+
+
     
-    // const reducer = (state, action) => {
-    //   switch (action.type) {
-    //     case REDUCER_ACTIONS.CREATE:
-        
-    //     break;
+    const reducer = (state, action) => {
+      console.log(action)
+      switch (action.type) {
+        case REDUCER_ACTIONS.CREATE:
+          state.push(action.payload.stream)
+          console.log(state)
+          return state
 
-    //     case REDUCER_ACTIONS.UPDATE:
-        
-    //     break;
 
-    //     case REDUCER_ACTIONS.DELETE:
+        case REDUCER_ACTIONS.UPDATETRACK:
+          console.log(state)
+          {
+            const {p,newstream} = action.payload
+            console.log(state)
+            let allstreams = [...state];
+            let istheone = allstreams.find((a)=>a.name === p.name && a.Id === p.Id);
+            if(istheone)
+            { if (istheone.stream !== null) {
+              let incomingTracks = newstream.getTracks();
+  
+                let existingTracks = istheone.stream.getTracks();
+                console.log('existing ones',existingTracks)
+                
+                let audioexists=false, videoexists=false;
+                for(let i=0;i<incomingTracks.length;i++){
+                  if(incomingTracks[i].kind === 'audio')
+                  {
+                     audioexists = true;
+                    }
+                  if(incomingTracks[i].kind === 'video')
+                  {
+                     videoexists = true;
+                    }
+                }
+              for(let i =0;i<existingTracks.length;i++){
+                if( (existingTracks[i].kind === 'audio' && audioexists) || (existingTracks[i].kind === 'video' && videoexists) ) istheone.stream.removeTrack(existingTracks[i])
+              }
         
-    //     break;
+                istheone.stream = new MediaStream([ ...incomingTracks , ...existingTracks]);
+  
+            } else {
+                istheone.stream = newstream;
+            }
+            allstreams.forEach((copy,index) => {
+                if (copy.name === istheone.name) allstreams[index].stream = istheone.stream;
+            });
+            console.log(state)
+            return allstreams;}
+        
+          }
+      break;
 
-    //     default:
-    //       return state;
-    //   }
-    // };
+        case REDUCER_ACTIONS.UPDATEVISIBILITY:
+          {
+            let newstate = [...state];
+
+            const {data} = action.payload
+            for(let i=0;i<newstate.length;i++){
+              console.log(newstate[i].name,data.from)
+              if(newstate[i].name === data.from ){
+                newstate[i].mic = data.audio;
+                newstate[i].cam = data.video;
+              }
+            }
+            return newstate;
+          }
+
+
+        case REDUCER_ACTIONS.DELETE:
+        {
+          const {name,Id} = action.payload;
+          if(name && state.length > 0 && Id){
+            let copy = [...state];
+            let index = -1 ;
+            for(let i = 0;i<copy.length;i++){
+             if(state[i].name === name && state[i].Id ===Id){
+               index = i; 
+               break;
+             }
+            }
+
+            console.log(state)
+            let newstate = [...state];
+            newstate.splice(index,1);
+            return newstate;
+        }
+      }
+        break;
+
+        case REDUCER_ACTIONS.CLEAR:
+        {
+          return Array.from([]);
+        }
+
+        default:
+          return state;
+      }
+
+      console.log(state)
+    };
+
+  
   
     const [icecandidates,setice] = useState([]);
     const media = useRef({mic:true,cam:true});
-    const [remoteVideo,setremote] = useState([]); // [{name , stream,cam,mic}]
-    // const [remoteVideo,setremote] = useReducer(reducer,[]); // [{name , stream,cam,mic}]
+    // const [remoteVideo,setremote] = useState([]); // [{name , stream,cam,mic}]
+    const [remoteVideo,setremote] = useReducer(reducer,[]); // [{name , stream,cam,mic}]
     const {
       socket,
       videocallstatus,
@@ -58,54 +148,25 @@ export function Videochatcontroller({ children }) {
       setmyvideo,
       pc,
       setpc,
-      removepc
+      removepc,
+      gonnaleave,
+      leaving
     } = useSocket();
-    const [ leaving , gonnaleave] = useState(false);
+   
     const [medialoading,setmediaload] = useState(false);
     const remote_stream_list = useRef(new Map());//{username,streamId}
     const [joining_list,setlist] = useState([]);
     const [answer_list,setans] = useState([]);
     // const [remote_media_status,change_status] = useState([]);/* {name,cam,mic} */
 
-    useEffect(()=>{
-      console.log('answer_listttttttttttttttttttttttttttttttttttttttttttttt',answer_list)
-    },[answer_list])
-
-    const removemedia =(name,Id)=>{
-      try{
-        if(name && remoteVideo.length > 0 && Id){
-          let copy = [...remoteVideo];
-          let index = -1 ;
-          console.log('hi removemedia here')
-          for(let i = 0;i<copy.length;i++){
-           if(copy[i].name === name && copy[i].Id ===Id){
-             index = i; 
-             break;
-           }
-          }
-          if(index != -1){
-            console.log(copy)
-            copy.splice(index,1);
-            setremote(copy);
-            console.log(copy)
-          }       
-
-          remote_stream_list.current.delete(name)
-        }
-      }catch(err){
-        console.log(err);
-      }
-     
-      
-    }
 
     const Getmedia =useCallback(()=>{
       const {cam,mic} = media.current;
       setmediaload(true);
       return new Promise((resolve,reject)=>{
         let audioTracks = myaudio ? myaudio.getTracks() : [];
-let videoTracks = myvideo ? myvideo.getTracks() : [];
-let copy = new MediaStream([...audioTracks, ...videoTracks]);
+        let videoTracks = myvideo ? myvideo.getTracks() : [];
+        let copy = new MediaStream([...audioTracks, ...videoTracks]);
 
         navigator.mediaDevices.getUserMedia({audio:mic,video:cam})
         .then((stream)=>{
@@ -146,18 +207,14 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
       return new Promise((resolve,reject)=>{
         getmystream()
         .then((stream)=>{
-          //console.log(stream , "got from mystream");
           let tracks = stream.getTracks()
           tracks = tracks.map(async(track)=>{
            const senders = peer.getSenders();
            const senderexists = senders.find((sender)=>sender.track === track);
-           //console.log(peer,senderexists,'exists or not')
            if(!senderexists){
-             await peer.addTrack(track,stream) 
-             //console.log(peer.getSenders())
+             await peer.addTrack(track,stream);
             }else{
               await peer.removeTrack(senderexists);
-              // await senderexists.replaceTrack(track);
               await peer.addTrack(track,stream)
             } 
         })
@@ -191,12 +248,14 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
           return new Promise((resolve,reject)=>{
             try{
               let peer = getPeer();
+              const Id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+           
              addTrackstoPeer(peer)
              .then(()=>{
               getOffer(peer)
               .then((offer)=>{
 
-                const Id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+               
 
                 socket.send({
                   roomid:sessionStorage.getItem('room'),
@@ -211,7 +270,7 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
                  })
                  
                
-                setpc({name:data.name,peer:peer,Id});
+               
                   let newremotestream = {
                     name:data.name,
                     stream:null,
@@ -219,9 +278,8 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
                     mic:false,
                     Id
                   }
-                  // setremote(prevdata=>[ ...prevdata , newremotestream ]);
-                  // setremote()
-                  
+                  setremote({type:REDUCER_ACTIONS.CREATE,payload:{stream:newremotestream}})
+              setpc({name:data.name,peer:peer,Id,incall:true})
                   resolve();
                  
               })
@@ -232,6 +290,8 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
             .catch((err)=>{
               reject(err);
             })
+            // .finally(()=>{
+            // })
                 
                
                
@@ -265,14 +325,27 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
         list = list.map(async(data)=>{
           return new Promise((resolve,reject)=>{
             try{
+           
               let peer = getPeer();
+              const {Id} = data;
+
+              let newremotestream = {
+                name:data.from,
+                stream:null,
+                cam:data.video,
+                mic:data.audio,
+                Id
+              } 
+              setremote({type:REDUCER_ACTIONS.CREATE,payload:{stream:newremotestream}})
+              console.log()
+                  setpc({name:data.from,peer:peer,Id,incall:true});
               addTrackstoPeer(peer)
               .then(()=>{
-
+              
                 getAnswer(peer,data.des)
                 .then((ans)=>{
-
-                  const {Id} = data;
+                 
+                 
     
                   socket.send({
                     roomid:sessionStorage.getItem('room'),
@@ -285,19 +358,13 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
                    audio:media.current.mic,
                    Id
                    })   
-                  //  const Id = Date.now().toString(36) + Math.random().toString(36).slice(2);
-                  //  change_status({cam:data.video,mic:data.audio});
+                  
      
-                   let newremotestream = {
-                    name:data.from,
-                    stream:null,
-                    cam:data.video,
-                    mic:data.audio,
-                    Id
-                  }
+                 
      
-                  setremote(prevdata=>[ ...prevdata , newremotestream ]);6
-                  setpc({name:data.from,peer:peer,Id});
+                  // setremote(prevdata=>[ ...prevdata , newremotestream ]);6
+               
+                 
                resolve();
                 })
                 .catch((err)=>{
@@ -309,7 +376,7 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
               .catch((err)=>{
                 reject(err);
               })
-             
+      
               //console.log('got send fuck')
               }catch(err){
                  console.log("error while sending answer",err);
@@ -337,10 +404,10 @@ let copy = new MediaStream([...audioTracks, ...videoTracks]);
       Mediacleanup(myvideo);
     }
 
-    useEffect(()=>{
-      console.log(remoteVideo)
+    // useEffect(()=>{
+    //   console.log(remoteVideo)
       
-    },[remoteVideo]);
+    // },[remoteVideo]);
 
     const getmystream =useCallback(()=>{
       return new Promise((resolve,reject)=>{
@@ -418,7 +485,7 @@ const Mediacontroller =useCallback(async(use)=>{
             let peers = [...pc];
           switch(use){
             case "add_video":
-              navigator.mediaDevices.getUserMedia({audio:false,video:true})
+              navigator.mediaDevices.getUserMedia({video:true})
               .then(async(stream)=>{
                 let tracks = stream.getTracks();
                 
@@ -460,7 +527,8 @@ const Mediacontroller =useCallback(async(use)=>{
                       roomid:sessionStorage.getItem('room'),
                       from:sessionStorage.getItem('name'),
                       command:CALL_ACTIONS.MEDIA,
-                      video:true
+                      video:true,
+                      audio:media.current.mic
                     })
 
                     //console.log('true video')
@@ -488,7 +556,7 @@ const Mediacontroller =useCallback(async(use)=>{
   
             case "add_audio":
               
-              navigator.mediaDevices.getUserMedia({audio:true,video:false})
+              navigator.mediaDevices.getUserMedia({audio:true})
               .then(async(stream)=>{
                 let tracks = stream.getTracks();
                 setmyaudio(new MediaStream([...tracks]))
@@ -515,12 +583,14 @@ const Mediacontroller =useCallback(async(use)=>{
                 })
                 Promise.all(peers)
                 .then(()=>{
+
                   socket.send({
                     type:'videocall',
                     roomid:sessionStorage.getItem('room'),
                     from:sessionStorage.getItem('name'),
                     command:CALL_ACTIONS.MEDIA,
-                    audio:true
+                    audio:true,
+                    video:media.current.cam
                   })
                   resolve(true)           
                 })
@@ -585,7 +655,8 @@ const Mediacontroller =useCallback(async(use)=>{
                   roomid:sessionStorage.getItem('room'),
                   from:sessionStorage.getItem('name'),
                   command:CALL_ACTIONS.MEDIA,
-                  video:false
+                  video:false,
+                  audio:media.current.mic
                 })
   
                 resolve(true)           
@@ -646,7 +717,8 @@ const Mediacontroller =useCallback(async(use)=>{
                       roomid:sessionStorage.getItem('room'),
                       from:sessionStorage.getItem('name'),
                       command:CALL_ACTIONS.MEDIA,
-                      audio:false
+                      audio:false,
+                      video:media.current.cam
                     })
                     
                     resolve(true)           
@@ -666,12 +738,8 @@ const Mediacontroller =useCallback(async(use)=>{
            })
 
   }        
-      },[ myvideo , myaudio , pc , socket ])
+      },[ myvideo , myaudio , pc , socket ,media])
 
-
-      // useEffect(()=>{
-      //   //console.log(remote_media_status)
-      // },[remote_media_status])
 
 
       
@@ -686,33 +754,6 @@ const Mediacontroller =useCallback(async(use)=>{
 
 /*Leave video call */
 
-useEffect(()=>{
-
-  if(leaving === true){
-    console.log(leaving)
-    console.log('hmm why leave')
-      Mediacleanup(myvideo)
-      .then(()=>{
-        Mediacleanup(myaudio);
-      })
-      .then(()=>{
-        leavecall();
-      })
-      .then(()=>{
-        setremote([]);
-        changestatus('not_in_call');
-      })
-      .catch((err)=>{
-        console.log('error while leaving call : ',err);
-      })
-      .finally(()=>{
-    gonnaleave(false);
-      
-      })
-  }
-},[leaving,changestatus,myvideo,myaudio]);
-
-
 
 const leavecall = useCallback(()=>{
   if(socket && videocallstatus === "in_video_call" && leaving === true ){
@@ -726,7 +767,7 @@ const leavecall = useCallback(()=>{
   .then(()=>{
     socket.send({
       type:'videocall',
-      command:CALL_ACTIONS.MEDIA,
+      command:CALL_ACTIONS.LEAVE,
       name:sessionStorage.getItem('name'),
       roomid:sessionStorage.getItem('room')
     })
@@ -745,6 +786,36 @@ const leavecall = useCallback(()=>{
 
   }
  },[videocallstatus,socket,leaving,removepc,pc])
+
+
+useEffect(()=>{
+
+  if(leaving === true){
+    console.log(leaving)
+    console.log('hmm why leave')
+      Mediacleanup(myvideo)
+      .then(()=>{
+        Mediacleanup(myaudio);
+      })
+      .then(()=>{
+        leavecall();
+      })
+      .then(()=>{
+        setremote({type:REDUCER_ACTIONS.CLEAR});
+        console.log('removing media');
+        changestatus('not_in_call');
+      })
+      .catch((err)=>{
+        console.log('error while leaving call : ',err);
+      })
+      .finally(()=>{
+    gonnaleave(false);
+      
+      })
+  }
+},[leaving,changestatus,myvideo,myaudio,leavecall]);
+
+
 
 useEffect(()=>{
   console.log(leaving)
@@ -819,13 +890,15 @@ useEffect(()=>{
 
              case "disconnected":
             try{
-              console.log('disconnected');
-              await closePeer(p.peer);
-              console.log('closed peer')
-              removepc(false,p.name,p.Id);
-              console.log('removed peer')
-              removemedia(p.name,p.Id);
-              console.log('removed media')
+              console.log('disconnected')
+              if(p.incall === false){
+                console.log('hmm')
+                const {peer,name,Id} = p
+                await closePeer(peer);
+                removepc(false,name,Id);
+                setremote({type:REDUCER_ACTIONS.DELETE,payload:{name,Id}});
+              }
+            
              }catch(err){
                console.log(err);
              }
@@ -836,63 +909,17 @@ useEffect(()=>{
              break;
            }
          };
-   
-         p.peer.onsignalingstatechange =async(e)=>{
-          ////console.log(e.currentTarget.signalingState)
-        
-         }
-
-         p.peer.onremovetrack = (event) => {
-          //console.log('Remote track removed:', event.track);
-          // Handle the track removal here
-        };
-   
-         p.peer.onconnectionstatechange =async(e)=>{
-          //console.log(e.currentTarget.signalingState)
-          
-         
-         }
        
    
          p.peer.ontrack = async ({streams}) => {
-          let copystreams = [...remoteVideo];
-          let stream = streams[0];
-          console.log("got streams",stream.getTracks())
-          let istheone = copystreams.find((copy) => copy.name === p.name && copy.Id === p.Id);
-          
-          console.log(istheone,copystreams,p.Id,p.name)
-          if (istheone.stream !== null) {
-            let incomingTracks = stream.getTracks();
-
-              let existingTracks = istheone.stream.getTracks();
-              console.log('existing ones',existingTracks)
-              
-              let audioexists=false, videoexists=false;
-              for(let i=0;i<incomingTracks.length;i++){
-                if(incomingTracks[i].kind === 'audio')
-                {
-                   audioexists = true;
-                  }
-                if(incomingTracks[i].kind === 'video')
-                {
-                   videoexists = true;
-                  }
-              }
-            for(let i =0;i<existingTracks.length;i++){
-              if( (existingTracks[i].kind === 'audio' && audioexists) || (existingTracks[i].kind === 'video' && videoexists) ) istheone.stream.removeTrack(existingTracks[i])
-            }
-      
-              istheone.stream = new MediaStream([ ...incomingTracks , ...existingTracks]);
-
-          } else {
-              istheone.stream = stream;
-          }
-          copystreams = copystreams.map((copy) => {
-              if (copy.name === istheone.name) copy.stream = istheone.stream;
-              return copy;
-          });
-      
-          setremote(copystreams);
+          console.log(streams)
+          setremote({
+            type:REDUCER_ACTIONS.UPDATETRACK,
+            payload:{
+              newstream:streams[0],
+              p
+            }});
+       
       }
       
  
@@ -902,7 +929,7 @@ useEffect(()=>{
        
     
      }
-   },[pc,socket,remoteVideo,setpc,findpeer,removemedia,removepc])
+   },[pc,socket,remoteVideo,setpc,findpeer,removepc])
    
 
 /*------------------------------------------------------------*/
@@ -943,17 +970,8 @@ useEffect(()=>{
                           let peer = findpeer(data.from,data.Id);
                           if(peer){
                               await peer.setRemoteDescription(data.des);
-                              let remotecopy = [...remoteVideo];
-                              console.log(remotecopy)
-                              remotecopy = remotecopy.map(({name,stream,cam,mic,Id})=>{
-                                  console.log(name);
-                                  if(name === data.from){
-                                      cam = data.video;
-                                      mic = data.audio;
-                                  }
-                                  return {name,stream, cam, mic,Id}; // return updated object
-                              })
-                              setremote(remotecopy);
+                             
+                              setremote({type:REDUCER_ACTIONS.UPDATEVISIBILITY,payload:{data}})
                               await addTrackstoPeer(peer);
                           }  
                       } catch(err){
@@ -1008,8 +1026,12 @@ useEffect(()=>{
 
                     case CALL_ACTIONS.LEFT:
                       {
-                        //console.log('hi')
-                        // leavecall();
+                        console.log('left so ')
+                        pc.forEach((p)=>{
+                          if(p.name === data.name){
+                            p.incall = false;
+                          }
+                        })
                           
                       }
                     break;
@@ -1023,40 +1045,9 @@ useEffect(()=>{
 
                     case CALL_ACTIONS.MEDIA:
                       {
-                      //console.log(data,'fucking media asshooles')
-                      let copy = [...remoteVideo];
-                      console.log(data);
-                      console.log(copy)
-                      copy = copy.map((media)=>{
-                        return new Promise((resolve,reject)=>{
-                          try{
-                            if(media.name === data.from ){
-                              if(data.audio || data.audio === false){
-                                media.mic = data.audio;
-                                console.log('this')
-                              }
-        
-                              if( data.video || data.video === false){
-                                media.cam = data.video;
-                                console.log('this2')
-  
-                              }
-                              console.log('this3')
-                              console.log(media)
-                            }
-                           
-                            resolve(media)
-                          }catch(err){
-                            reject(err);
-                          }
-                        
-                        })
-                      })
-                   
-                    let resolveddata =  await Promise.all(copy)
-                     
-                      setremote(resolveddata);
 
+                        setremote({type:REDUCER_ACTIONS.UPDATEVISIBILITY,payload:{data}})
+                 
                     }
                     break;
         
@@ -1064,6 +1055,7 @@ useEffect(()=>{
                         console.log(data);
                     break;
                 }
+             
             
             }catch(err){
                 console.log(err);

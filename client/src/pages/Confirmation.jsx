@@ -68,13 +68,14 @@ const Confirmation = () => {
       <Custombox>
         <Styledtext>{rejoinmsg}</Styledtext>
         <Btn colour={'blue'} onClick={()=>{
-          wanttorejoin()
+          wanttorejoin(true)
           }}>Rejoin</Btn>
         <Btn onClick={()=>{
           sessionStorage.removeItem('name');
           sessionStorage.removeItem('joinname');
           sessionStorage.removeItem('room');
           sessionStorage.removeItem('joinroom');
+          sessionStorage.removeItem('roomkey');
         }} to={'/landingpage'}>Go back to Landing page</Btn>
       </Custombox>
     </Rejoinpage>
