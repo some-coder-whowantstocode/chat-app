@@ -101,8 +101,8 @@ export function SocketProvider({ children }) {
 
   const gettoken = async () => {
   
-  const url = 'http://localhost:9310/handshake'
-  // const url = 'https://instant-chat-backend.onrender.com/handshake'
+  // const url = 'http://localhost:9310/handshake'
+  const url = 'https://instant-chat-backend.onrender.com/handshake'
   const { data } = await axios.get(url).catch(err =>{
     
 console.log(err);
@@ -110,8 +110,8 @@ console.log(err);
    const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
 
-  // const wsurl =  `wss://instant-chat-backend.onrender.com`
-  const wsurl =  `ws://localhost:9310`
+  const wsurl =  `wss://instant-chat-backend.onrender.com`
+  // const wsurl =  `ws://localhost:9310`
 
   let socket = io(wsurl, { 
     query: { token: jwtToken },
