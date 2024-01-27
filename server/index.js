@@ -128,9 +128,7 @@ try {
                         case 'create':
 
                             Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, room_key, connections);
-                            if (offduty) {
-                                inspector();
-                            }
+
                             break;
 
                         case 'join':
@@ -222,17 +220,15 @@ try {
             });
 
             socket.on('ping', ({ key, roomid }) => {
+                console.log("223", key, roomid);
                 if (roomid && key) {
                     const roomkey = room_key.get(roomid);
-                    console.log(roomid, key, socket.id)
-
                     if (roomkey === key) {
                         let conn = connections.get(socket.id);
                         if (conn) {
                             conn.active = true;
                             connections.set(socket.id, conn);
                         }
-                        console.log(connections.get(socket.id).active);
 
 
                     }
@@ -241,7 +237,10 @@ try {
 
                 // console.log(active)
             });
-
+            // if (offduty) {
+            //     console.log("offduty", offduty)
+            //     inspector();
+            // }
 
         } catch (err) {
             const stackLines = err.stack.split('\n');
@@ -279,6 +278,7 @@ server.listen(PORT, () => console.log(`server is listening at ${PORT}`))
 const inspector = () => {
     interval = setInterval(() => {
         connections.forEach((values, key) => {
+            console.log("281", values.active)
             if (values.active === true) {
                 values.active = false;
 
@@ -290,14 +290,14 @@ const inspector = () => {
             }
         })
 
-        console.log(connections)
-        if (connections.size === 0) {
-            offduty = true;
-            clearInterval(interval)
-        }
-    }, [1000 * 60]);
+        console.log("293", connections.size)
+            // if (!connections.size) {
+            //     offduty = true;
+            //     clearInterval(interval)
+            // }
+    }, [1000 * 10]);
 }
-
+inspector()
 
 
 

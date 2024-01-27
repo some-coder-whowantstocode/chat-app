@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import Nav from "../components/landingpage/Nav";
-import image from "../assets/chatgroup.jpg";
-import { useNavigate } from "react-router-dom";
+import image from "../assets/chatgrp2.svg";
 import { useSocket } from "../context/SocketProvider";
 import {
   Custombtn,
@@ -20,9 +19,8 @@ const LandingPage = () => {
   const nameref = useRef(null);
   const roomidref = useRef(null);
 
-  const navigate = useNavigate();
 
-  const { wanttojoin , errmsg , handleconnection , wanttocancel , wanttocreate , state , room_status } = useSocket();
+  const { wanttojoin , errmsg , handleconnection , wanttocancel , wanttocreate , state , curr_poss , ROOMS } = useSocket();
 
   useEffect(()=>{
     if (state == "Authfailed" || state == "ConnectionLost") {
@@ -48,26 +46,30 @@ const LandingPage = () => {
                         position: absolute;
                         top: -10px;
                         font-size: 15px;
-                        background-color: white;
-                        color:gray;
+                        background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); ;
+                        background-blend-mode: multiply;
+                        color:white;
                         `;
 
             inputs[i].style = `
                     color:black;
                 `;
           } else {
-            titles[i].style = `
-                        position: absolute;
-                        top: 3px;
-                        left:0;
-                        transition-duration: 0.5s;
-                        font-size: 20px;
+            if(inputs[i].value === ''){
+              titles[i].style = `
+              position: absolute;
+              top: 3px;
+              left:0;
+              transition-duration: 0.5s;
+              font-size: 20px;
 
-                        `;
-            inputs[i].style = `
-                        color:transparent;
+              `;
+  inputs[i].style = `
+              color:transparent;
 
-                    `;
+          `;
+            }
+          
           }
         }
       };
@@ -77,11 +79,6 @@ const LandingPage = () => {
     }
   }, [pageref]);
 
-  useEffect(() => {
-    if (room_status === 'in room') {
-      navigate("/chat");
-    }
-  }, [room_status,navigate]);
 
   useEffect(() => {
     const handler = () => {

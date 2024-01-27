@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
 import styled from 'styled-components';
-import {NavLink, useNavigate} from 'react-router-dom';
+import {NavLink} from 'react-router-dom';
 import { useSocket } from '../context/SocketProvider';
 import CustomErrbox from '../components/CustomErrbox';
 import Reqprocessing from '../components/landingpage/Reqprocessing';
@@ -46,14 +45,9 @@ const Styledtext = styled.p`
 
 const Confirmation = () => {
 
-  const {room_status,wanttorejoin,errmsg,rejoinmsg,leavecall} = useSocket()
-  const navigate = useNavigate();
+  const {wanttorejoin,errmsg,rejoinmsg} = useSocket()
 
-  useEffect(() => {
-    if (room_status === "in room" && !leavecall) {
-      navigate("/chat");
-    }
-  }, [room_status,leavecall]);
+
   return (
     <Rejoinpage>
         {

@@ -6,17 +6,49 @@ import Authbox from './pages/Authbox'
 import Confirmation from './pages/Confirmation'
 import VideochatPage from './pages/VideochatPage'
 import Waitingroom from './pages/Waitingroom'
+import Members from './components/Chatpage/Members'
+import { PATH } from './utils/Paths'
 
 function App() {
 
   return (
     <Routes>
-      <Route path='/' element={<Authbox/>}/>
-      <Route path='/videochat' element={<VideochatPage/>}/>
-      <Route path='/landingpage' element={<LandingPage/>}/>
-      <Route path='/chat' element={<Chatpage/>}/>
-      <Route path='/rejoin' element={<Confirmation/>}/>
-      <Route path='/wait' element={<Waitingroom/>}/>
+
+      <Route 
+      path={ PATH.HOME_PAGE } 
+      element={ <Authbox/> }
+      />
+
+      <Route 
+      path={ PATH.VIDEO_CHAT_PAGE } 
+      element={ <VideochatPage/> }
+      />
+
+      <Route 
+      path={ PATH.LANDING_PAGE } 
+      element={ <LandingPage/> }
+      />
+
+      <Route 
+      path={ PATH.CHAT_PAGE } 
+      element={ <Chatpage/> }
+      />
+
+      <Route 
+      path={ PATH.REJOIN_PAGE } 
+      element={ <Confirmation/> }
+      />
+
+      <Route 
+      path={ PATH.MEMBERS_PAGE } 
+      element={ <Members/> }
+      />
+
+      <Route 
+      path={ PATH.WAITING_PAGE } 
+      element={ <Waitingroom/> }
+      />
+      
     </Routes>
   )
 }

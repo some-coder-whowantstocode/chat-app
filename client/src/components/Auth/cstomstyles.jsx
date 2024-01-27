@@ -76,7 +76,7 @@ export const Text = styled.div`
     }
     p{
         opacity: 0;
-
+        color: rgb(235, 235, 235); 
         animation:${
             
             props=> props.adir 
@@ -119,13 +119,29 @@ export const Text = styled.div`
 `
 
 
-export const Backimg = styled.img`
+// export const Backimg = styled.img`
+//       max-width: 100%;
+//     width: 100vw;
+//     max-height: 100%;
+//     height: 100vh;
+//     z-index: 99;
+//     filter: contrast(1);
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+// `
+
+
+
+export const Backimg = styled.div`
       max-width: 100%;
     width: 100vw;
     max-height: 100%;
     height: 100vh;
     z-index: 99;
-    filter: contrast(1);
+    /* filter: contrast(1); */
+    /* background: linear-gradient(270deg, rgba(221,147,239,1) 0%, rgba(222,194,235,1) 29%, rgba(193,133,232,1) 57%, rgba(221,166,231,1) 100%); */
+    background:linear-gradient(to right, rgb(150, 123, 182), rgb(123, 145, 182));
     position: absolute;
     top: 0;
     left: 0;
@@ -156,7 +172,7 @@ button{
     font-size: 19px;
     padding: 6px 10px;
     border-radius: 10px;
-    background: linear-gradient(#e66465, #9198e5);
+    background: linear-gradient(to right, rgb(80, 60, 120), rgb(60, 80, 120)); /* Dark Purple to Dark Blue */
     border: none;
     color: #ffffff;
     margin-top: 10px;

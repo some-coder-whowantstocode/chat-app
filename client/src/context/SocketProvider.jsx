@@ -1,9 +1,13 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { cancelrequest, createRoom, joinRoom, leaveRoom } from '../wsmethods/roomcontroller';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { cancelrequest, createRoom, joinRoom, leaveRoom } from '../services/chat';
 import { useNavigate } from 'react-router-dom';
 import notification from '../assets/notification.wav';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { useRef } from 'react';
+import { Actions } from '../utils/Actions';
+import { PATH } from '../utils/Paths';
+import { DEVICE_SIZES, DEVICE_CHART } from '../utils/Sizechart';
 
 
 const SocketContext = createContext(null);
@@ -20,8 +24,16 @@ export function SocketProvider({ children }) {
     KICKOUT:"kickout"
   }
 
+  const CONNECTION_STATES = {
+    CONNECTED:'connected',
+    FAILED:'connection_failed',
+    CONNECTION_LOST:'was_connected_but_now_lost',
+    INITIAL_STATE:'has_not_started_yet'
+  }
 
-  const [socket, setSocket] = useState(); /* websocket */
+  const [connection_state,setcon] = useState(CONNECTION_STATES.INITIAL_STATE);
+  const [ viewport , setview ] = useState(innerWidth <= DEVICE_SIZES.MOBILE.MAX ? DEVICE_CHART.MOBILE : DEVICE_CHART.PC);
+  const [socket, setSocket] = useState(); 
   const [loading, setLoading] = useState(true); /* To show the user when something is going on during which the app can not be used */
   const [state,setstate] = useState('notauthenticated');/* To check if the app is authenticatd or not. */
   const [waiting,setwaiting] = useState(false);/* Make user wait */
@@ -31,35 +43,126 @@ export function SocketProvider({ children }) {
   const [rejoinmsg,setrem] = useState('want to rejoin room.');
   const [members,setmembers] = useState([]);
   const [adminname,setadminname] = useState();
-  const [ room_status , set_room_status ] = useState("not in room");/* [not in room,waiting,in room] */
-  const [videocallstatus , setstatus] = useState('not_in_call');/* [ not_in_call , preparing_to_join , in_video_call ] */
-  const [myaudio,addaudio] = useState();
-  const [myvideo,addvideo] = useState();
+  const [ curr_poss , setcurr ] = useState(
+    {
+      location:PATH.HOME_PAGE,
+      last_location:PATH.HOME_PAGE,
+      activity:{
+        main_act:Actions.USER_ACTIONS.IDLE,
+        sub_act:Actions.USER_ACTIONS.IDLE
+      }});
+  const myaudio = useRef();
+  const myvideo = useRef();
   const [leavecall,setleave] = useState(false);
   const [ leaving , gonnaleave] = useState(false);
-  // const [pc,addpc] = useState([]);//[{name of the other user,peer}]
-  const pc = useRef([]);//<name,peer,Id,incall>
+  const [pc,addpc] = useState([]);//[{name of the other user,peer}]
 
   const setmyaudio =(data)=>{
-    addaudio(data);
+    myaudio.current = data;
   }
   const setmyvideo =(data)=>{
-    addvideo(data);
+    myvideo.current = data;
   }
   const setpc =(data)=>{
-    pc.current.push(data);
-    // addpc(data);
+    // pc.current.push(data);
+    // let copy = pc;
+    // copy.push(data);
+    // addpc(copy);
+    addpc(prevdata=>[...prevdata,data])
   }
+
+
+  const Transport =(command)=>{
+    const locations = Actions.TRANSPORT_LOCATIONS;
+    let copy = {...curr_poss};
+    copy.last_location = copy.location ;
+    switch(command){
+      case locations.CHAT :
+        copy.location = PATH.CHAT_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.CHAT;
+        copy.activity.sub_act = Actions.USER_ACTIONS.CHAT;
+        setcurr(copy);
+      break;
+
+      case locations.JOIN_CHAT :
+        copy.location = PATH.LANDING_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.IDLE;
+        copy.activity.sub_act = Actions.USER_ACTIONS.IDLE;
+        setcurr(copy);
+      break;
+
+      case locations.LANDING_PAGE :
+        copy.location = PATH.LANDING_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.IDLE;
+        copy.activity.sub_act = Actions.USER_ACTIONS.IDLE;
+        setcurr(copy);
+      break;
+
+      case locations.MEMBERS :
+        copy.location = PATH.MEMBERS_PAGE;
+        setcurr(copy);
+      break;
+
+      case locations.VIDEO_CHAT :
+        copy.location = PATH.VIDEO_CHAT_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.CHAT;
+        copy.activity.sub_act = Actions.USER_ACTIONS.VIDEO_CHAT;
+        setcurr(copy);
+      break;
+
+      case locations.WAITING_ROOM :
+        copy.location = PATH.WAITING_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.CHAT;
+        copy.activity.sub_act = Actions.USER_ACTIONS.JOINING_VIDEO_CHAT;
+        setcurr(copy);
+      break;
+
+      case locations.REJOIN:
+        copy.location = PATH.REJOIN_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.IDLE;
+        copy.activity.sub_act = Actions.USER_ACTIONS.IDLE;
+        setcurr(copy);
+      break;
+    }
+  }
+
+
+  useEffect(()=>{
+
+    const handleresize =(e)=>{
+      const { innerWidth } = e.target;
+
+      if( DEVICE_SIZES.PC.MIN <= innerWidth && innerWidth <= DEVICE_SIZES.PC.MAX )
+      {
+        viewport != DEVICE_CHART.PC && setview(DEVICE_CHART.PC);
+      }
+      else if( DEVICE_SIZES.MOBILE.MIN <= innerWidth && innerWidth <= DEVICE_SIZES.MOBILE.MAX ){
+        viewport != DEVICE_CHART.MOBILE && setview(DEVICE_CHART.MOBILE);
+      }      
+      else{
+        console.log('out of box')
+      }
+    }
+
+    window.addEventListener('resize',handleresize)
+
+    return ()=>{
+      window.removeEventListener('resize',handleresize);
+    }
+  },[])
+
+
 
  
 
   const removepc =(all,name,Id)=>{
     try{
       if(all){
-        pc.current = [];
+        console.log('remove all')
+        addpc([])
        }else{
          if(name){
-           let copy = pc.current;
+           let copy = [...pc];
            let index = -1 ;
            for(let i = 0;i<copy.length;i++){
             if(copy[i].name === name && copy[i].Id === Id){
@@ -68,17 +171,20 @@ export function SocketProvider({ children }) {
             }
            }
            
-           console.log(copy,name,index)
            if(index != -1){
              copy.splice(index,1);
-             pc.current = copy;
-             console.log(copy);
+             if(copy.length>0){
+              addpc(copy);
+             }else{
+              addpc([]);
+             }
            }
           
          }
         
        }
-       console.log(pc.current)
+
+
     }catch(err){
       console.log(err);
     }
@@ -86,12 +192,57 @@ export function SocketProvider({ children }) {
    
   }
 
+  useEffect(()=>{
+    if(pc.length > 0){
+      pc.map((p)=>{
+        p.peer.oniceconnectionstatechange = async({ target }) => {
+  
+          const { iceConnectionState } = target;
+          switch (iceConnectionState) {
+              case "failed":
+                  p.peer.restartIce();
+                  break;
+  
+              case "disconnected":
+                  try {
+
+                      if (p.incall === false) {
+                          p.Close();
+                          removepc(false,p.name,p.Id)
+                      }else{
+                        const offer =await p.getOffer();
+                        socket.send({
+                          
+                          roomid:sessionStorage.getItem('room'),
+                          from:sessionStorage.getItem('name'),
+                           command:Actions.CALL_ACTIONS.R_OFFER,
+                           type:'videocall',
+                           des:offer,
+                           to:p.name,
+                           Id:p.Id
+                         })
+                      }
+                  } catch (err) {
+                      console.log(err);
+                  }
+                  break;
+  
+              default:
+                  console.log(iceConnectionState);
+                  break;
+          }
+      };
+      })
+    }
+   
+  },[pc])
+
 
   // const [request_processing , req_res ] = useState(false);
   
-  const changestatus =(value)=>{
-    setstatus(value);
-  }
+  // const changestatus =(value)=>{
+  //   setstatus(value);
+  // }
   
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
@@ -120,13 +271,10 @@ console.log(err);
   });
 
   socket.on('connect_error', (err) => {
-    if(room_status === "in room"){
-      navigate('/rejoin')
-
-    }
-    set_room_status('not in room');
     console.log(`connect_error due to ${err.message}`);
     setrem('connection lost do you want to rejoin ?');
+   
+    Transport(Actions.TRANSPORT_LOCATIONS.REJOIN);
     
     
   });
@@ -137,18 +285,18 @@ console.log(err);
 
   
   useEffect(()=>{
-    if(state === 'notauthenticated'){
+    if(connection_state === CONNECTION_STATES.INITIAL_STATE){
     
         setLoading(true);
         gettoken()
         .then(socket=>{
           setLoading(true);
           setSocket(socket);
-          setstate('Authenticated');
+          setcon(CONNECTION_STATES.CONNECTED)
         })
         .catch(err=>{
           console.log(err);
-          setstate('Authfailed');
+          setcon(CONNECTION_STATES.FAILED)
         })
         .finally(()=>{
           setLoading(false);
@@ -161,16 +309,19 @@ console.log(err);
 
   
   const reopensocket =()=>{
-    if (state == 'Authfailed' || state == 'ConnectionLost') {
+    if (connection_state == CONNECTION_STATES.FAILED || connection_state == CONNECTION_STATES.CONNECTION_LOST) {
       setLoading(true);
 
             gettoken().then(socket=>{
               setSocket(socket);
-              setstate('Authenticated');
+              // setstate('Authenticated');
+              setcon(CONNECTION_STATES.CONNECTED)
+
             })
             .catch(err=>{
               console.log(err);
-              setstate('Authfailed');
+              // setstate('Authfailed');
+              setcon(CONNECTION_STATES.FAILED)
             })
             .finally(()=>{
               setLoading(false);
@@ -186,7 +337,7 @@ console.log(err);
    }
  
    const wanttojoin =async(name,roomid)=>{
-    set_room_status('waiting');
+    // set_room_status('waiting');
      setwaiting(true);
      sessionStorage.setItem('joinname',name);
      sessionStorage.setItem('joinroom',roomid);
@@ -195,7 +346,7 @@ console.log(err);
    }
 
    const wanttorejoin =async(rejoin)=>{
-    set_room_status('waiting');
+    // set_room_status('waiting');
     setwaiting(true);
     let name = sessionStorage.getItem('name');
     let roomid = sessionStorage.getItem('room');
@@ -212,11 +363,9 @@ console.log(err);
  
 useEffect(()=>{
 
-  if(leavecall === true && socket && room_status === "in room")
+  if(leavecall === true && socket && curr_poss.activity.main_act === Actions.USER_ACTIONS.VIDEO_CHAT && curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT )
   {
     try{
-        console.log('hmm in call')
-        console.log(leavecall,room_status)
         leaveRoom(socket,true)
         .then(()=>{
           
@@ -224,12 +373,8 @@ useEffect(()=>{
            setAdmin(false);
            setadminname('');
            setmembers([]);
-           set_room_status('not in room');
+          Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
            setleave(false);
-           console.log('setroom', 'not in room')
-          //  sessionStorage.removeItem('name');
-          //  sessionStorage.removeItem('room');
-          //  sessionStorage.removeItem('roomkey');
         })
         .catch((err)=>{
           throw Error(err);
@@ -242,10 +387,10 @@ useEffect(()=>{
  }
   }
 
-},[leavecall,socket,room_status])
+},[leavecall,socket,curr_poss])
 
    const kickedout =async()=>{
-    set_room_status('not in room');
+    Transport(Actions.TRANSPORT_LOCATIONS.REJOIN);
     setAdmin(false);
     setadminname('');
     setmembers([]);
@@ -254,7 +399,13 @@ useEffect(()=>{
  
    const wanttocancel =async()=>{
     await cancelrequest(socket);
-    set_room_status('not in room');
+    // let copy = {...curr_poss}
+    // copy.activity.main_act = Actions.USER_ACTIONS.IDLE;
+    // copy.activity.sub_act = Actions.USER_ACTIONS.IDLE;
+    // copy.last_location = copy.location;
+    // copy.location = PATH.LANDING_PAGE;
+    // setcurr(copy);
+    Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
      setwaiting(false);
     
  }
@@ -277,7 +428,8 @@ useEffect(()=>{
 
   useEffect(()=>{
     if(socket && socket.readyState ==0) {
-      set_room_status('waiting');
+      // set_room_status('waiting');
+      
       setwaiting(true);
 
     }
@@ -285,7 +437,7 @@ useEffect(()=>{
 
 
       const handleOpen = () => {
-        set_room_status('not in room');
+        Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
        setwaiting(false);
       };
 
@@ -300,7 +452,7 @@ useEffect(()=>{
               sessionStorage.setItem('room',jsondata.roomid);
               sessionStorage.setItem('roomkey',jsondata.key);
               setadminname(jsondata.name);
-              set_room_status('in room');
+              Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
               setmembers([jsondata.name]);
               setAdmin(true);
             
@@ -314,9 +466,9 @@ useEffect(()=>{
               sessionStorage.setItem('name',name);
               sessionStorage.setItem('room',roomid);
               sessionStorage.setItem('roomkey',key)
-              set_room_status('in room');
+              // set_room_status('in room');
+              Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
                   setwaiting(false);
-                  set_room_status('in room');
                   setadminname(jsondata.Admin);
                   setmembers(jsondata.mems)
                   notificationsound.play();
@@ -333,7 +485,7 @@ useEffect(()=>{
                   }, 3000);
                   return [...prevdata,{ ...newMsg, timeoutId }];
                 });
-                set_room_status('not in room');
+                Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
                 setwaiting(false);
               
                 
@@ -375,7 +527,7 @@ useEffect(()=>{
               if(jsondata.left){
                   gonnaleave(true)
                   setrem('want to rejoin room.');
-                  set_room_status('not in room');
+                  Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
                  setAdmin(false);
                  setadminname('');
                  setmembers([]);
@@ -418,37 +570,51 @@ useEffect(()=>{
       socket.addEventListener('close',handleclose);
 
 
-      let timeout;
 
-      if (socket) {
-       
-        timeout = setInterval(() => {
-          const key = sessionStorage.getItem('roomkey');
-          const roomid = sessionStorage.getItem('room');
-          if(room_status === 'in room'){
-            socket.emit('ping',{key,roomid});
-          }
-          
-         
-        }, 1000 * 5);
-  
-      }
+    
   
       return () => {
         socket.removeEventListener('open', handleOpen);
         socket.removeEventListener('message',handlemessage);
         socket.removeEventListener('close',handleclose);
-        clearInterval(timeout);
+        
 
       };
     }
     
 
-},[socket,notificationsound,room_status,videocallstatus])
+},[socket,notificationsound,curr_poss])
+
+
+useEffect(()=>{
+  if(!socket ) return;
+  if (socket.io._readyState === 'open') {
+      let timeout;
+    timeout = setInterval(() => {
+      const key = sessionStorage.getItem('roomkey');
+      const roomid = sessionStorage.getItem('room');
+      if( curr_poss.activity.main_act !== Actions.USER_ACTIONS.IDLE ){
+        socket.emit('ping',{key,roomid});
+      }
+      
+     
+    }, 1000 * 5);
+
+
+    return(()=>{
+      clearInterval(timeout);
+    })
+
+  }
+
+
+},[socket,curr_poss])
+
+
 
 
 const handleconnection =()=>{
-  set_room_status("not in call")
+  Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
   navigate('/')
 }
 
@@ -462,16 +628,23 @@ const reconnect =async()=>{
 
 
 
+
+useEffect(()=>{
+  if(curr_poss.location != curr_poss.last_location){
+    navigate(curr_poss.location);
+  }
+},[curr_poss])
+
+
   return (
     <SocketContext.Provider value={
       {
-        room_status,
-        myaudio,
-        myvideo,
+        curr_poss,
+        Transport,
+        myaudio:myaudio.current,
+        myvideo:myvideo.current,
         setmyaudio,
         setmyvideo,
-        changestatus,
-        videocallstatus,
         kickout,
         members,
         Admin,
@@ -487,16 +660,19 @@ const reconnect =async()=>{
         leavecall,
         socket,
         loading,
-        state,
+        connection_state,
+        CONNECTION_STATES,
         reopensocket,
         waiting,
         err,
         errmsg,
-        pc:pc.current,
+        pc,
         setpc,
         removepc,
         leaving,
-        gonnaleave
+        gonnaleave,
+        viewport,
+        DEVICE_CHART
         }
         }>
       {children}

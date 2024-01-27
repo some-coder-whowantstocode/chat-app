@@ -1,53 +1,153 @@
-const config = {
-    iceServers: [{
-            urls: [
-                "stun:stun.l.google.com:19302",
-                "stun:global.stun.twilio.com:3478"
-            ]
+import { Actions } from "../utils/Actions";
+
+export default class Peer {
+    constructor(socket, name, Id) {
+        this.config = {
+            iceServers: [{
+                urls: [
+                    "stun:stun.l.google.com:19302",
+                    "stun:global.stun.twilio.com:3478",
+                ],
+            }, ],
+        };
+        this.myname = sessionStorage.getItem('name');
+        this.roomid = sessionStorage.getItem('room');
+        this.name = name;
+        this.Id = Id;
+        this.socket = socket;
+        this.peer = new RTCPeerConnection(this.config);
+        this.incall = true;
+        this.stream = null;
+        this.media_availability = { cam: true, mic: true };
+
+
+        this.socket.on("message", async({ command, des, to, Id }) => {
+            try {
+                if (to === this.myname && Id === this.Id) {
+                    if (command === Actions.CALL_ACTIONS.ICE) {
+                        this.peer.addIceCandidate(des);
+                    } else if (command === Actions.CALL_ACTIONS.R_OFFER) {
+                        const ans = await this.handleOffer(des);
+                        socket.send({
+                            roomid: sessionStorage.getItem('room'),
+                            from: sessionStorage.getItem('name'),
+                            command: Actions.CALL_ACTIONS.R_OFFER,
+                            type: 'videocall',
+                            des: ans,
+                            to: this.name,
+                            Id: this.Id
+                        })
+                    } else if (command === Actions.CALL_ACTIONS.R_ANSWER) {
+                        await this.handleAnswer(des);
+                    }
+                }
+
+            } catch (err) {
+                console.log(err);
+            }
+        })
+
+        this.peer.onicecandidate = (event) => {
+            console.log('icecandidate triggered', event)
+            this.socket.send({
+                roomid: this.roomid,
+                from: this.myname,
+                command: Actions.CALL_ACTIONS.ICE,
+                type: "videocall",
+                des: event.candidate,
+                to: this.name,
+                Id: this.Id,
+            });
+        };
+
+
+        this.peer.onicecandidateerror = (e) => {
+            console.log("ice error", e)
         }
 
-    ],
-};
+        this.peer.onnegotiationneeded = async() => {
+            console.log(this.peer.signalingState);
+            try {
+                await this.peer.setLocalDescription();
+                this.socket.send({
+                    roomid: this.roomid,
+                    from: this.myname,
+                    command: Actions.CALL_ACTIONS.NEGO_INIT,
+                    type: "videocall",
+                    des: this.peer.localDescription,
+                    to: this.name,
+                    Id: this.Id,
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        };
 
-export const getPeer = () => {
-    try {
-        return new RTCPeerConnection(config)
-    } catch (err) {
-        console.log(err);
+
+
     }
-}
+    async addTracks(stream) {
 
-export const getOffer = async(peer) => {
-    try {
-        let offer = await peer.createOffer();
-        await peer.setLocalDescription(offer);
-        return offer;
-    } catch (err) {
-        throw new Error(err)
-    }
-}
+        return new Promise((resolve, reject) => {
 
-export const getAnswer = async(peer, offer) => {
-    try {
-        await peer.setRemoteDescription(new RTCSessionDescription(offer));
-        let answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        return answer;
-    } catch (err) {
-        console.log(err);
-    }
-}
+            let tracks = stream.getTracks();
+            console.log(tracks)
+            for (let track of tracks) {
+                const senders = this.peer.getSenders();
+                console.log(senders)
 
-export const closePeer = async(peer) => {
-    if (peer) {
-        try {
-            // const senders = peer.getSenders();
-            // senders.forEach((s) => {
-            //     peer.removeTrack(s);
-            // })
-            await peer.close();
-        } catch (err) {
+                const senderexists = senders.find((sender) => { return sender.track && sender.track.id === track.id });
+                console.log(senderexists)
+                if (!senderexists) {
+                    console.log('no exists')
+                    this.peer.addTrack(track, stream);
+
+                } else {
+                    console.log('exists')
+                    this.peer.removeTrack(senderexists);
+                    this.peer.addTrack(track, stream);
+                }
+
+                console.log(this.peer)
+            }
+
+            try {
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        }).catch((err) => {
             console.log(err);
+        });
+    }
+
+    async getOffer() {
+        try {
+            await this.peer.setLocalDescription();
+
+            return this.peer.localDescription;
+        } catch (err) {
+            console.error('Error in getOffer:', err);
         }
     }
-};
+
+
+    async handleOffer(offer) {
+
+        await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
+        let answer = await this.peer.createAnswer();
+        await this.peer.setLocalDescription(answer);
+        return answer;
+    }
+
+    async handleAnswer(answer) {
+        await this.peer.setRemoteDescription(new RTCSessionDescription(answer));
+        return;
+    }
+
+    Close() {
+
+        this.peer.close();
+        console.log(this.peer)
+    }
+}

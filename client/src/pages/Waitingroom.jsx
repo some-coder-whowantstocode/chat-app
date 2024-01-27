@@ -1,13 +1,17 @@
-import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef,useState } from 'react';
 import { useVideo } from '../context/Videochatcontroller';
-import defaultimage from  '../assets/default.png'
+import defaultimage from  '../assets/default.png';
 import styled from 'styled-components';
 import { IoVideocam,IoVideocamOff  } from "react-icons/io5";
 import { IoIosMic,IoIosMicOff } from "react-icons/io";
-// import { CustomPoster } from '../components/videocall/Customstyles';
 import { useSocket } from '../context/SocketProvider';
 import Loading from '../components/Loading';
+import { Mediapackup, Mediacontroller } from '../utils/mediahandler';
+import { Actions } from '../utils/Actions';
+import RequestBox from '../components/Chatpage/RequestBox';
+// import { useNavigate } from 'react-router-dom';
+import notification from "../assets/notification.wav";
+
 
 
 
@@ -115,10 +119,15 @@ const CustomJoin = styled.div`
 const WaitingRoom = styled.div`
   position: relative;
   height: 100vh;
-  width: 50vw;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  width: 100vw;
+    flex-direction: column;
+    background:black;
+ 
+ 
 `
 
 const Videoholder = styled.div`
@@ -129,57 +138,144 @@ const Videoholder = styled.div`
 
 const Waitingroom = () => {
 
-    const { goback , Mediacontroller ,medialoading, media , joincall } = useVideo();
-    const {changestatus, myvideo , myaudio} =useSocket()
+    const { goback , media , joincall  } = useVideo();
+    const { myvideo,Transport, myaudio , setmyaudio ,  viewport, DEVICE_CHART,setmyvideo , pc , socket} =useSocket()
     const videoref = useRef(null);
     const audioref = useRef(null);
     const username = sessionStorage.getItem('name');
+    const [ medialoading , setmediaload ] = useState(true);
+    const [video,setvideo] = useState();
+    const [audio,setaudio] = useState();
+    const [reqdata, setreqdata] = useState([]);
+  const [notificationsound] = useState(new Audio(notification));
+    
 
-   
+    // const navigate = useNavigate()
+
+    useEffect(() => {
+      const handleMessage = (jsondata) => {
+        switch(jsondata.type){
+  
+
+  
+          case 'request':
+            notificationsound.play();
+            setreqdata((prevreqdata) => [jsondata, ...prevreqdata]);
+          break;
+  
+          case 'removereq':
+            console.log('recieved',jsondata)
+            setreqdata((prevreqdata) => {
+              let arr = prevreqdata.filter((r) => r.name != jsondata.name);
+              return arr;
+            });
+          break;
+  
+        }
+      }
+  
+  
+      if (socket) {
+        socket.addEventListener("message", handleMessage);
+        return () => {
+          socket.removeEventListener("message", handleMessage);
+        };
+      }
+    }, [socket]);
+
+    const Getmedia =()=>{
+      const {cam,mic} = media.current;
+      const copyaudio = myaudio;
+      const copyviddeo = myvideo;
+      
+      return new Promise((resolve,reject)=>{
+        
+        navigator.mediaDevices.getUserMedia({audio:mic,video:cam})
+        .then((stream)=>{
+          for(const track of  stream.getTracks()){
+            let trac = new MediaStream([track])
+            if(track.kind === 'audio'){
+              setmyaudio(trac);
+              setaudio(trac);
+
+            }
+            else{
+              setmyvideo(trac);
+              setvideo(trac);
+
+            }
+          }
+          Mediapackup(Actions.PACKUP_ACTIONS.ALL,{audio:copyaudio,video:copyviddeo})
+
+          resolve(stream);
+        
+        })
+        .catch((err)=>{
+          if(err.name === 'TypeError'){
+              media.current.cam = false;
+              media.current.mic = false;
+              setmyaudio();
+              setmyvideo();
+          }else{
+              reject("Error while getting media in Getmedia : " + err);
+
+          }
+        
+        })
+        .finally(()=>{
+          setmediaload(false)
+        })
+       })
+    }
+
 
     useEffect(()=>{
-        if(videoref.current && myvideo){
-            const video = videoref.current;
-            console.log(myvideo);
-            video.srcObject = myvideo
-            video.autoPlay = true
-            video.onloadedmetadata = () => {
-                video.play();
+      Getmedia();
+    },[])
+
+   
+    useEffect(()=>{
+        if(videoref.current && video){
+            const videoelement = videoref.current;
+            videoelement.srcObject = video
+            videoelement.autoPlay = true
+            videoelement.onloadedmetadata = () => {
+              videoelement.play();
               };
         }
-    },[videoref,myvideo])
+    },[videoref,video])
 
     useEffect(()=>{
-      if(videoref.current && myaudio){
-        const audio = audioref.current;
-        console.log(myaudio);
-        audio.srcObject = myaudio
-        audio.autoPlay = true
-        audio.onloadedmetadata = () => {
-            audio.play();
+      if(videoref.current && audio){
+        const audioelement = audioref.current;
+        audioelement.srcObject = audio
+        audioelement.autoPlay = true
+        audioelement.onloadedmetadata = () => {
+          audioelement.play();
           };
     }
-    },[audioref,myaudio]);
+    },[audioref,audio]);
    
-    // const navigate = useNavigate();
 
 
     const backtochat =()=>{
-
+      if(videoref.current){
+        videoref.current = null;
+    }
+    Mediapackup(Actions.PACKUP_ACTIONS.ALL,{audio:audio,video:video})
+    setmyaudio();
+    setmyvideo();
+    setaudio();
+    setvideo()
         goback();
-        if(videoref.current){
-            videoref.current.srcObject = null;
-        }
-        console.log('is this runnerd')
-        changestatus('not_in_call')
+       
 
     }
 
-      // console.log('hi waiting mf')
   
 
   return (
-    <WaitingRoom>
+    <WaitingRoom min={viewport === DEVICE_CHART.MOBILE}>
    
       <Videoholder>
 
@@ -201,15 +297,31 @@ const Waitingroom = () => {
             media.current.cam ?
             <IoVideocam
             size={30}
-            onClick={()=>Mediacontroller("remove_video")}
+            onClick={()=>{
+              console.log('clicked',myvideo,video)
+              Mediacontroller("remove_video",pc,socket,media,video) 
+              .then((stream)=>{
+                setmyvideo(stream);
+                setvideo(stream);
+              })
+            }}
             />
             :
             <IoVideocamOff
             size={30}
-            onClick={()=>Mediacontroller("add_video")}
+            onClick={()=>{
+              Mediacontroller("add_video",pc,socket,media,video) 
+              .then((stream)=>{
+                setmyvideo(stream);
+                setvideo(stream);
+              })
+            }}
             />
         }
-       
+         
+      {reqdata.map((rd) => (
+        <RequestBox key={rd.name} data={rd} />
+      ))}
       </VideoOption>
       <VideoOption
             pos ={{bottom:`20px`,right:`35%`}}
@@ -219,12 +331,26 @@ const Waitingroom = () => {
             media.current.mic === true ?
             <IoIosMic
             size={30}
-            onClick={()=>Mediacontroller("remove_audio")}
+            onClick={()=>{
+              Mediacontroller("remove_audio",pc,socket,media,audio) 
+              .then((stream)=>{
+                setmyaudio(stream);
+                setaudio(stream);
+              })
+            }}
+
             />
             :
             <IoIosMicOff
             size={30}
-            onClick={()=>Mediacontroller("add_audio")}
+            onClick={()=>{
+              Mediacontroller("add_audio",pc,socket,media,audio) 
+              .then((stream)=>{
+                setmyaudio(stream);
+                setaudio(stream);
+              })
+            }}
+
             />
         }
       </VideoOption>
@@ -243,13 +369,15 @@ const Waitingroom = () => {
           <>
           <CustomJoin color='#009dff' onClick={()=>{
           joincall()
-          changestatus('in_video_call')
-          // navigate('/videochat')
+          Transport(Actions.TRANSPORT_LOCATIONS.VIDEO_CHAT)
         }}>
           join now
       </CustomJoin>
       <CustomJoin color='#949494'
-      onClick={()=>backtochat()}
+      onClick={()=>{
+        backtochat()
+        Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
+      }}
       >
         cancel
       </CustomJoin>

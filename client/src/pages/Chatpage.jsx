@@ -17,14 +17,20 @@ import {
   Options
 } from "../components/Chatpage/customstyles";
 import Loading from "../components/Loading";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Members from "../components/Chatpage/Members";
 import Waitingroom from "./Waitingroom";
 import { useVideo } from "../context/Videochatcontroller";
 import VideochatPage from "./VideochatPage";
+import { GiHamburgerMenu } from "react-icons/gi";
+import { PATH } from "../utils/Paths";
+import { Actions } from "../utils/Actions";
+
+
+
 
 const Chatpage = () => {
-  const { socket, state,room_status, setleave, Admin , members,changestatus,videocallstatus } =
+  const { socket, Transport,viewport,DEVICE_CHART,connection_state,CONNECTION_STATES, setleave, Admin , members,curr_poss } =
     useSocket();
   const { gonnaleave } = useVideo();
 
@@ -52,8 +58,8 @@ const Chatpage = () => {
   useEffect(()=>{
     console.log(mem)
   },[mem])
-  const navigate = useNavigate();
 
+  console.log(viewport,DEVICE_CHART.MOBILE)
 
 
   useEffect(() => {
@@ -105,7 +111,7 @@ const Chatpage = () => {
 
         case 'Alert':
           if(jsondata.action_required) setleave(true);
-          navigate("/rejoin");
+          Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
         break;
 
 
@@ -119,14 +125,15 @@ const Chatpage = () => {
         socket.removeEventListener("message", handleMessage);
       };
     }
-  }, [socket,notificationsound,navigate,setleave,mem]);
+  }, [socket,notificationsound,setleave,mem]);
 
 
   useEffect(() => {
-    if (room_status=== "not in room") {
-      navigate("/landingpage");
+    if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
+      // navigate("/landingpage");
+      Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
     }
-  }, [navigate,room_status]);
+  }, []);
 
   useEffect(() => {
     const handler = async () => {
@@ -165,26 +172,37 @@ const Chatpage = () => {
   };
 
   useEffect(() => {
-    if (state == "Authfailed" || state == "ConnectionLost") {
-      navigate('/landingpage')
+    if (connection_state === CONNECTION_STATES.FAILED || connection_state == CONNECTION_STATES.CONNECTION_LOST) {
+      Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
     }
-  }, [state,navigate]);
+  }, [connection_state]);
 
   return (
     <Room>
-     <Members mems={mem}/>
+     {
+      viewport === DEVICE_CHART.PC &&<Members mems={mem}/>
+     }
+
+
     <Chatroom>
      
       
-      <Chathead>{roomid}
-
+      <Chathead>
+        
+        <div>
+        {
+          viewport === DEVICE_CHART.MOBILE && <Link to={PATH.MEMBERS_PAGE} state={mem}> <GiHamburgerMenu/></Link>
+        }
+        <p>{roomid}</p>
+    
+        </div>
+   
       <Options>
       <Option colorschema={{col:'black',bac: 'green'}}
       
       onClick={async () => {
-        if(videocallstatus === "not_in_call"){
-          changestatus('preparing_to_join');
-
+        if(curr_poss.location === PATH.CHAT_PAGE && curr_poss.activity.sub_act !== Actions.USER_ACTIONS.VIDEO_CHAT  ){
+          Transport(Actions.TRANSPORT_LOCATIONS.WAITING_ROOM)
         }
       
       }}
@@ -197,12 +215,11 @@ const Chatpage = () => {
       <Option colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
       
         onClick={async () => {
-          console.log('hmm')
           await gonnaleave(true);
-          console.log('leavecall')
           await setleave(true);
-          console.log('leaveroom')
-          navigate("/rejoin");
+          // navigate("/rejoin");
+          // changeRoom(ROOMS.REJOIN_PAGE)
+          Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
         }}
       >
         <FaPowerOff/>
@@ -232,14 +249,14 @@ const Chatpage = () => {
       </Messagebox>
     
     </Chatroom>
-    {
-      videocallstatus === 'preparing_to_join' &&  <Waitingroom/>
+    {/* {
+      ( videocallstatus === 'preparing_to_join' &&  viewport === DEVICE_CHART.PC) &&  <Waitingroom/>
     }
 
     {
-      videocallstatus === 'in_video_call' && <VideochatPage/>
+      ( videocallstatus === 'in_video_call' &&  viewport === DEVICE_CHART.PC ) && <VideochatPage/>
     }
-    
+     */}
     </Room>
   );
 };

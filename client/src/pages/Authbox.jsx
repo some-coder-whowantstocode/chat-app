@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useconnection_state } from 'react'
 import back from '../assets/back.jpg'
 import  {
     Loading,
@@ -9,37 +9,37 @@ import  {
     Failed
 } from '../components/Auth/cstomstyles'
 import {useSocket} from '../context/SocketProvider'
-import { useNavigate } from 'react-router-dom'
+import { Actions } from '../utils/Actions'
+// import { useNavigate } from 'react-router-dom'
 
 
 
 const Authbox = () => {
 
-    const [dir,setdir] =useState(true);
+    const [dir,setdir] =useconnection_state(true);
 
-    const {loading,state,reopensocket} =useSocket()
+    const {loading,connection_state,CONNECTION_STATES,reopensocket,Transport} =useSocket()
 
    
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     
 const remove =()=>{
     setdir(!dir)
 
      setTimeout(() => {
-        navigate('/landingpage')
+        Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
         
     }, 100);
     
 
 
 }
-
   return (
     <>
 
     {
-        state === 'notauthenticated' &&
+        connection_state === CONNECTION_STATES.INITIAL_STATE &&
         <Loading>
             <div>Connecting please wait...</div>
             <Loader size={50}/>
@@ -47,7 +47,7 @@ const remove =()=>{
     }
 
     {
-        state === 'Authenticated' &&
+        connection_state === CONNECTION_STATES.CONNECTED &&
         <Passed>
             <Backimg src={back}/>
             <Text time='0.5s' adir={dir}>
@@ -59,7 +59,7 @@ const remove =()=>{
     }
 
     {
-        state === 'Authfailed' && 
+        connection_state === CONNECTION_STATES.FAILED && 
         <Failed>
             <h1>401</h1>
 
@@ -69,7 +69,7 @@ const remove =()=>{
     }
 
 {
-        state === 'ConnectionLost' && 
+        connection_state === CONNECTION_STATES.CONNECTION_LOST && 
         <Failed>
             <h1>OOPS</h1>
 

@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect , useState } from 'react'
 import styled from 'styled-components'
 import { GiHamburgerMenu } from "react-icons/gi";
 import { useSocket } from '../../context/SocketProvider';
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { RxCross2 } from "react-icons/rx";
+import { Link, useLocation } from 'react-router-dom';
 
-const min = 750;
 
 const Alter = styled(BsThreeDotsVertical)`
   cursor: pointer;
@@ -17,16 +17,17 @@ const Mems = styled.div`
   min-height: 100vh;
   transition: all;
   transition-duration: 0.5s;
- 
-  ${innerWidth<min ?
+  /* width:${props=>props.isclicked ? `36.5vw` : `100px`}; */
+  ${props=>props.min ?
   `
-  width:${props=>props.isclicked ? `29.5vw` : `10px`};
+  align-items:center;
   `
-:
-`
-width:${props=>props.isclicked ? `29.5vw` : `70px`};
-`
-}
+  :
+  `
+  width:${props.isclicked ? `36.5vw` : `90px`};
+  `
+  }
+
   overflow-y: scroll;
   ::-webkit-scrollbar{
   display: none;
@@ -43,10 +44,10 @@ const Mem = styled.div`
   display: flex;
   align-items: center;
   padding-left: 5px;
-  
   justify-content: space-between;
   overflow: hidden;
   position: relative;
+  /* box-sizing: border-box; */
   ${
     props=>props.admin ?
     `
@@ -75,33 +76,37 @@ const Mem = styled.div`
     box-shadow: rgba(20, 20, 20, 0.2) 0px 12px 8px 0px;
     
   }
+
+  
   ${props=>props.isclicked ? `
   width: 20vw;
+  margin: 10px;
+  padding-left:5px;
   
   ` 
   : 
   `
-  width:30px;
-  height:30px;
-  padding:5px;
-  justify-content:center;
+  width:45px;
+  height:25px;
   border-radius:50%;
+  margin:10px;
   `};
+  
 
-
-${
-  innerWidth < min
-  ?
-  `
-    margin:5px;
+${props=>props.mobile ? `
+    width:95vw;
+    border-radius:5%;
+  box-sizing:border-box;
+  padding-left:19px;
+  margin:5px;
     height:30px;
     font-size:13px;
 
   `
   :
   `
-  margin: 10px;
   height: 50px;
+    
   `
 }
   
@@ -110,7 +115,9 @@ ${
 const MemBox = styled.div`
  max-height: 100vh;
  overflow: scroll;
- background-color: #2D2D2D;
+ /* background-color: #2D2D2D; */
+ background: linear-gradient(to right, rgb(50, 30, 70), rgb(30, 50, 70)); /* Deep Purple to Deep Blue */
+
  ::-webkit-scrollbar{
   display: none;
 }
@@ -132,11 +139,13 @@ const ActiveMenu = styled(RxCross2)`
   cursor: pointer;
   transition: all;
   transition-duration: 0.6s;
+  color: white !important;
 `
 
 const Head = styled.div`
   width: 100%;
-  background-color: #444444;
+  /* background-color: #444444; */
+  background: linear-gradient(to right, rgb(50, 30, 70), rgb(30, 50, 70)); /* Deep Purple to Deep Blue */
   color: white;
   height: 40px;
   display: flex;
@@ -155,12 +164,25 @@ const Head = styled.div`
 `
 
 const Members = ({mems}) => {
-  const {adminname,Admin,kickout} = useSocket();
+  const {adminname,Admin,kickout, viewport,DEVICE_CHART} = useSocket();
   const [mem,setmem] = useState([]);
   const [isclicked,setisclicked] = useState(false);
 
+  const location = useLocation();
+
   useEffect(()=>{
-    setmem(mems)
+    console.log(location.state)
+    if(location.state){
+      setmem(location.state)
+
+    }
+  },[location])
+  useEffect(()=>{
+    if(mems){
+      console.log(mems)
+      setmem(mems)
+    }
+  
   },[mems])
 
 
@@ -171,7 +193,10 @@ const Members = ({mems}) => {
         isclicked={isclicked}
       
       >
+       
         {
+          viewport === DEVICE_CHART.PC 
+          ?
           isclicked === false ?
           <Menu
           size={30}
@@ -187,54 +212,111 @@ const Members = ({mems}) => {
           }}
           />
 
+          :
+          <Link to={"/chat"} >
+            <ActiveMenu
+          size={30}
+          />
+          </Link>
+        
+
         }
        
       </Head>
-    <Mems
-    isclicked={isclicked}
-    >
-      {
-        mem.map((me,i)=>(
-          <React.Fragment
-          key={`${i}th mem`}
-          
-          >
-          {
-            me === adminname 
-            
-            ?
-            <Mem 
-            admin
-            isclicked={isclicked}
-            >{ isclicked ? me : String(me).slice(0,2) }</Mem>
-            :
-           <>
-           {
-            Admin 
-            
-            ?
-            <Mem 
-            isclicked={isclicked}
-            >{ isclicked ? me : String(me).slice(0,2) }
-           <div> <Alter onClick={()=>{
-              kickout(me);
-            }}/></div>
-            </Mem>
-            :
+      
+    {
+       viewport === DEVICE_CHART.MOBILE ? 
 
-            <Mem 
-            isclicked={isclicked}
-            >{ isclicked ? me : String(me).slice(0,2) }</Mem>
-           }
-         
-           </>
-          
-          }
-          </React.Fragment>
-         
-        ))
-      }
-    </Mems>
+      <Mems min={ viewport === DEVICE_CHART.MOBILE}>
+        {
+          mem.map((me,i)=>(
+            <React.Fragment
+            
+            key={i}
+            >
+            {
+              me === adminname 
+
+              ?
+              <Mem 
+              admin
+              mobile={ true}
+              >
+                {me}
+                </Mem>
+
+                :
+                <Mem 
+                mobile={true}
+    
+                >
+                  {me}
+               <div> <Alter onClick={()=>{
+                  kickout(me);
+                }}/>
+                </div>
+                </Mem>
+            }
+            </React.Fragment>
+          ))
+        }
+      </Mems>
+
+      :
+
+      <Mems
+      isclicked={isclicked}
+      >
+        {
+          mem.map((me,i)=>(
+            <React.Fragment
+            key={`${i}th mem`}
+            
+            >
+            {
+              me === adminname 
+              
+              ?
+              <Mem 
+              admin
+              isclicked={isclicked}
+              >
+                {me}
+                </Mem>
+              :
+             <>
+             {
+              Admin 
+              
+              ?
+              <Mem 
+              isclicked={isclicked}
+  
+              >
+                {me}
+             <div> <Alter onClick={()=>{
+                kickout(me);
+              }}/></div>
+              </Mem>
+              :
+  
+              <Mem 
+              isclicked={isclicked}
+              >{me}</Mem>
+             }
+           
+             </>
+            
+            }
+            </React.Fragment>
+           
+          ))
+        }
+      </Mems>
+
+    }
+
+   
     </MemBox>
   )
 }

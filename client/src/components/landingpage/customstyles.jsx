@@ -21,15 +21,14 @@ export const Input = styled.div`
     input{
         width: 300px;
         height: 30px;
+        color: #535353 !important;
         padding-left: 3px;
         background-color: transparent;
-        border: none;
-        border: 2px solid #696969;
+        border: 2px solid #ffffff;
         border-radius: 5px;
-        color: white;
+        /* color: white; */
         &:focus{
             transition-delay: 0.1s;
-            color: black;
             outline: none;
         }
     }
@@ -43,7 +42,7 @@ export const Input = styled.div`
             left:0;
             transition-duration: 0.3s;
             font-size: 20px;
-            color: #696969;
+            color: white;
             pointer-events: none;
 
         }
@@ -52,6 +51,7 @@ export const Input = styled.div`
 `
 
 export const Page = styled.div`
+background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); 
     ${innerWidth > min 
     ?
     `
@@ -105,7 +105,7 @@ export const Custombtn = styled.div`
     font-size: 17px;
     cursor: pointer;
     border: none;
-    background-color: #0077ff;
+    background-color: rgb(0, 112, 217);
     color: white;
     box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
     margin-right: 10px;
@@ -113,6 +113,7 @@ export const Custombtn = styled.div`
 `
 
 export const Imgcover = styled.div`
+background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); 
     ${innerWidth>min
     ?
     `
@@ -175,5 +176,5 @@ export const Loader = styled(AiOutlineLoading)`
     animation: ${rotating} infinite 1s;
     height: 30px;
     width: 30px;
-    color: white;
+    color: #000000;
 `

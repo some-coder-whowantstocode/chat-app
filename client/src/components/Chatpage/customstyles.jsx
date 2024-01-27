@@ -28,7 +28,8 @@ max-height: 100%;
 flex-direction: column;
 box-sizing: border-box;
 flex-grow: 1;
-background-color: #F5F5F5;
+/* background-color: #F5F5F5; */
+background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); 
 `
 
 
@@ -99,9 +100,19 @@ export const Chathead = styled.div`
   font-weight: 800;
   font-size: 20px;
   width: 100%;
-  background-color: white;
+  /* background-color: white; */
+  background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); 
   padding: 0px 10px;
   box-sizing: border-box;
+  div{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    p{
+      margin-left: 10px;
+    }
+  }
 `
 
 export const Options = styled.div`

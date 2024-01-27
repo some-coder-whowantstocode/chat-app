@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react'
+import  React,{ useEffect } from 'react'
 import styled from 'styled-components'
-import { useVideo } from '../../context/Videochatcontroller'
-import Remotevideo from '../Remotevideo'
+import Remotevideo from './Remotevideo'
+import { useSocket } from '../../context/SocketProvider'
 
 const Videoholder =styled.div`
   height: 100vh;
@@ -18,29 +18,22 @@ const Videoholder =styled.div`
 
 const RemoteVideos = () => {
 
-  const { remoteVideo  } = useVideo();
-
-  useEffect(()=>{
-
-    if(remoteVideo.length >0){
-
-      console.log(remoteVideo[0].stream?.getTracks())
-    }
-  },[remoteVideo])
+  const {pc} = useSocket()
 
   return (
     <Videoholder>
       {
-      remoteVideo.map((r,index)=> {
-          console.log(r)
-          return (
-           <Remotevideo key={index} r={r}/>
+        console.log(pc)
+
+      }
+      {
+      pc.map((r,index)=> 
+          ( <Remotevideo key={index} r={r}/>)
            
-          )
-        })
+        )
       }
     </Videoholder>
   )
 }
 
-export default React.memo(RemoteVideos)
+export default React.memo(RemoteVideos);
