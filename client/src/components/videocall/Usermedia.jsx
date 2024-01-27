@@ -131,24 +131,34 @@ const Usermedia = () => {
 
     useEffect(()=>{
         const func_leave =()=>{
-
+          try{
             videoref.current = null;
             posterref.current = null;
             audioref.current = null;
-            let tracks = video.getTracks();
-            tracks.forEach((t)=>{
-                t.stop()
-            })
+            if(video){
+              let tracks = video.getTracks();
+              tracks.forEach((t)=>{
+                  t.stop()
+              })
+            }
           
-            tracks = audio.getTracks();
+          if(audio){
+            let tracks = audio.getTracks();
             tracks.forEach((t)=>{
                 t.stop()
             })
+          }
+          
                 gonnaleave(true)
                 setleave(false);
                 
+        
+          }catch(err){
+            console.log(err)
+          }
         }
-        if(leave){
+        if(leave===true){
+          console.log('leving')
             func_leave()
         }
 
@@ -317,7 +327,7 @@ const Usermedia = () => {
         }
         <Quit
         onClick={async()=>{
-          await setleave(true)
+          setleave(true)
            
         }}
         />

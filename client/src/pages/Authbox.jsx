@@ -1,4 +1,4 @@
-import { useconnection_state } from 'react'
+import { useState, useconnection_state } from 'react'
 import back from '../assets/back.jpg'
 import  {
     Loading,
@@ -16,7 +16,7 @@ import { Actions } from '../utils/Actions'
 
 const Authbox = () => {
 
-    const [dir,setdir] =useconnection_state(true);
+    const [dir,setdir] =useState(true);
 
     const {loading,connection_state,CONNECTION_STATES,reopensocket,Transport} =useSocket()
 

@@ -226,10 +226,11 @@ const leavecall = useCallback(()=>{
 
 
 useEffect(()=>{
-
+console.log(leaving)
   if(leaving === true){
     Mediapackup(Actions.PACKUP_ACTIONS.ALL,{video:myvideo,audio:myaudio})
       .then(()=>{
+        console.log('leaivngsdjafoi')
         leavecall();
       })
       .catch((err)=>{

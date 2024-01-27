@@ -630,6 +630,7 @@ const reconnect =async()=>{
 
 
 useEffect(()=>{
+  console.log('why no leave')
   if(curr_poss.location != curr_poss.last_location){
     navigate(curr_poss.location);
   }

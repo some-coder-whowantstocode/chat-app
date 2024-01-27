@@ -1,11 +1,10 @@
 import styled from 'styled-components';
 import RemoteVideos from '../components/videocall/RemoteVideos';
 import Usermedia from '../components/videocall/Usermedia';
-import React from 'react';
+import React, { useState,useEffect } from 'react';
 import { useSocket } from '../context/SocketProvider';
 import RequestBox from '../components/Chatpage/RequestBox';
 import notification from "../assets/notification.wav";
-
 
 const min = 750
 
