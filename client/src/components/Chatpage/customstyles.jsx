@@ -28,7 +28,6 @@ height: 100dvh;
 flex-direction: column;
 box-sizing: border-box;
 flex-grow: 1;
-/* background-color: #F5F5F5; */
 background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); 
 `
 
@@ -50,7 +49,9 @@ scrollbar-width: none;
 `
 
 export const Messagebox = styled.div`
-position: relative;
+position: absolute;
+bottom:0;
+width:100%;
 `
 
 export const CustomInput = styled.input`
@@ -86,9 +87,11 @@ export const Send = styled(AiOutlineSend)`
   position: absolute;
   bottom:50%;
   transform:translateY(50%);
-  right: 25px;
+  right:20px;
   font-size: 20px;
   cursor: pointer;
+ 
+
 `
 
 export const Chathead = styled.div`
