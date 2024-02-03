@@ -6,11 +6,11 @@ import { AiOutlineSend } from "react-icons/ai";
 const min = 750
 
 export const Room = styled.div`
-width: 100svw;
+width: 100vw;
 max-width: 100%;
 display: flex;
 overflow-x: hidden;
-height:100svh;
+height:100dvh;
 
 ::-webkit-scrollbar{
   display: none;
@@ -24,8 +24,7 @@ export const Chatroom = styled.div`
 width: 69.5vw;
 display: flex;
 position: relative;
-height: 100svh;
-max-height: 100%;
+height: 100dvh;
 flex-direction: column;
 box-sizing: border-box;
 flex-grow: 1;
@@ -52,7 +51,6 @@ scrollbar-width: none;
 
 export const Messagebox = styled.div`
 position: relative;
-bottom:30px;
 `
 
 export const CustomInput = styled.input`

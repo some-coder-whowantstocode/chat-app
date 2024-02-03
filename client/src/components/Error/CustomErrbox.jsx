@@ -34,18 +34,20 @@ const CustomErrbox = ({id,msg}) => {
 
   const { errmsg, seterrmsg } = useSocket();
 
-  useEffect(()=>{
-    console.log(errmsg)
-  },[errmsg])
-
   return (
     <>
     {
           <Errbox 
           onClick={()=>{
             let copy = [...errmsg];
-            copy = copy.filter(element => element.id !== id);
-
+            copy = copy.filter(element =>{
+              if( element.id !== id){
+                return element;
+              }else{
+               clearInterval(element.timeoutId)
+              }
+              
+              });
             seterrmsg(copy);
           }}
           >
@@ -55,7 +57,6 @@ const CustomErrbox = ({id,msg}) => {
           </Content>
           </div>
         </Errbox>
-      
     }
    
     </>

@@ -415,6 +415,7 @@ useEffect(()=>{
   }
  }
  
+console.log('hi')
    
  
 
@@ -432,7 +433,6 @@ useEffect(()=>{
         Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
        setwaiting(false);
       };
-
 
      
       const handlemessage =(jsondata)=>{
@@ -452,14 +452,12 @@ useEffect(()=>{
           break;
 
           case CHAT_METHODS.JOIN_RESPONSE:
-           console.log(jsondata)
               if(jsondata.permission === 'Acc')
               {
                 const {name,roomid,key} = jsondata;
               sessionStorage.setItem('name',name);
               sessionStorage.setItem('room',roomid);
               sessionStorage.setItem('roomkey',key)
-              // set_room_status('in room');
               Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
                   setwaiting(false);
                   setadminname(jsondata.Admin);

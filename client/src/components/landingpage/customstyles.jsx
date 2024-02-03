@@ -69,7 +69,7 @@ background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210));
     flex-direction:column;
     align-items: center;
     justify-content:center ;
-    height:100svh;
+    height:100dvh;
      
     `
     
