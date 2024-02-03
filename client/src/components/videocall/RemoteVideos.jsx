@@ -22,10 +22,7 @@ const RemoteVideos = () => {
 
   return (
     <Videoholder>
-      {
-        console.log(pc)
-
-      }
+     
       {
       pc.map((r,index)=> 
           ( <Remotevideo key={index} r={r}/>)

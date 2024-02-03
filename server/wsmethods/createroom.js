@@ -1,41 +1,49 @@
-module.exports.Createroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, room_key, connections) => {
+const { CUSTOM_RESPONSE } = require("../responses");
+
+module.exports.Createroom = (data, ws, ROOM) => {
 
     try {
         const { roomid, name } = data;
-        if (!roomid || !name || roomid == '' || name == '') {
-            ws.send({
-                type: `error`,
-                msg: `please provide valid roomid and name.`
+        console.log(data)
 
-            })
+        if (!roomid || !name || roomid == '' || name == '') {
+            ws.send(CUSTOM_RESPONSE.CREATE_ROOM.REJECT.INVALID_CREDINTIALS);
             return;
         }
-
-        if (rooms_id.has(roomid)) {
-            ws.send({
-                type: `error`,
-                msg: `${roomid} already exists.`
-            })
+        if (ROOM.has(roomid)) {
+            ws.send(CUSTOM_RESPONSE.CREATE_ROOM.REJECT.ROOM_EXISTS);
             return;
         }
 
         const key = Date.now().toString(36) + Math.random().toString(36).slice(2);
 
-
-        rooms_id.set(roomid, [ws]);
-        users_in_rooms.set(roomid, [name]);
-        connections.set(ws.id, { roomid, name, key, requester: false, active: true, ws });
-        roomAdmin.set(roomid, ws);
-        room_key.set(roomid, key);
-        users_in_videocall.set(roomid, []);
-        requesters.set(roomid, []);
-        ws.send({
-            type: 'create',
-            response: true,
-            name: name,
-            roomid: roomid,
-            key
+        let mem = new Array()
+        mem.push( {
+            name,
+            incall:false,
+            active:true,
+            ws
         })
+        ROOM.set(roomid,
+            {
+                key,
+                users:1,
+                members:mem,
+                admin:{
+                    name,
+                    ws
+                },
+                call:[],
+                requesters:[]
+            }
+        )
+        let res = {...CUSTOM_RESPONSE.CREATE_ROOM.ACCEPT}
+        res.name = name;
+        res.roomid = roomid;
+        res.key = key;
+        console.log(res)
+        ws.send(res);
+       
     } catch (err) {
         throw new Error(`Error while creating the room - ${ err.message}`, );
     }

@@ -1,7 +1,7 @@
-module.exports.joincall = (data, ws, users_in_videocall) => {
-    console.log('data', data)
+module.exports.joincall = (data, ws, ROOM) => {
     const { roomid, name } = data;
-    let roomoffer = users_in_videocall.get(roomid);
+    let Room = ROOM.get(roomid);
+    let roomoffer = Room.call;
     let clientoffer = {
         ws,
         name
@@ -16,8 +16,10 @@ module.exports.joincall = (data, ws, users_in_videocall) => {
     })
 
     roomoffer.push(clientoffer);
-    users_in_videocall.set(roomid, roomoffer)
-    console.log(users_in_videocall)
+    Room.call = roomoffer;
+    ROOM.set(roomid,Room);
+    // users_in_videocall.set(roomid, roomoffer)
+    // console.log(users_in_videocall)
     ws.send({
         type: 'videocall',
         msg: 'you joined the call'

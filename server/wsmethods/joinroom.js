@@ -1,53 +1,47 @@
-module.exports.joinroom = (data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, connections, room_key) => {
+const { CUSTOM_RESPONSE } = require("../responses");
+
+module.exports.joinroom = (data, ws, ROOM, USER_LIMIT) => {
     try {
         const { roomid, name, rejoin, key } = data;
-        if (!rooms_id.has(roomid)) {
-            ws.send({
-                type: `error`,
-                msg: `room ${roomid} does not exist.`
-            })
+        if (!ROOM.has(roomid)) {
+            ws.send(CUSTOM_RESPONSE.JOIN_ROOM.REJECT.NOT_EXISTS)
             return;
         }
-        console.log(data)
+        const Room = ROOM.get(roomid);
+
+        if(Room.users === USER_LIMIT){
+            ws.send(CUSTOM_RESPONSE.JOIN_ROOM.REJECT.FULL);
+            return;
+        } 
         if (rejoin) {
-            console.log('rejoining')
-            let roomkey = room_key.get(roomid);
-            if (roomkey !== key) {
-                ws.send({
-                    type: `error`,
-                    msg: `old room does not exist.`
-                })
+            if (Room.key !== key) {
+                ws.send(CUSTOM_RESPONSE.JOIN_ROOM.REJECT.ANOTHER_ROOM)
                 return;
             }
         }
-
-        let members = users_in_rooms.get(roomid);
-        let already_exists = members.find(m => m === name);
-        let requester = requesters.get(roomid);
+        let members = Room.members;
+        let already_exists = members.find(m => m.name === name);
+        let requester = Room.requesters;
         let existreq = requester.find(r => r.name === name);
 
         if (already_exists || existreq) {
-            ws.send({
-                type: 'error',
-                msg: `some one with name ${name} already exists in this room please choose another name.`
-            });
+            ws.send(CUSTOM_RESPONSE.JOIN_ROOM.REJECT.EXISTING_NAME);
             return;
         }
 
-        const Admin = roomAdmin.get(roomid);
-        const request = {
-            type: 'request',
-            name: name,
-            roomid: roomid
-        };
-        connections.set(ws.id, { roomid, name, requester: true, ws, active: true })
+        const Admin = Room.admin;
+        const request = {...CUSTOM_RESPONSE.JOIN_ROOM.ACCEPT.ASK_TO_ADMIN};
+        request.name = name;
+        request.roomid = roomid;
+       
             // store requesters who want to join so that you can accept or decline when more than one wants to join
 
         requester.push({ name: name, ws: ws });
-        requesters.set(roomid, requester);
+        Room.requesters = requester;
+        ROOM.set(roomid,Room);
 
-
-        Admin.send(request);
+        console.log(request)
+        Admin.ws.send(request);
     } catch (err) {
         throw new Error(`Error while joining the room - ${ err.message}`, );
     }

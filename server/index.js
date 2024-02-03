@@ -1,29 +1,70 @@
 const http = require('http');
 const { shakeHand } = require('./Controller/TokenController.js')
 const {
-    bodyParser,
     defaultPage,
     errorHandler,
-    applicationHeader
 } = require('./middleware/index.js');
 require('dotenv').config();
 const socketIo = require('socket.io');
 
 const jwt = require('jsonwebtoken')
 
-const rooms_id = new Map(); //<id,[ws,ws.....]>
-const users_in_rooms = new Map(); //<id,[name,name.....]>
-const roomAdmin = new Map(); //<id,ws>
+const USER_LIMIT = 3;
+
+const ROOM = new Map();
+/*
+Room=
+Room_id:[
+-Room_key,
+-USERS:number(must be less than limit)
+-Members:[
+    -member:{
+        name,
+        incall:bool,
+        active,
+        ws
+    }
+],
+-Admin:{
+    name,
+    ws
+},
+call:[
+    {
+        name,
+        ws
+    }
+]
+
+-Requestors:[
+    {
+        name,
+        ws
+    }
+]
+]
+*/
+
+// const rooms_id = new Map(); //<id,[ws,ws.....]>
+// const users_in_rooms = new Map(); //<id,[name,name.....]>
+// const roomAdmin = new Map(); //<id,ws>
+
+
 /* to handle room admins */
-const requesters = new Map(); //<id,[{name,ws},{name,ws}....]>
+
+// const requesters = new Map(); //<id,[{name,ws},{name,ws}....]>
+
+
 /*to handle users requesting to join room */
 // const blocklist = new Map(); //<id,[ws,ws,ws,ws]>
-const connections = new Map(); //<ws.id,{roomid,name,key,active,ws}>
-const users_in_videocall = new Map(); //<id,[{name,ws},{name,ws}]>
+
+// const connections = new Map(); //<ws.id,{roomid,name,key,active,ws}>
+// const users_in_videocall = new Map(); //<id,[{name,ws},{name,ws}]>
+
+
 /*to handle all the users for video call */
-const room_key = new Map(); //<id,key>
-let interval;
-let offduty = true;
+
+// const room_key = new Map(); //<id,key>
 
 const {
     sendtoall,
@@ -127,16 +168,16 @@ try {
                     switch (data.type) {
                         case 'create':
 
-                            Createroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, room_key, connections);
+                            Createroom(data, socket, ROOM);
 
                             break;
 
                         case 'join':
-                            joinroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, connections, room_key);
+                            joinroom(data, socket,ROOM, USER_LIMIT);
                             break;
 
                         case 'response':
-                            permission(data, rooms_id, users_in_rooms, requesters, connections, room_key);
+                            permission(data,ROOM,USER_LIMIT);
                             socket.emit('message', {
                                 type: 'removereq',
                                 name: data.name
@@ -144,46 +185,44 @@ try {
                             break;
 
                         case 'leave':
-                            leaveroom(data, socket, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, false, room_key, connections);
+                            leaveroom(data, socket,ROOM);
                             break;
 
                         case 'cancel':
-                            cancelrequest(data, socket, roomAdmin, requesters, connections);
+                            cancelrequest(data, ROOM);
                             break;
 
                         case 'kickout':
-                            kickout(data, socket, roomAdmin, rooms_id, users_in_rooms);
+                            kickout(data, socket, ROOM);
 
                             break;
 
                         case 'videocall':
 
                             if (data.enter) {
-                                joincall(data, socket, users_in_videocall);
+                                joincall(data, socket, ROOM);
                             }
                             if (data.command === 'leavecall') {
-                                leavecall(data, users_in_videocall);
+                                leavecall(data, ROOM);
                             } else {
                                 if (data.command === 'media') {
-                                    console.log(data)
-                                    let list = users_in_videocall.get(data.roomid);
+                                    let list = ROOM.get(data.roomid).call;
                                     list && list.map(({ name, ws }) => {
                                             if (name !== data.from) {
-                                                console.log(name)
                                                 ws.send(data)
                                             }
 
                                         })
                                         // sendtoall(, data)
                                 } else {
-                                    forward(data, users_in_videocall);
+                                    forward(data, ROOM);
 
                                 }
                             }
                             break;
 
                         default:
-                            message(data, rooms_id);
+                            message(data, ROOM);
                             break;
 
                     }
@@ -219,28 +258,31 @@ try {
                 console.log('user disconnected');
             });
 
-            socket.on('ping', ({ key, roomid }) => {
-                console.log("223", key, roomid);
+            socket.on('ping', ({ key, roomid, name }) => {
                 if (roomid && key) {
-                    const roomkey = room_key.get(roomid);
-                    if (roomkey === key) {
-                        let conn = connections.get(socket.id);
-                        if (conn) {
-                            conn.active = true;
-                            connections.set(socket.id, conn);
+                    const Room = ROOM.get(roomid);
+                    if(Room){
+                        if (Room.key === key) {
+                            Room.members = Room.members.map((m)=> {
+                                if(m.name === name) m.active = true;
+                                return m;
+                            })
+                            ROOM.set(roomid,Room);
                         }
-
-
+                        else{
+                            socket.send({
+                                type: 'Announcement',
+                                left: true,
+                                msg: `You left the room ${roomid}`
+                            })
+                        }
                     }
+                  
                 }
 
 
-                // console.log(active)
             });
-            // if (offduty) {
-            //     console.log("offduty", offduty)
-            //     inspector();
-            // }
+         
 
         } catch (err) {
             const stackLines = err.stack.split('\n');
@@ -277,24 +319,24 @@ server.listen(PORT, () => console.log(`server is listening at ${PORT}`))
 //check for active or not active connections 
 const inspector = () => {
     interval = setInterval(() => {
-        connections.forEach((values, key) => {
-            console.log("281", values.active)
-            if (values.active === true) {
-                values.active = false;
-
-            } else {
-                const { ws } = values
-                leaveroom(values, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, false, room_key, connections)
-                connections.delete(key);
-
-            }
+        
+        ROOM.forEach((values, key) => {
+           let Room = values;
+            Room.members.forEach((m)=>{
+                if(m.active === true){
+                    m.active = false;
+                ROOM.set(key,Room)
+                }else{
+                    const {ws} = m;
+                    console.log('the real culprit')
+                    const data ={name:m.name,roomid:key,key:values.key}
+                    leaveroom(data,ws,ROOM);
+                }
+            })
+         
         })
 
-        console.log("293", connections.size)
-            // if (!connections.size) {
-            //     offduty = true;
-            //     clearInterval(interval)
-            // }
+         
     }, [1000 * 10]);
 }
 inspector()

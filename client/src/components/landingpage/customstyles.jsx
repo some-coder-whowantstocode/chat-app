@@ -69,6 +69,7 @@ background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210));
     flex-direction:column;
     align-items: center;
     justify-content:center ;
+    height:100svh;
      
     `
     
@@ -173,8 +174,9 @@ export const Btn = styled.button`
 `
 
 export const Loader = styled(AiOutlineLoading)`
-    animation: ${rotating} infinite 1s;
+    animation: ${rotating} infinite 0.5s linear;
     height: 30px;
     width: 30px;
     color: #000000;
+    z-index:10001;
 `

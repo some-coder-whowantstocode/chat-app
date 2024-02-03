@@ -8,6 +8,7 @@ import { useRef } from 'react';
 import { Actions } from '../utils/Actions';
 import { PATH } from '../utils/Paths';
 import { DEVICE_SIZES, DEVICE_CHART } from '../utils/Sizechart';
+import { Mediapackup } from '../utils/mediahandler';
 
 
 const SocketContext = createContext(null);
@@ -53,7 +54,7 @@ export function SocketProvider({ children }) {
       }});
   const myaudio = useRef();
   const myvideo = useRef();
-  const [leavecall,setleave] = useState(false);
+  const [leavechat,setleave] = useState(false);
   const [ leaving , gonnaleave] = useState(false);
   const [pc,addpc] = useState([]);//[{name of the other user,peer}]
 
@@ -64,10 +65,6 @@ export function SocketProvider({ children }) {
     myvideo.current = data;
   }
   const setpc =(data)=>{
-    // pc.current.push(data);
-    // let copy = pc;
-    // copy.push(data);
-    // addpc(copy);
     addpc(prevdata=>[...prevdata,data])
   }
 
@@ -75,8 +72,17 @@ export function SocketProvider({ children }) {
   const Transport =(command)=>{
     const locations = Actions.TRANSPORT_LOCATIONS;
     let copy = {...curr_poss};
-    copy.last_location = copy.location ;
+    copy.last_location = window.location.href ;
+    console.log('last loc',copy.last_location,copy.location)
     switch(command){
+
+      case locations.HOME:
+        copy.location = PATH.HOME_PAGE;
+        copy.activity.main_act = Actions.USER_ACTIONS.IDLE;
+        copy.activity.sub_act = Actions.USER_ACTIONS.IDLE;
+        setcurr(copy);
+      break;
+
       case locations.CHAT :
         copy.location = PATH.CHAT_PAGE;
         copy.activity.main_act = Actions.USER_ACTIONS.CHAT;
@@ -205,7 +211,7 @@ export function SocketProvider({ children }) {
   
               case "disconnected":
                   try {
-
+                    console.log('disoccdsifsadijlsdsfasdjfi')
                       if (p.incall === false) {
                           p.Close();
                           removepc(false,p.name,p.Id)
@@ -238,15 +244,8 @@ export function SocketProvider({ children }) {
   },[pc])
 
 
-  // const [request_processing , req_res ] = useState(false);
-  
-  // const changestatus =(value)=>{
-  //   setstatus(value);
-  // }
-  
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
-  console.log('socket rerendering')
 
   /* Frist get token for establising connection with websocket at backend.*/
 
@@ -270,11 +269,13 @@ console.log(err);
     withCredentials: true
   });
 
-  socket.on('connect_error', (err) => {
+  socket.on('connect_error', async(err) => {
     console.log(`connect_error due to ${err.message}`);
-    setrem('connection lost do you want to rejoin ?');
-   
-    Transport(Actions.TRANSPORT_LOCATIONS.REJOIN);
+    if(curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT || curr_poss.activity.sub_act === Actions.USER_ACTIONS.JOINING_VIDEO_CHAT){
+     await Mediapackup(Actions.PACKUP_ACTIONS.ALL,{audio:myaudio.current,video:myvideo.current})
+    }
+    setcon(CONNECTION_STATES.CONNECTION_LOST)
+    Transport(Actions.TRANSPORT_LOCATIONS.HOME);
     
     
   });
@@ -314,13 +315,10 @@ console.log(err);
 
             gettoken().then(socket=>{
               setSocket(socket);
-              // setstate('Authenticated');
               setcon(CONNECTION_STATES.CONNECTED)
 
             })
             .catch(err=>{
-              console.log(err);
-              // setstate('Authfailed');
               setcon(CONNECTION_STATES.FAILED)
             })
             .finally(()=>{
@@ -333,6 +331,7 @@ console.log(err);
 
   
   const wanttocreate =(name,roomid)=>{
+    setLoading(true);
     createRoom(socket,name,roomid);
    }
  
@@ -362,8 +361,7 @@ console.log(err);
 
  
 useEffect(()=>{
-
-  if(leavecall === true && socket && curr_poss.activity.main_act === Actions.USER_ACTIONS.VIDEO_CHAT && curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT )
+  if(leavechat === true && socket  )
   {
     try{
         leaveRoom(socket,true)
@@ -387,7 +385,7 @@ useEffect(()=>{
  }
   }
 
-},[leavecall,socket,curr_poss])
+},[leavechat,socket,curr_poss])
 
    const kickedout =async()=>{
     Transport(Actions.TRANSPORT_LOCATIONS.REJOIN);
@@ -399,12 +397,6 @@ useEffect(()=>{
  
    const wanttocancel =async()=>{
     await cancelrequest(socket);
-    // let copy = {...curr_poss}
-    // copy.activity.main_act = Actions.USER_ACTIONS.IDLE;
-    // copy.activity.sub_act = Actions.USER_ACTIONS.IDLE;
-    // copy.last_location = copy.location;
-    // copy.location = PATH.LANDING_PAGE;
-    // setcurr(copy);
     Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
      setwaiting(false);
     
@@ -448,6 +440,7 @@ useEffect(()=>{
         let timeoutId;
         switch(jsondata.type){
           case CHAT_METHODS.CREATE:
+            setLoading(false);
               sessionStorage.setItem('name',jsondata.name);
               sessionStorage.setItem('room',jsondata.roomid);
               sessionStorage.setItem('roomkey',jsondata.key);
@@ -459,7 +452,7 @@ useEffect(()=>{
           break;
 
           case CHAT_METHODS.JOIN_RESPONSE:
-           
+           console.log(jsondata)
               if(jsondata.permission === 'Acc')
               {
                 const {name,roomid,key} = jsondata;
@@ -527,7 +520,7 @@ useEffect(()=>{
               if(jsondata.left){
                   gonnaleave(true)
                   setrem('want to rejoin room.');
-                  Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
+                  Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
                  setAdmin(false);
                  setadminname('');
                  setmembers([]);
@@ -594,7 +587,7 @@ useEffect(()=>{
       const key = sessionStorage.getItem('roomkey');
       const roomid = sessionStorage.getItem('room');
       if( curr_poss.activity.main_act !== Actions.USER_ACTIONS.IDLE ){
-        socket.emit('ping',{key,roomid});
+        socket.emit('ping',{key,roomid,name:sessionStorage.getItem('name')});
       }
       
      
@@ -630,7 +623,7 @@ const reconnect =async()=>{
 
 
 useEffect(()=>{
-  console.log('why no leave')
+  console.log('why no leave',curr_poss.location,curr_poss.last_location )
   if(curr_poss.location != curr_poss.last_location){
     navigate(curr_poss.location);
   }
@@ -648,6 +641,7 @@ useEffect(()=>{
         setmyvideo,
         kickout,
         members,
+        setmembers,
         Admin,
         adminname,
         rejoinmsg,
@@ -658,7 +652,7 @@ useEffect(()=>{
         wanttojoin,
         wanttocreate,
         setleave,
-        leavecall,
+        leavechat,
         socket,
         loading,
         connection_state,
@@ -667,6 +661,7 @@ useEffect(()=>{
         waiting,
         err,
         errmsg,
+        seterrmsg,
         pc,
         setpc,
         removepc,

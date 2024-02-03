@@ -11,7 +11,8 @@ import {
   Imgcover,
 } from "../components/landingpage/customstyles";
 import Reqprocessing from "../components/landingpage/Reqprocessing";
-import CustomErrbox from "../components/CustomErrbox";
+import Customerrors from "../components/Error/Customerrors";
+import Loading from "../components/Loading";
 
 const LandingPage = () => {
  
@@ -20,7 +21,7 @@ const LandingPage = () => {
   const roomidref = useRef(null);
 
 
-  const { wanttojoin , errmsg , handleconnection , wanttocancel , wanttocreate , state , curr_poss , ROOMS } = useSocket();
+  const { wanttojoin , handleconnection , wanttocancel , wanttocreate , state } = useSocket();
 
   useEffect(()=>{
     if (state == "Authfailed" || state == "ConnectionLost") {
@@ -96,12 +97,8 @@ const LandingPage = () => {
 
   return (
     <>
-      {
-        errmsg.map((em,i)=>(
-          
-          <CustomErrbox key={`${i}th error`} msg={em.msg}/>
-        ))
-      }
+    <Customerrors/>
+    <Loading/>
       <Reqprocessing />
 
       <Nav />

@@ -139,7 +139,7 @@ const Videoholder = styled.div`
 const Waitingroom = () => {
 
     const { goback , media , joincall  } = useVideo();
-    const { myvideo,Transport, myaudio , setmyaudio ,  viewport, DEVICE_CHART,setmyvideo , pc , socket} =useSocket()
+    const { myvideo,Transport, myaudio , setmyaudio ,  viewport, DEVICE_CHART,setmyvideo , pc , socket , curr_poss} =useSocket()
     const videoref = useRef(null);
     const audioref = useRef(null);
     const username = sessionStorage.getItem('name');
@@ -148,6 +148,12 @@ const Waitingroom = () => {
     const [audio,setaudio] = useState();
     const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
+
+  useEffect(() => {
+    if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
+      Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
+    }
+  }, []);
     
 
     // const navigate = useNavigate()

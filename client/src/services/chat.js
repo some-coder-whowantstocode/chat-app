@@ -1,6 +1,7 @@
 const createRoom = (socket, name, roomid) => {
     try {
         if (socket) {
+            console.log('hmm')
             socket.send({ type: 'create', roomid: roomid, name: name })
         }
     } catch (err) {
@@ -38,13 +39,18 @@ const leaveRoom = async(socket, temp) => {
 }
 
 const cancelrequest = async(socket) => {
-    await socket.send({
-        type: "cancel",
-        name: sessionStorage.getItem('joinname'),
-        roomid: sessionStorage.getItem('joinroom')
-    })
-    sessionStorage.removeItem('joinroom');
-    sessionStorage.removeItem('joinname');
+    try{
+        await socket.send({
+            type: "cancel",
+            name: sessionStorage.getItem('joinname'),
+            roomid: sessionStorage.getItem('joinroom')
+        })
+        sessionStorage.removeItem('joinroom');
+        sessionStorage.removeItem('joinname');
+    }catch(err){
+        console.log(err);
+    }
+  
 }
 
 export {

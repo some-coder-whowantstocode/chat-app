@@ -1,9 +1,12 @@
 import styled from 'styled-components'
 import logo from '/chat.png'
+import { useSocket } from '../../context/SocketProvider'
+import { Actions } from '../../utils/Actions'
 
 const min = 750
 
 const Navbox = styled.div`
+cursor:pointer;
 color: white;
 width: 100vw;
 height: 45px;
@@ -35,8 +38,14 @@ img{
 `
 
 const Nav = () => {
+
+  const {Transport} = useSocket()
   return (
-    <Navbox>
+    <Navbox 
+    onClick={()=>{
+      Transport(Actions.TRANSPORT_LOCATIONS.HOME)
+    }}
+    >
         <img src={logo} alt="" />
       <span>Instant group</span>
     </Navbox>

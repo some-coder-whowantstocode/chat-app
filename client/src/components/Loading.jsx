@@ -2,6 +2,7 @@ import React from 'react'
 import { AiOutlineLoading } from 'react-icons/ai'
 import styled from 'styled-components'
 import { useSocket } from '../context/SocketProvider'
+import { Loader } from './landingpage/customstyles'
 
 
 const Loadingbox = styled.div`
@@ -15,11 +16,13 @@ const Loadingbox = styled.div`
     position: absolute;
     top: 0;
     left: 0;
+    background:white;
+    z-index:10000;
+    opacity:0.5;
     
 `
-const Loader = styled(AiOutlineLoading)`
-    transform: scale(3);
-`
+
+
 
 const Loading = () => {
     const {loading} = useSocket()

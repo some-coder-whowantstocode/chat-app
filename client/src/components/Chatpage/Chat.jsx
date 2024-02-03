@@ -55,7 +55,7 @@ const Chat = ({m,me}) => {
   return (
     <Chatbox me={me}>
     {
-      m.type === 'Alert' ?
+      m.type === 'Announcement' ?
 
       <Announcement >
         {m.msg}

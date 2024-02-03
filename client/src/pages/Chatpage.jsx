@@ -19,9 +19,6 @@ import {
 import Loading from "../components/Loading";
 import { Link } from "react-router-dom";
 import Members from "../components/Chatpage/Members";
-import Waitingroom from "./Waitingroom";
-import { useVideo } from "../context/Videochatcontroller";
-import VideochatPage from "./VideochatPage";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { PATH } from "../utils/Paths";
 import { Actions } from "../utils/Actions";
@@ -30,9 +27,8 @@ import { Actions } from "../utils/Actions";
 
 
 const Chatpage = () => {
-  const { socket, Transport,viewport,DEVICE_CHART,connection_state,CONNECTION_STATES, setleave, Admin , members,curr_poss } =
+  const { socket, Transport,viewport,DEVICE_CHART,connection_state,CONNECTION_STATES, setleave, Admin , members,setmembers,curr_poss } =
     useSocket();
-  const { gonnaleave } = useVideo();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
@@ -40,7 +36,7 @@ const Chatpage = () => {
   const msg = useRef('');
   const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
-  const [mem, setmem] = useState([]);
+  // const [mem, setmem] = useState([]);
   
 
   const inputref = useRef(null);
@@ -50,14 +46,10 @@ const Chatpage = () => {
   useEffect(() => {
     setname(sessionStorage.getItem("name"));
     setroomid(sessionStorage.getItem("room"));
-    setmem([...members]);
+    // setmem([...members]);
     return ()=>{
     }
   }, []);
-
-  useEffect(()=>{
-    console.log(mem)
-  },[mem])
 
   console.log(viewport,DEVICE_CHART.MOBILE)
 
@@ -94,15 +86,14 @@ const Chatpage = () => {
         case 'Announcement':
        
           if(jsondata.joined){
-            setmem(prevdata=>[...prevdata,jsondata.name]);
+            // setmem(prevdata=>[...prevdata,jsondata.name]);
+            setmembers(prevdata=>[...prevdata,jsondata.name])
           }
           if(jsondata.leftroom){
-            console.log('leftroom',jsondata)
             let copymems = [...mem];
-            console.log(copymems,mem)
             copymems = copymems.filter((m)=>jsondata.name !== m)
-            console.log(copymems)
-            setmem(copymems)
+            // setmem(copymems)
+            setmembers(copymems);
           }
           setmsgs((prevmsg) => [...prevmsg, jsondata]);
         
@@ -110,6 +101,7 @@ const Chatpage = () => {
         break;
 
         case 'Alert':
+          console.log(jsondata)
           if(jsondata.action_required) setleave(true);
           Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
         break;
@@ -125,33 +117,15 @@ const Chatpage = () => {
         socket.removeEventListener("message", handleMessage);
       };
     }
-  }, [socket,notificationsound,setleave,mem]);
+  }, [socket,notificationsound,setleave,members]);
 
 
   useEffect(() => {
     if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
-      // navigate("/landingpage");
       Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
     }
   }, []);
 
-  useEffect(() => {
-    const handler = async () => {
-      console.log('hmm')
-      await gonnaleave(true);
-      console.log('leavecall')
-      await setleave(true);
-      console.log('leaveroom')
-
-    };
-
-    window.addEventListener("beforeunload", handler);
-
-    return () => {
-      window.removeEventListener("beforeunload", handler);
-    };
-  }, []);
-  
 
   const sendmsg = async () => {
     try {
@@ -180,7 +154,7 @@ const Chatpage = () => {
   return (
     <Room>
      {
-      viewport === DEVICE_CHART.PC &&<Members mems={mem}/>
+      viewport === DEVICE_CHART.PC &&<Members mems={members}/>
      }
 
 
@@ -191,7 +165,7 @@ const Chatpage = () => {
         
         <div>
         {
-          viewport === DEVICE_CHART.MOBILE && <Link to={PATH.MEMBERS_PAGE} state={mem}> <GiHamburgerMenu/></Link>
+          viewport === DEVICE_CHART.MOBILE && <Link to={PATH.MEMBERS_PAGE} state={members}> <GiHamburgerMenu/></Link>
         }
         <p>{roomid}</p>
     
@@ -215,10 +189,7 @@ const Chatpage = () => {
       <Option colorschema={{col:'#b10e0e',bac:'#b10e0e'}}
       
         onClick={async () => {
-          await gonnaleave(true);
           await setleave(true);
-          // navigate("/rejoin");
-          // changeRoom(ROOMS.REJOIN_PAGE)
           Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
         }}
       >
@@ -249,14 +220,6 @@ const Chatpage = () => {
       </Messagebox>
     
     </Chatroom>
-    {/* {
-      ( videocallstatus === 'preparing_to_join' &&  viewport === DEVICE_CHART.PC) &&  <Waitingroom/>
-    }
-
-    {
-      ( videocallstatus === 'in_video_call' &&  viewport === DEVICE_CHART.PC ) && <VideochatPage/>
-    }
-     */}
     </Room>
   );
 };

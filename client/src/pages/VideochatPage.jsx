@@ -5,8 +5,8 @@ import React, { useState,useEffect } from 'react';
 import { useSocket } from '../context/SocketProvider';
 import RequestBox from '../components/Chatpage/RequestBox';
 import notification from "../assets/notification.wav";
+import { Actions } from '../utils/Actions';
 
-const min = 750
 
 const Page = styled.div`
 width:100vw;
@@ -22,7 +22,13 @@ const VideochatPage = () => {
 
   const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
-  const {socket} = useSocket()
+  const {socket,curr_poss,Transport} = useSocket()
+
+  useEffect(() => {
+    if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
+      Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
+    }
+  }, []);
 
   useEffect(() => {
     const handleMessage = (jsondata) => {

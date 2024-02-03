@@ -1,8 +1,8 @@
 import styled from 'styled-components';
-import {NavLink} from 'react-router-dom';
 import { useSocket } from '../context/SocketProvider';
-import CustomErrbox from '../components/CustomErrbox';
 import Reqprocessing from '../components/landingpage/Reqprocessing';
+import { Actions } from '../utils/Actions';
+import Customerrors from '../components/Error/Customerrors';
 
 const Rejoinpage = styled.div`
   height: 100vh;
@@ -19,7 +19,7 @@ const Custombox = styled.div`
   
 `
 
-const Btn = styled(NavLink)`
+const Btn = styled.button`
   border: none;
   text-decoration: none;
   padding: 5px 8px;
@@ -45,17 +45,12 @@ const Styledtext = styled.p`
 
 const Confirmation = () => {
 
-  const {wanttorejoin,errmsg,rejoinmsg} = useSocket()
+  const {wanttorejoin,errmsg,rejoinmsg,Transport} = useSocket()
 
 
   return (
     <Rejoinpage>
-        {
-        errmsg.map((em,index)=>(
-          
-          <CustomErrbox key={index} msg={em.msg}/>
-        ))
-      }
+      <Customerrors/>
       <Reqprocessing />
       
 
@@ -70,7 +65,8 @@ const Confirmation = () => {
           sessionStorage.removeItem('room');
           sessionStorage.removeItem('joinroom');
           sessionStorage.removeItem('roomkey');
-        }} to={'/landingpage'}>Go back to Landing page</Btn>
+          Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
+        }} >Go back to Landing page</Btn>
       </Custombox>
     </Rejoinpage>
   )

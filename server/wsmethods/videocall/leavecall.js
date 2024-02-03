@@ -1,7 +1,8 @@
-module.exports.leavecall = async(data, users_in_videocall) => {
+module.exports.leavecall = async(data, ROOM) => {
     try {
         const { roomid, name } = data;
-        let copy = Array.from(users_in_videocall.get(roomid));
+        let Room = ROOM.get(roomid);
+        let copy = Room.call;
         if (copy.find(c => c.name === name)) {
             copy = copy.filter((c) => c.name != name);
             copy.forEach((c) => {
@@ -10,8 +11,10 @@ module.exports.leavecall = async(data, users_in_videocall) => {
                     name
                 })
             })
-            console.log(copy)
-            users_in_videocall.set(roomid, copy);
+            // console.log(copy)
+            // users_in_videocall.set(roomid, copy);
+            Room.call = copy;
+            ROOM.set(roomid,Room)
         }
 
 

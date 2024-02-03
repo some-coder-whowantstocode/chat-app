@@ -23,7 +23,7 @@ export const Chatroom = styled.div`
 width: 69.5vw;
 display: flex;
 position: relative;
-height: 100vh;
+height: 100svh;
 max-height: 100%;
 flex-direction: column;
 box-sizing: border-box;
@@ -100,7 +100,6 @@ export const Chathead = styled.div`
   font-weight: 800;
   font-size: 20px;
   width: 100%;
-  /* background-color: white; */
   background: linear-gradient(to right, rgb(200, 190, 210), rgb(190, 200, 210)); 
   padding: 0px 10px;
   box-sizing: border-box;
@@ -110,7 +109,8 @@ export const Chathead = styled.div`
     justify-content: center;
 
     p{
-      margin-left: 10px;
+     
+      margin: 8px 0px 10px 10px;.
     }
   }
 `

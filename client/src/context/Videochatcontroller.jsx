@@ -192,7 +192,6 @@ export function Videochatcontroller({ children }) {
 
 
 const leavecall = useCallback(()=>{
-  console.log(curr_poss)
   if(socket && curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT && leaving === true ){
     console.log('entered')
     try{
@@ -226,11 +225,9 @@ const leavecall = useCallback(()=>{
 
 
 useEffect(()=>{
-console.log(leaving)
   if(leaving === true){
     Mediapackup(Actions.PACKUP_ACTIONS.ALL,{video:myvideo,audio:myaudio})
       .then(()=>{
-        console.log('leaivngsdjafoi')
         leavecall();
       })
       .catch((err)=>{
@@ -338,12 +335,20 @@ console.log(leaving)
 
                     case Actions.CALL_ACTIONS.LEFT:
                       {
-                       //console.log('left so ')
-                        pc.forEach((p)=>{
-                          if(p.name === data.name){
-                            p.incall = false;
-                          }
-                        })
+                       console.log('left so ',pc.length)
+                       for(let i = 0;i<pc.length;i++){
+
+                        if(pc[i].name === data.name){
+                          pc[i].incall = false;
+                          console.log(pc[i])
+                          break;
+                        }
+                       }
+                        // pc.forEach((p)=>{
+                        //   if(p.name === data.name){
+                        //     p.incall = false;
+                        //   }
+                        // })
                           
                       }
                     break;

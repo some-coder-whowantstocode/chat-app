@@ -24,7 +24,7 @@ const Mems = styled.div`
   `
   :
   `
-  width:${props.isclicked ? `36.5vw` : `90px`};
+  width:${props.isclicked ? `30.5vw` : `70px`};
   `
   }
 

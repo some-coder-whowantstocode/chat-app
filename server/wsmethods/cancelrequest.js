@@ -1,19 +1,19 @@
-module.exports.cancelrequest = (data, socket, roomAdmin, requesters, connections) => {
+module.exports.cancelrequest = (data, ROOM) => {
     try {
         const { name, roomid } = data;
-        let admin = roomAdmin.get(roomid);
-
+        let Room = ROOM.get(roomid);
+        let admin = Room.admin;
         if (admin) {
-            admin.send({
+            admin.ws.send({
                 type: 'cancelrequest',
                 name: name
             });
         }
-        let reqs = requesters.get(roomid);
-        connections.delete(socket.id)
+        let reqs = Room.requesters;
         if (reqs) {
             reqs = reqs.filter((r) => r.name !== name);
-            requesters.set(roomid, reqs);
+            Room.requesters = reqs;
+            ROOM.set(roomid,reqs)
         }
 
     } catch (err) {

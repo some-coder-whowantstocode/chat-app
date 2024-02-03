@@ -1,99 +1,76 @@
+const { CUSTOM_RESPONSE } = require("../responses");
 const { sendtoall } = require("./senttoall");
 const { leavecall } = require("./videocall/leavecall");
 
-module.exports.leaveroom = async(data, ws, rooms_id, users_in_rooms, roomAdmin, requesters, users_in_videocall, timeout, room_key, connections) => {
+module.exports.leaveroom = async(data, ws, ROOM ) => {
     try {
-        console.log('hmm came here')
-        const { roomid, name, key } = data;
-        let room = rooms_id.get(roomid);
-
-        if (!room) {
-            ws.send({
-                type: 'Announcement',
-                left: true,
-                msg: `You left the room ${roomid} ${timeout=== true && 'due to timeout'}`
-            });
+        const { 
+            roomid, 
+            name, 
+            key 
+        } = data;
+        if (!ROOM.has(roomid)) {
+            ws.send(CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL)
             return;
         }
 
-        const Roomkey = room_key.get(roomid);
-        if (Roomkey === key) {
-            console.log('room matched')
-            if (room.length > 1) {
-                console.log('room length big')
-                let users = users_in_rooms.get(roomid);
-                let index = room.indexOf(ws);
-                console.log(index);
-                room.splice(index, 1);
-                users.splice(index, 1);
+        const Room = ROOM.get(roomid);
+        if (Room.key === key) {
+        leavecall(data,ROOM)
 
-                rooms_id.set(roomid, room);
-                users_in_rooms.set(roomid, users);
+            let all_mem = Room.members;
+            if (all_mem.length > 1) {
 
-                let leavemsg = {
-                    type: 'Announcement',
-                    leftroom: true,
-                    name: name,
-                    msg: `${name} left the room ${timeout=== true && 'due to timeout'}`
-                };
+                all_mem = all_mem.filter((mem)=>{if (mem.name != name) return mem})
+                console.log(all_mem.length)
+                Room.members = all_mem;
+               
 
-                sendtoall(room, leavemsg);
+                const leavemsg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.ANNOUNCEMENT};
+                leavemsg.name = name;
+                leavemsg.msg = `${name} left the room `
 
-
-                if (roomAdmin.has(roomid) && roomAdmin.get(roomid) === ws) {
-
-                    roomAdmin.delete(roomid);
-                    let s = 0;
-
-                    let e = room.length - 1;
-                    let randomadmin = Math.floor(Math.random() * (e - s + 1)) + s;
-                    roomAdmin.set(roomid, room[randomadmin]);
-
-                    let msg = {
-                        type: 'Announcement',
-                        change: true,
-                        newAdmin: users[randomadmin],
-                        msg: `${users[randomadmin]} is now the new Admin.${timeout=== true && 'due to timeout'}`
+                if(name === Room.admin.name){
+                    let random_Admin_index = Math.floor(Math.random() * ((all_mem.length-1) + 1));
+                    let random_Admin = all_mem[random_Admin_index];
+                    Room.admin = {
+                        name:random_Admin.name,
+                        ws:random_Admin.ws
                     }
-                    sendtoall(room, msg);
 
-
+                    let msg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.NEW_ADMIN}
+                    msg.newAdmin = random_Admin.name
+                    msg.msg = `${random_Admin.name} is now the new Admin.`
+                    sendtoall(Room.members, msg);
                 }
+               
+
+                sendtoall(Room.members, leavemsg);
+                Room.users -=1;
+                ROOM.set(roomid,Room);
 
             } else {
-                console.log('clear the fucking room')
-                roomAdmin.delete(roomid);
-                rooms_id.delete(roomid);
-                users_in_rooms.delete(roomid);
-                await leavecall(data, users_in_videocall);
-                let reqs = requesters.get(roomid);
+                if(name !== Room.admin.name){
+                    return;
+                }
+               let reqs = Room.requesters;
                 reqs.map((req) => {
-                    let msg = {
-                        type: 'response',
-                        permission: 'Dec',
-                        roomid: roomid,
-                        name: name
-                    }
+                    const msg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.DECLINE_ALL_REQUESTS};
+                    msg.name = name;
+                    msg.roomid = roomid;
                     req.ws.send((msg));
 
                 })
-                console.log('else this')
-                requesters.delete(roomid)
-
+            ROOM.delete(roomid);
             }
         }
 
-        connections.delete(ws.id)
 
-        ws.send({
-            type: 'Announcement',
-            left: true,
-            msg: `You left the room ${roomid}${timeout=== true && 'due to timeout'}`
-        });
+        ws.send(CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL);
 
 
     } catch (err) {
-        throw new Error(`Error while leaving the room - ${ err.message}`, );
+        console.log(`Error while leaving the room - ${ err.message}`)
     }
 
 

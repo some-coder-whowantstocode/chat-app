@@ -44,13 +44,11 @@ const Remotevideo = (props) => {
       r.peer.ontrack = async({ streams }) => {
         console.log('ice')
   
-        console.log(streams);
         const newstream = streams[0];
         if (r.stream !== null) {
             let incomingTracks = newstream.getTracks();
   
             let existingTracks = r.stream.getTracks();
-            console.log("existing ones", existingTracks);
   
             let audioexists = false,
                 videoexists = false;
@@ -82,6 +80,13 @@ const Remotevideo = (props) => {
     }
    
   },[r])
+
+  console.log('hi from rv')
+
+  useEffect(()=>{
+    setvideo(r.stream);
+    console.log(r.stream,'this ran')
+  },[])
 
   useEffect(()=>{
 

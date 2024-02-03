@@ -33,6 +33,7 @@ export const Actions = {
         ALL: "both"
     },
     TRANSPORT_LOCATIONS: {
+        HOME:'homepage',
         LANDING_PAGE:'landingpage',
         CHAT:'chat',
         JOIN_CHAT:'join',

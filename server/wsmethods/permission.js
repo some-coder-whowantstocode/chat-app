@@ -1,62 +1,61 @@
-const { sendtoall } = require('./senttoall.js')
+const { CUSTOM_RESPONSE } = require("../responses");
+const { sendtoall } = require("./senttoall");
 
-module.exports.permission = (data, rooms_id, users_in_rooms, requesters, connections, room_key) => {
+module.exports.permission = async(data, ROOM, USER_LIMIT) => {
     try {
         const { response, roomid, name, admin } = data;
-        if (response == "Dec") {
 
-            let reqs = requesters.get(roomid)
-            let w = reqs.filter((a) => a.name === name);
-            if (w.length == 1) {
-                w[0].ws.send({
-                    type: 'response',
-                    permission: 'Dec',
-                    roomid: roomid,
-                    name: name
-                });
-            }
-            connections.delete(w[0].ws.id);
-            requesters.set(roomid, reqs.filter((a) => a.name !== name));
+        let Room = ROOM.get(roomid);
+        let reqs = Room.requesters;
+        let requester = reqs.find(r=>r.name === name) ;
+        reqs = reqs.filter((a) => a.name !== name);
 
-        } else {
-            let users = Array.from(users_in_rooms.get(roomid));
-            let room = rooms_id.get(roomid);
-            const key = room_key.get(roomid);
-            let reqs = requesters.get(roomid)
-            let w = reqs.filter((a) => a.name === name);
-            room.push(w[0].ws);
-            users.push(name)
-            w[0].ws.send({
-                type: 'response',
-                permission: 'Acc',
-                roomid: roomid,
-                name: name,
-                Admin: admin,
-                mems: users,
-                key
-            });
-            requesters.set(roomid, reqs.filter((a) => a.name !== name));
-            users_in_rooms.set(roomid, users);
-            rooms_id.set(roomid, room)
+        const reject = {...CUSTOM_RESPONSE.PERMISSION.REJECT.DECLINED}
+        reject.roomid = roomid;
+        reject.name = name;
+       
+        const mem = Room.members;
 
-            if (connections.has(w[0].ws.id)) {
-                let c = connections.get(w[0].ws.id);
-                c.requester = false;
-                c.key = key
-                connections.set(w[0].ws.id, c);
+        if(requester){
+            if(response === "Dec" ){
+                requester.ws.send(reject)
 
-                let msg = {
-                    type: 'Announcement',
-                    joined: true,
-                    name: name,
-                    msg: `${name} joined the room.`
+              
+            }else if(mem.length === USER_LIMIT){
+                    requester.ws.send(reject)
+                    requester.ws.send(CUSTOM_RESPONSE.PERMISSION.REJECT.FULL);
+                    Room.admin.ws.send(CUSTOM_RESPONSE.PERMISSION.REJECT.FULL);
                 }
-                sendtoall(room, msg)
+            else{   
+                mem.push({
+                    name:name,
+                    incall:false,
+                    active:true,
+                    ws:requester.ws
+                })
+                let names = new Array();
+                mem.map((m)=>{names.push(m.name)})
 
+                const accept ={...CUSTOM_RESPONSE.PERMISSION.ACCEPT.JOIN}
+                accept.roomid = roomid;
+                accept.name = name;
+                accept.Admin = admin;
+                accept.mems = names;
+                accept.key = Room.key;
+
+                const message = {...CUSTOM_RESPONSE.PERMISSION.ACCEPT.ANNOUNCEMENT};
+                message.name = name;
+                message.msg = `${name} joined the room.`
+                sendtoall(mem,message);
+                requester.ws.send(accept);
+               
+                Room.members = mem;
+                Room.users += 1;
             }
-
-
-        }
+              
+        }      
+            Room.requesters = reqs;
+            ROOM.set(roomid,Room);
     } catch (err) {
         throw new Error(`Error while getting permission to join room - ${ err.message}`, );
     }
