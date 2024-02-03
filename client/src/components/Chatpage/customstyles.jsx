@@ -10,6 +10,7 @@ width: 100svw;
 max-width: 100%;
 display: flex;
 overflow-x: hidden;
+height:100svh;
 
 ::-webkit-scrollbar{
   display: none;
@@ -51,6 +52,7 @@ scrollbar-width: none;
 
 export const Messagebox = styled.div`
 position: relative;
+bottom:30px;
 `
 
 export const CustomInput = styled.input`

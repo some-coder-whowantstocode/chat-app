@@ -36,7 +36,6 @@ const Chatpage = () => {
   const msg = useRef('');
   const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
-  // const [mem, setmem] = useState([]);
   
 
   const inputref = useRef(null);
@@ -46,13 +45,9 @@ const Chatpage = () => {
   useEffect(() => {
     setname(sessionStorage.getItem("name"));
     setroomid(sessionStorage.getItem("room"));
-    // setmem([...members]);
     return ()=>{
     }
   }, []);
-
-  console.log(viewport,DEVICE_CHART.MOBILE)
-
 
   useEffect(() => {
     const handleMessage = (jsondata) => {
@@ -69,7 +64,6 @@ const Chatpage = () => {
         break;
 
         case 'removereq':
-          console.log('recieved',jsondata)
           setreqdata((prevreqdata) => {
             let arr = prevreqdata.filter((r) => r.name != jsondata.name);
             return arr;
@@ -86,13 +80,11 @@ const Chatpage = () => {
         case 'Announcement':
        
           if(jsondata.joined){
-            // setmem(prevdata=>[...prevdata,jsondata.name]);
             setmembers(prevdata=>[...prevdata,jsondata.name])
           }
           if(jsondata.leftroom){
-            let copymems = [...mem];
+            let copymems = [...members];
             copymems = copymems.filter((m)=>jsondata.name !== m)
-            // setmem(copymems)
             setmembers(copymems);
           }
           setmsgs((prevmsg) => [...prevmsg, jsondata]);
