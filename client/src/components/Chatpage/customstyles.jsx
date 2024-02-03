@@ -154,14 +154,14 @@ export const Option = styled.div`
 export const Requestcard = styled.div`
 height:140px ;
 width: 230px;
-background-color: white;
-box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
+background-color: black;
 position: fixed;
 top: 50%;
 left: 50%;
 transform: translateX(-50%) translateY(-50%);
 font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 padding:8px;
+color:white;
 
 `
 
