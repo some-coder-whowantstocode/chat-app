@@ -32,6 +32,12 @@ export function SocketProvider({ children }) {
     INITIAL_STATE:'has_not_started_yet'
   }
 
+  const APP_FOR = {
+    PRODUCTION:'PRODUCTION',
+    TESTING:'TESTING'
+  }
+
+  const For = APP_FOR.PRODUCTION
   const [connection_state,setcon] = useState(CONNECTION_STATES.INITIAL_STATE);
   const [ viewport , setview ] = useState(innerWidth <= DEVICE_SIZES.MOBILE.MAX ? DEVICE_CHART.MOBILE : DEVICE_CHART.PC);
   const [socket, setSocket] = useState(); 
@@ -250,18 +256,24 @@ export function SocketProvider({ children }) {
   /* Frist get token for establising connection with websocket at backend.*/
 
   const gettoken = async () => {
-  
-  const url = 'http://localhost:9310/handshake'
-  // const url = 'https://instant-chat-backend.onrender.com/handshake'
+    let url,wsurl;
+
+    if(For ===APP_FOR.TESTING ){
+      url = 'http://localhost:9310/handshake';
+      wsurl = 'ws://localhost:9310';
+    }else{
+      url = 'https://instant-chat-backend.onrender.com/handshake';
+      wsurl = `wss://instant-chat-backend.onrender.com`;
+    }
+
+
+ 
   const { data } = await axios.get(url).catch(err =>{
     
 console.log(err);
   });
    const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
-
-  // const wsurl =  `wss://instant-chat-backend.onrender.com`
-  const wsurl =  `ws://localhost:9310`
 
   let socket = io(wsurl, { 
     query: { token: jwtToken },
