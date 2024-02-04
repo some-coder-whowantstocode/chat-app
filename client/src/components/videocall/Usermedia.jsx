@@ -7,8 +7,6 @@ import { IoMdMic , IoIosMicOff } from "react-icons/io";
 import { useState } from 'react';
 import { useVideo } from '../../context/Videochatcontroller';
 import { Mediacontroller } from '../../utils/mediahandler';
-import { Actions } from '../../utils/Actions';
-// import { useNavigate } from 'react-router-dom';
 
 
 
@@ -77,10 +75,7 @@ const Myvideo = styled.video`
     right: 10px;
     height: 100px;
     width: 160px;
-
-    &:hover{
-      cursor: move;
-    }
+    z-index:1000;
 `
 
 const CustomPoster = styled.div`
@@ -94,6 +89,7 @@ const CustomPoster = styled.div`
     justify-content: center;
     background-color: #d1cece;
     border-radius: 20px;
+    z-index:1000;
     div{
         color: white;
         height: 50%;
@@ -123,7 +119,7 @@ const Usermedia = () => {
     const audioref = useRef(null);
     const posterref = useRef(null);
 
-    const {myvideo,myaudio,setmyaudio,setmyvideo,socket,pc,Transport} = useSocket();
+    const {myvideo,myaudio,setmyaudio,setmyvideo,socket,pc} = useSocket();
     const username = sessionStorage.getItem('name')
     const [video,setvideo] = useState(myvideo);
     const [audio,setaudio] = useState(myaudio);
@@ -189,7 +185,6 @@ const Usermedia = () => {
       
         window.addEventListener('mouseup',releasevideo);
         window.addEventListener('mouseleave',releasevideo);
-        // window.addEventListener('beforeunload',)
       
         return(()=>{
           window.removeEventListener('mouseup',releasevideo);
@@ -204,11 +199,10 @@ const Usermedia = () => {
         return function(e){
           if(element){
             if(Drag.current === true){
-              // console.log( e.clientX , e.clientY )
               cancelAnimationFrame(animationId);
             animationId = requestAnimationFrame(() => {
               lastpos.current.y =  element.style.top = `${e.clientY - (element.offsetHeight/2)}px`;
-              lastpos.current.x = element.style.left = `${e.clientX - ((innerWidth /2) + (element.offsetWidth*(3/2)))}px`;
+              lastpos.current.x = element.style.left = `${e.clientX -  (element.offsetWidth/2)}px`;
             });
             }else{
         
@@ -224,16 +218,29 @@ const Usermedia = () => {
     };
     
     useEffect(() => {
+      const playVideo =(video)=>{
+        const playpromise = video.play();
+        if(playpromise !== undefined ){
+          playpromise
+          .then(()=>{
+            console.log('playble')
+          })
+        }
+      }
     if (videoref.current) {
         let videoelement = videoref.current
         if (video) {
             videoelement.srcObject = video
-            videoelement.autoPlay = true
-            videoelement.onloadedmetadata = () => {
-                videoelement.play();
-            };
+            videoelement.onloadedmetadata = () => playVideo(videoelement)
+            videoelement.onloadeddata = () => playVideo(videoelement)
+            videoelement.onpause = () => playVideo(videoelement)
+            videoelement.oncanplay = () => playVideo(videoelement)
+            // videoelement.onloadedmetadata = () => {
+            //     videoelement.play();
+            // };
+            videoelement.disablePictureInPicture = true
+
         }
-        console.log('video')
         const lockvideo = () => {
             Drag.current = true;
         }
@@ -257,7 +264,6 @@ const Usermedia = () => {
 
     useEffect(()=>{
     if(posterref.current){
-      console.log('poster')
       const lockvideo =()=>{
         Drag.current = true;
       }
@@ -284,7 +290,6 @@ const Usermedia = () => {
     
     },[posterref,toggle])
 
-    // const navigate = useNavigate()
   return (
     <div>
        {

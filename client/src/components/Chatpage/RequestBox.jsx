@@ -53,7 +53,7 @@ const RequestBox = ({data}) => {
             <Name>{data.name}</Name>
           </Nameholder>
           <Req>
-           <span> {data.name} </span>requests to join would you like to Accept ?
+           requests to join would you like to Accept ?
           </Req>
           <Res>
             <Resbtn clr={'#af1818'} onClick={()=>sendresponse(false)} >NO</Resbtn>

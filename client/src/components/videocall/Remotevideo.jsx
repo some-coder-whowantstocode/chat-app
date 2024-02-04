@@ -126,6 +126,16 @@ const Remotevideo = (props) => {
   }
   },[socket])
 
+  const playVideo =(video)=>{
+    const playpromise = video.play();
+    if(playpromise !== undefined ){
+      playpromise
+      .then(()=>{
+        console.log('playble')
+      })
+    }
+  }
+
   return (
     <div>
       {
@@ -136,9 +146,11 @@ const Remotevideo = (props) => {
                 if (video) {
                   video.srcObject = rvideo;
                   video.autoPlay = true
-                  video.onloadedmetadata = () => {
-                    video.play();
-                  };
+                  video.onloadedmetadata = () => playVideo(video)
+                  video.onloadeddata = () => playVideo(video)
+                  video.onpause = () => playVideo(video)
+                  video.oncanplay = () => playVideo(video)
+                  video.disablePictureInPicture = true
                 }
               } catch (err) {
                 console.log('error while using remotevideo : ', err);

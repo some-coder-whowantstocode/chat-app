@@ -10,12 +10,13 @@ module.exports.CUSTOM_RESPONSE = {
         REJECT:{
             ROOM_EXISTS:{ 
                 type: `error`,
-                msg: `Room already exists.`
+                msg: `Room already exists.`,
+                create:true
             },
             INVALID_CREDINTIALS:{
                 type: `error`,
-                msg: `please provide valid roomid and name.`
-
+                msg: `please provide valid roomid and name.`,
+                create:true
             }
         }
     },

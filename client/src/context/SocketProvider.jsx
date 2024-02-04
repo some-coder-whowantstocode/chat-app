@@ -37,14 +37,13 @@ export function SocketProvider({ children }) {
     TESTING:'TESTING'
   }
 
-  const For = APP_FOR.PRODUCTION
+  const For = APP_FOR.TESTING
   const [connection_state,setcon] = useState(CONNECTION_STATES.INITIAL_STATE);
   const [ viewport , setview ] = useState(innerWidth <= DEVICE_SIZES.MOBILE.MAX ? DEVICE_CHART.MOBILE : DEVICE_CHART.PC);
   const [socket, setSocket] = useState(); 
   const [loading, setLoading] = useState(true); /* To show the user when something is going on during which the app can not be used */
   const [state,setstate] = useState('notauthenticated');/* To check if the app is authenticatd or not. */
   const [waiting,setwaiting] = useState(false);/* Make user wait */
-  const [err,seterr] = useState(true);/* If error notify the user */
   const [errmsg,seterrmsg] = useState([]);/* store the content of the error here and show it to user */
   const [Admin,setAdmin] = useState(false);/* To know if the user is the admin or not */
   const [rejoinmsg,setrem] = useState('want to rejoin room.');
@@ -496,8 +495,9 @@ console.log('hi')
           break;
 
           case CHAT_METHODS.ERROR:
-            seterr(true);
-           
+           if(jsondata.create){
+            setLoading(false);
+           }
             
             seterrmsg(prevdata => {
               const newMsg = { msg: jsondata.msg, id: Date.now() };
@@ -669,7 +669,6 @@ useEffect(()=>{
         CONNECTION_STATES,
         reopensocket,
         waiting,
-        err,
         errmsg,
         seterrmsg,
         pc,

@@ -4,7 +4,6 @@ module.exports.Createroom = (data, ws, ROOM) => {
 
     try {
         const { roomid, name } = data;
-        console.log(data)
 
         if (!roomid || !name || roomid == '' || name == '') {
             ws.send(CUSTOM_RESPONSE.CREATE_ROOM.REJECT.INVALID_CREDINTIALS);
@@ -41,7 +40,6 @@ module.exports.Createroom = (data, ws, ROOM) => {
         res.name = name;
         res.roomid = roomid;
         res.key = key;
-        console.log(res)
         ws.send(res);
        
     } catch (err) {
