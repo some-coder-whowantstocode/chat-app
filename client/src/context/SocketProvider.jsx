@@ -37,7 +37,7 @@ export function SocketProvider({ children }) {
     TESTING:'TESTING'
   }
 
-  const For = APP_FOR.TESTING
+  const For = APP_FOR.PRODUCTION
   const [connection_state,setcon] = useState(CONNECTION_STATES.INITIAL_STATE);
   const [ viewport , setview ] = useState(innerWidth <= DEVICE_SIZES.MOBILE.MAX ? DEVICE_CHART.MOBILE : DEVICE_CHART.PC);
   const [socket, setSocket] = useState(); 
