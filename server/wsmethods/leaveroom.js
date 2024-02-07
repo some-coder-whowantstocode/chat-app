@@ -22,7 +22,6 @@ module.exports.leaveroom = async(data, ws, ROOM ) => {
             if (all_mem.length > 1) {
 
                 all_mem = all_mem.filter((mem)=>{if (mem.name != name) return mem})
-                console.log(all_mem.length)
                 Room.members = all_mem;
                
 
@@ -50,7 +49,7 @@ module.exports.leaveroom = async(data, ws, ROOM ) => {
                 ROOM.set(roomid,Room);
 
             } else {
-                if(name !== Room.admin.name){
+                if(name !== all_mem[0].name){
                     return;
                 }
                let reqs = Room.requesters;

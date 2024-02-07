@@ -4,7 +4,7 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import { useSocket } from '../../context/SocketProvider';
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { RxCross2 } from "react-icons/rx";
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 
 const Alter = styled(BsThreeDotsVertical)`
@@ -163,27 +163,11 @@ const Head = styled.div`
   }
 `
 
-const Members = ({mems}) => {
-  const {adminname,Admin,kickout, viewport,DEVICE_CHART} = useSocket();
-  const [mem,setmem] = useState([]);
+const Members = () => {
+  const {adminname,Admin,kickout, viewport,DEVICE_CHART,members} = useSocket();
   const [isclicked,setisclicked] = useState(false);
 
-  const location = useLocation();
 
-  useEffect(()=>{
-    console.log(location.state)
-    if(location.state){
-      setmem(location.state)
-
-    }
-  },[location])
-  useEffect(()=>{
-    if(mems){
-      console.log(mems)
-      setmem(mems)
-    }
-  
-  },[mems])
 
 
   return (
@@ -229,7 +213,7 @@ const Members = ({mems}) => {
 
       <Mems min={ viewport === DEVICE_CHART.MOBILE}>
         {
-          mem.map((me,i)=>(
+          members.map((me,i)=>(
             <React.Fragment
             
             key={i}
@@ -268,7 +252,7 @@ const Members = ({mems}) => {
       isclicked={isclicked}
       >
         {
-          mem.map((me,i)=>(
+          members.map((me,i)=>(
             <React.Fragment
             key={`${i}th mem`}
             

@@ -9,7 +9,7 @@ const socketIo = require('socket.io');
 
 const jwt = require('jsonwebtoken')
 
-const USER_LIMIT = 3;
+const USER_LIMIT = 4;
 
 const ROOM = new Map();
 /*
@@ -163,8 +163,6 @@ try {
                 active = true;
 
                 try {
-                    // console.log(data)
-
                     switch (data.type) {
                         case 'create':
 
@@ -318,26 +316,30 @@ server.listen(PORT, () => console.log(`server is listening at ${PORT}`))
 
 //check for active or not active connections 
 const inspector = () => {
-    interval = setInterval(() => {
+    try{
+        interval = setInterval(() => {
         
-        ROOM.forEach((values, key) => {
-           let Room = values;
-            Room.members.forEach((m)=>{
-                if(m.active === true){
-                    m.active = false;
-                ROOM.set(key,Room)
-                }else{
-                    const {ws} = m;
-                    console.log('the real culprit')
-                    const data ={name:m.name,roomid:key,key:values.key}
-                    leaveroom(data,ws,ROOM);
-                }
+            ROOM.forEach((values, key) => {
+               let Room = values;
+               Room.members?.forEach((m)=>{
+                    if(m.active === true){
+                        m.active = false;
+                    ROOM.set(key,Room)
+                    }else{
+                        const {ws} = m;
+                        const data ={name:m.name,roomid:key,key:values.key}
+                        leaveroom(data,ws,ROOM);
+                    }
+                })
+             
             })
-         
-        })
-
-         
-    }, [1000 * 60]);
+    
+             
+        }, [1000 * 60]);
+    }catch(err){
+        console.log(err);
+    }
+  
 }
 inspector()
 

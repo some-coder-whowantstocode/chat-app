@@ -90,7 +90,6 @@ export const Mediacontroller = async(use, pc, socket, media, givenstream) => {
                 case "remove_video":
                     {
                         media.current.cam = false;
-                        console.log(givenstream)
                         let tracks = givenstream.getTracks();
                         ClearTracks(tracks);
                         let newstream = new MediaStream([])

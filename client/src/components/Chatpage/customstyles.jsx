@@ -162,6 +162,7 @@ transform: translateX(-50%) translateY(-50%);
 font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 padding:8px;
 color:white;
+z-index:10000;
 
 `
 

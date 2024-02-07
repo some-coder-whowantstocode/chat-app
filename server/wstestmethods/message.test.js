@@ -1,64 +1,48 @@
-const { message } = require('../wsmethods/index.js');
-const {sendtoall} = require('../wsmethods/senttoall.js');
-const { clearmaps } = require('./testmaps.js');
-jest.mock('../wsmethods/senttoall.js');
+const { message } = require('../wsmethods/message'); 
+const { CUSTOM_RESPONSE } = require("../responses");
 
+// Mock data
 
-const mws = {
-  send:jest.fn((data) => { sentData = data })
+const data = {
+    msg: 'Hello, this is a test message',
+    name: 'Test User',
+    Admin: false,
+    roomid: '123'
+};
+let sentData;
+const ws = {
+    send:jest.fn((data) => { sentData = data })
 }
 
-describe('message',()=>{
 
-  test('A message without badword should not be censored.', () => {
-    const mockData = {
-      msg: 'Hello, this is a test message',
-      name: 'Test User',
-      Admin: false,
-      roomid: '123'
-    };
-    const mockRoomsId = new Map();
-    mockRoomsId.set('123', [mws, mws]);
-  
-    
-    message(mockData, mockRoomsId);
-  
-    expect(sendtoall).toHaveBeenCalledWith(
-      Array.from(mockRoomsId.get(mockData.roomid)),
-      {
-        type: 'message',
-        msg: 'Hello, this is a test message',
-        name: 'Test User',
-        Admin: false
-      }
-      );
-      clearmaps()
-  });
+const ROOM = new Map();
+ROOM.set('123', { members: [{ name: 'Test User', ws: ws }], requesters: [] });
 
-  
-  test('A message with badword should be censored.', () => {
-    const mockData = {
-      msg: 'Hello, this is a test message with badword fuck',
-      name: 'Test User',
-      Admin: false,
-      roomid: '123'
-    };
-    const mockRoomsId = new Map();
-    mockRoomsId.set('123', [mws, mws]);
-  
-    
-    message(mockData, mockRoomsId);
-  
-    expect(sendtoall).toHaveBeenCalledWith(
-      mockRoomsId.get(mockData.roomid),
-      {
-        type: 'message',
-        msg: 'Hello, this is a test message with badword f**k',
-        name: 'Test User',
-        Admin: false
-      }
-    );
-    clearmaps()
-  });
-  
-})
+// Test suite
+describe("message function", () => {
+    beforeEach(() => {
+        ws.send.mockClear();
+    });
+
+    test("should not censor a message without bad words", () => {
+        const data = {roomid:'123',name:'null',Admin:'null',msg:'Hello, this is a test message with goodword'}
+       
+        message(data, ROOM);
+        let sample = {...CUSTOM_RESPONSE.MESSAGE};
+        sample.Admin = data.Admin;
+        sample.name = data.name ;
+        sample.msg = data.msg;
+        expect(sentData).toEqual(sample);
+    });
+
+    test("should censor a message with bad words", () => {
+        const data = {roomid:'123',name:'null',Admin:'null',msg:'Hello, this is a test message with badword fuck'}
+        
+        message(data, ROOM);
+        let sample = {...CUSTOM_RESPONSE.MESSAGE};
+        sample.Admin = data.Admin;
+        sample.name = data.name ;
+        sample.msg = 'Hello, this is a test message with b*****d f**k';
+        expect(sentData).toEqual(sample);
+    });
+});

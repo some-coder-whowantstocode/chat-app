@@ -2,7 +2,11 @@ module.exports.cancelrequest = (data, ROOM) => {
     try {
         const { name, roomid } = data;
         let Room = ROOM.get(roomid);
+        if(!Room){
+            return;
+        }
         let admin = Room.admin;
+
         if (admin) {
             admin.ws.send({
                 type: 'cancelrequest',

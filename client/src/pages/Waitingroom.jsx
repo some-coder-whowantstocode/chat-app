@@ -170,7 +170,6 @@ const Waitingroom = () => {
           break;
   
           case 'removereq':
-            console.log('recieved',jsondata)
             setreqdata((prevreqdata) => {
               let arr = prevreqdata.filter((r) => r.name != jsondata.name);
               return arr;
@@ -304,7 +303,6 @@ const Waitingroom = () => {
             <IoVideocam
             size={30}
             onClick={()=>{
-              console.log('clicked',myvideo,video)
               Mediacontroller("remove_video",pc,socket,media,video) 
               .then((stream)=>{
                 setmyvideo(stream);

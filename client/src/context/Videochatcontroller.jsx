@@ -19,6 +19,7 @@ export function Videochatcontroller({ children }) {
       pc,
       setpc,
       removepc,
+      setpinned,
       gonnaleave,
       leaving,
       Transport
@@ -40,14 +41,12 @@ export function Videochatcontroller({ children }) {
             try{
               const Id = Date.now().toString(36) + Math.random().toString(36).slice(2);
               let peer = new Peer(socket,data.name,Id);
-             //console.log(peer)
               const stream = new MediaStream([...myvideo.getTracks(), ...myaudio.getTracks()]);
               peer.addTracks(stream)
              .then(()=>{
               peer.getOffer()
               .then((offer)=>{
 
-              //console.log('offer',offer)
 
                 socket.send({
                   roomid:sessionStorage.getItem('room'),
@@ -193,7 +192,7 @@ export function Videochatcontroller({ children }) {
 
 const leavecall = useCallback(()=>{
   if(socket && curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT && leaving === true ){
-    console.log('entered')
+    setpinned(false);
     try{
       let copy = [...pc];
     copy =copy.map((peer)=>{
@@ -250,13 +249,11 @@ useEffect(()=>{
 
         const handlecall =async(data)=>{
             try{
-              //console.log(data,data.command)
                 switch(data.command){
 
                     case Actions.CALL_ACTIONS.OFFER:
                       { 
                       setans(prevstate=>[...prevstate,data])
-              console.log('me got offer yayyyyyyyyy',data,answer_list)
 
                        }
          break;
@@ -264,7 +261,6 @@ useEffect(()=>{
          
          case Actions.CALL_ACTIONS.NEW_JOIN:
            { 
-             console.log('new member yayyyyyyyyy')
                         setlist(prevstate=>[...prevstate,data])
 
                     
@@ -291,17 +287,13 @@ useEffect(()=>{
                     case Actions.CALL_ACTIONS.NEGO_INIT:
                       {
                         try{
-                          console.log(data,'nego inittiated')
                         let peer = findpeer(data.from,data.Id);
                         if(peer.peer.signalingState !== 'stable'){
-                          // //console.log('can not insitiate not stable')
-                         console.log('stable')
                           return;
                         }
         
                         peer.handleOffer(data.des)
                         .then((ans)=>{
-                         //console.log('nego intit')
                           socket.send({
                             roomid:sessionStorage.getItem('room'),
                             from:sessionStorage.getItem('name'),
@@ -335,21 +327,19 @@ useEffect(()=>{
 
                     case Actions.CALL_ACTIONS.LEFT:
                       {
-                       console.log('left so ',pc.length)
                        for(let i = 0;i<pc.length;i++){
 
                         if(pc[i].name === data.name){
                           pc[i].incall = false;
-                          console.log(pc[i])
+
+                          let timeout = setTimeout(()=>{
+                            removepc(false,pc[i].name,pc[i].id);
+                            clearTimeout(timeout);
+                          },[1000*13])
                           break;
                         }
                        }
-                        // pc.forEach((p)=>{
-                        //   if(p.name === data.name){
-                        //     p.incall = false;
-                        //   }
-                        // })
-                          
+                     
                       }
                     break;
 
@@ -359,15 +349,11 @@ useEffect(()=>{
                         let peer = await findpeer(data.from,data.Id);
 
                         peer.media_availability = {cam:data.video,mic:data.audio}
-                       //console.log(peer.media_availability)
-
-                 
+                 ;
                     }
                     break;
         
-                    default:
-                       //console.log(data);
-                    break;
+                 
                 }
              
             

@@ -11,8 +11,6 @@ module.exports.leavecall = async(data, ROOM) => {
                     name
                 })
             })
-            // console.log(copy)
-            // users_in_videocall.set(roomid, copy);
             Room.call = copy;
             ROOM.set(roomid,Room)
         }

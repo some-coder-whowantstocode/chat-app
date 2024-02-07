@@ -48,7 +48,6 @@ export default class Peer {
         })
 
         this.peer.onicecandidate = (event) => {
-            console.log('icecandidate triggered', event)
             this.socket.send({
                 roomid: this.roomid,
                 from: this.myname,
@@ -66,7 +65,6 @@ export default class Peer {
         }
 
         this.peer.onnegotiationneeded = async() => {
-            console.log(this.peer.signalingState);
             try {
                 await this.peer.setLocalDescription();
                 this.socket.send({
@@ -91,24 +89,18 @@ export default class Peer {
         return new Promise((resolve, reject) => {
 
             let tracks = stream.getTracks();
-            console.log(tracks)
             for (let track of tracks) {
                 const senders = this.peer.getSenders();
-                console.log(senders)
 
                 const senderexists = senders.find((sender) => { return sender.track && sender.track.id === track.id });
-                console.log(senderexists)
                 if (!senderexists) {
-                    console.log('no exists')
                     this.peer.addTrack(track, stream);
 
                 } else {
-                    console.log('exists')
                     this.peer.removeTrack(senderexists);
                     this.peer.addTrack(track, stream);
                 }
 
-                console.log(this.peer)
             }
 
             try {
@@ -148,6 +140,5 @@ export default class Peer {
     Close() {
 
         this.peer.close();
-        console.log(this.peer)
     }
 }

@@ -1,70 +1,45 @@
-const {permission,sendtoall} = require('../wsmethods/index.js')
-
-const {
-    rooms_id,
-    users_in_rooms,
-    roomAdmin,
-    requesters,
-    clearmaps
-} = require('./testmaps.js')
+const { CUSTOM_RESPONSE } = require('../responses.js');
+const { permission } = require('../wsmethods/index.js'); 
+const { ROOM, USER_LIMIT, clearmaps } = require('./t_essentials.js')
 
 let sentData;
 
 const mws = {
-    send:jest.fn((data) => { sentData = data })
+    send: jest.fn((data) => { sentData = data; })
 }
 
-const adws = {
-    send:jest.fn((data) => { sentData = data })
-}
-describe('permission',()=>{
+describe('permission', () => {
+
     beforeEach(() => {
-       
-        mws.send.mockClear();
-    });
-    test('If admin declines the requeset.',()=>{
-        const data = {response:'Dec',name:'rohit',roomid:'123'};
-        requesters.set(data.roomid,[{name:data.name,ws:mws}]);
-        users_in_rooms.set(data.roomid,['hi']);
-        permission(data,rooms_id,users_in_rooms,requesters);
-        expect(mws.send).toHaveBeenCalled();
-        expect(sentData).toEqual({
-            type:'response',
-            permission:'Dec',
-            roomid:data.roomid,
-            name:data.name
-        })
-        expect(requesters.get(data.roomid).length).toEqual(0);
-        expect(users_in_rooms.get(data.roomid).length).toEqual(1);
         clearmaps();
     });
 
-    test('User joins room and announcement is sent', () => {
-        clearmaps()
-        const data = { name: 'testUser', roomid: '125',response:'Acc',admin:'testUser' };
-        rooms_id.set(data.roomid,[adws])
-        users_in_rooms.set(data.roomid,[data.name])
-        requesters.set(data.roomid, [{ name: data.name, ws: mws }]);
-        roomAdmin.set(data.roomid,adws)
-        permission(data,rooms_id,users_in_rooms,requesters);
-        expect(users_in_rooms.get(data.roomid)).toContain(data.name);
-        expect(rooms_id.get(data.roomid)).toContain(mws);
-        expect(requesters.get(data.roomid)).toHaveLength(0);
-        
-        expect(mws.send).toHaveBeenNthCalledWith(1,{
-            type:'response',
-            permission:'Acc',
-            roomid:data.roomid,
-            name:data.name,
-            Admin:data.name,
-            mems:[data.name,data.name]
-        });
-        expect(mws.send).toHaveBeenNthCalledWith(2,{
-            name:data.name,
-            joined:true,
-            type:'Announcement',
-            msg:`${data.name} joined the room.`
-        });
-        clearmaps()
+    test('If admin declines the request.', () => {
+        const data = { response: 'Dec', name: 'rohit', roomid: '123' };
+        const Room = { admin: mws, members: [], requesters: [{ name: 'rohit', ws: mws }] };
+        ROOM.set(data.roomid, Room);
+        permission(data, ROOM, USER_LIMIT);
+        expect(Room.requesters.length).toEqual(0);
+        let sample ={...CUSTOM_RESPONSE.PERMISSION.REJECT.DECLINED};
+        sample.name = data.name;
+        sample.roomid = data.roomid;
+        expect(sentData).toEqual(sample);
     });
+
+    test('User joins room and announcement is sent', () => {
+        const data = { response: 'Acc', name: 'testUser', roomid: '125', admin: 'null' };
+        const Room = { admin: {name:'null',ws:mws},key:'a legendary key', members: [{name:'null',ws:mws}], requesters: [{ name: 'testUser', ws: mws }] };
+        ROOM.set(data.roomid, Room);
+        permission(data, ROOM, USER_LIMIT);
+        expect(Room.members).toEqual([{name:'null',ws:mws},{active:true,incall:false, name: 'testUser', ws: mws }]);
+        expect(Room.requesters.length).toEqual(0);
+        let sample ={...CUSTOM_RESPONSE.PERMISSION.ACCEPT.JOIN};
+        sample.name = data.name;
+        sample.Admin = data.admin;
+        sample.roomid = data.roomid;
+        sample.key = expect.anything();
+        sample.mems = [data.admin,data.name];
+        expect(sentData).toEqual(sample);
+    });
+
 });

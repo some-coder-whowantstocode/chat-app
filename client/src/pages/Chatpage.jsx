@@ -27,7 +27,7 @@ import { Actions } from "../utils/Actions";
 
 
 const Chatpage = () => {
-  const { socket, Transport,viewport,DEVICE_CHART,connection_state,CONNECTION_STATES, setleave, Admin , members,setmembers,curr_poss } =
+  const { socket, Transport,viewport,DEVICE_CHART,connection_state,CONNECTION_STATES, setleave, Admin ,curr_poss } =
     useSocket();
 
   const [username, setname] = useState();
@@ -78,22 +78,12 @@ const Chatpage = () => {
         break;
 
         case 'Announcement':
-       
-          if(jsondata.joined){
-            setmembers(prevdata=>[...prevdata,jsondata.name])
-          }
-          if(jsondata.leftroom){
-            let copymems = [...members];
-            copymems = copymems.filter((m)=>jsondata.name !== m)
-            setmembers(copymems);
-          }
           setmsgs((prevmsg) => [...prevmsg, jsondata]);
         
         
         break;
 
         case 'Alert':
-          console.log(jsondata)
           if(jsondata.action_required) setleave(true);
           Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
         break;
@@ -109,7 +99,7 @@ const Chatpage = () => {
         socket.removeEventListener("message", handleMessage);
       };
     }
-  }, [socket,notificationsound,setleave,members]);
+  }, [socket,notificationsound,setleave]);
 
 
   useEffect(() => {
@@ -146,7 +136,7 @@ const Chatpage = () => {
   return (
     <Room>
      {
-      viewport === DEVICE_CHART.PC &&<Members mems={members}/>
+      viewport === DEVICE_CHART.PC &&<Members />
      }
 
 
@@ -157,7 +147,7 @@ const Chatpage = () => {
         
         <div>
         {
-          viewport === DEVICE_CHART.MOBILE && <Link to={PATH.MEMBERS_PAGE} state={members}> <GiHamburgerMenu/></Link>
+          viewport === DEVICE_CHART.MOBILE &&<GiHamburgerMenu onClick={()=>Transport(Actions.TRANSPORT_LOCATIONS.MEMBERS)}/>
         }
         <p>{roomid}</p>
     

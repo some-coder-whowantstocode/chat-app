@@ -7,6 +7,7 @@ import { IoMdMic , IoIosMicOff } from "react-icons/io";
 import { useState } from 'react';
 import { useVideo } from '../../context/Videochatcontroller';
 import { Mediacontroller } from '../../utils/mediahandler';
+import { MdOutlinePushPin } from "react-icons/md";
 
 
 
@@ -35,7 +36,7 @@ const Quit = styled(MdCallEnd)`
 
 const Cam = styled(IoVideocam)`
  padding: 8px;
-height: 20px;
+ height: 20px;
   width: 20px;
   border-radius: 6px;
   background-color: gray;
@@ -69,27 +70,81 @@ height: 20px;
   cursor: pointer;
 `
 
+const Userpack = styled.div`
+
+
+${
+  props=>props.float ?
+  `
+  position:relative;
+  height:${props.height}px;
+  width:${props.width}px;
+  top:0px;
+  left:0px;
+  `
+  :
+  `
+
+  position:absolute;
+  height: 100px;
+  width: 200px;
+  `
+}
+position:absolute;
+height: 100px;
+width: 200px;
+bottom: 10px;
+right: 70px;
+background:black;
+overflow:hidden;
+z-index:100;
+border-radius: 20px;
+draggable:true;
+touch-action:none;//for removing the block sign while dragging
+span{
+  transition:0.2s;
+  opacity:0;
+ 
+}
+
+&:hover{
+  span{
+    opacity:1;
+  }
+}
+`
+
+const Optbtn = styled(MdOutlinePushPin)`
+position:absolute;
+top:7px;
+right:4px;
+color:brown;
+cursor:pointer;
+z-index:101;
+height:25px;
+width:25px;
+padding:2px;
+&:hover{
+  background:#80808082;
+  border-radius: 50%;
+}
+` 
+
 const Myvideo = styled.video`
-  position: absolute;
-    bottom: 10px;
-    right: 10px;
-    height: 100px;
-    width: 160px;
-    z-index:1000;
+    height:inherit;
+    width:inherit;
+
 `
 
 const CustomPoster = styled.div`
-  position: absolute;
-    bottom: 10px;
-    right: 10px;
-     height: 100px;
-    width: 160px;
+    height:inherit;
+    width:inherit;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #d1cece;
     border-radius: 20px;
-    z-index:1000;
+
     div{
         color: white;
         height: 50%;
@@ -102,9 +157,6 @@ const CustomPoster = styled.div`
         border-radius: 50%;
     }
 
-    &:hover{
-      cursor: move;
-    }
 `
 
 
@@ -113,13 +165,14 @@ const Usermedia = () => {
     const {media,gonnaleave} = useVideo();
  
   const [toggle,change] = useState(false);
+  const [float,setfloat] = useState(false);
  
 
     const videoref = useRef(null);
     const audioref = useRef(null);
     const posterref = useRef(null);
 
-    const {myvideo,myaudio,setmyaudio,setmyvideo,socket,pc} = useSocket();
+    const {myvideo,myaudio,setmyaudio,setmyvideo,socket,pc,media_size,setpinned,pinned} = useSocket();
     const username = sessionStorage.getItem('name')
     const [video,setvideo] = useState(myvideo);
     const [audio,setaudio] = useState(myaudio);
@@ -154,14 +207,12 @@ const Usermedia = () => {
           }
         }
         if(leave===true){
-          console.log('leving')
             func_leave()
         }
 
         window.addEventListener('beforeunload',func_leave)
     },[leave,audio,video])
 
-    console.log(media)
 
     const lastpos = useRef({x:innerWidth,y:innerHeight});
     const Drag = useRef(false);
@@ -195,7 +246,6 @@ const Usermedia = () => {
       },[])
 
     const handleMousemove = (animationId,element)=>{
-        console.log(element)
         return function(e){
           if(element){
             if(Drag.current === true){
@@ -235,28 +285,13 @@ const Usermedia = () => {
             videoelement.onloadeddata = () => playVideo(videoelement)
             videoelement.onpause = () => playVideo(videoelement)
             videoelement.oncanplay = () => playVideo(videoelement)
-            // videoelement.onloadedmetadata = () => {
-            //     videoelement.play();
-            // };
             videoelement.disablePictureInPicture = true
 
         }
-        const lockvideo = () => {
-            Drag.current = true;
-        }
        
   
-        videoelement.style.top = lastpos.current.y;
-        videoelement.style.left = lastpos.current.x;
-  
-        const handleMouseMove = handleMousemove(null, videoelement);
-  
-        window.addEventListener('mousemove', handleMouseMove);
-        videoelement.addEventListener('mousedown', lockvideo);
   
         return (() => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            videoelement.removeEventListener('mousedown', lockvideo);
             videoelement.srcObject = null
         })
     }
@@ -264,8 +299,10 @@ const Usermedia = () => {
 
     useEffect(()=>{
     if(posterref.current){
+      if(!float){
+
       const lockvideo =()=>{
-        Drag.current = true;
+          Drag.current = true;
       }
       let videoelement = posterref.current
     
@@ -276,31 +313,75 @@ const Usermedia = () => {
      
       window.addEventListener('mousemove',handleMousemove(null,videoelement));
       videoelement.addEventListener('mousedown',lockvideo);
-    
+      videoelement.addEventListener('touch',lockvideo)
+
       return(()=>{
       window.removeEventListener('mousemove',handleMousemove);
       videoelement.removeEventListener('mousedown',lockvideo);
-      posterref.current = null
       })
+    }
      
     
      
     }
    
     
-    },[posterref,toggle])
+    },[posterref,toggle,float])
+
+
+    useEffect(()=>{
+      if(posterref.current){
+        const element = posterref.current;
+        if(float){
+      
+          element.style =  `
+          position:relative;
+          height:${media_size.height}px;
+          width:${media_size.width}px;
+          `
+        }else{
+          element.style = `
+           
+         
+
+        
+                  `
+        }
+      }
+    },[float,posterref,media_size])
 
   return (
-    <div>
+    <>
+       <Userpack
+       float={float}
+       height={media_size.height}
+       width = {media_size.width}
+        ref={posterref}
+
+       >
+        <span>
+       <Optbtn 
+       onClick={()=>{
+        setpinned(!pinned);
+        setfloat(!float);
+       }}
+       />
+       {/* <div>
+        <p>pin</p>
+       </div> */}
+        </span>
+
        {
         media.current.cam ?
+       
         <Myvideo ref={videoref} poster=''>
         </Myvideo>
         :
         <CustomPoster
-        ref={posterref}
         ><div>{username.slice(0,2)}</div></CustomPoster>
+       
       }
+      </Userpack>
      <audio ref={audioref}/>
 
      <Controls>
@@ -364,7 +445,7 @@ const Usermedia = () => {
 
       </Controls>
 
-    </div>
+    </>
   )
 }
 

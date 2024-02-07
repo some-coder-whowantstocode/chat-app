@@ -40,7 +40,6 @@ module.exports.joinroom = (data, ws, ROOM, USER_LIMIT) => {
         Room.requesters = requester;
         ROOM.set(roomid,Room);
 
-        console.log(request)
         Admin.ws.send(request);
     } catch (err) {
         throw new Error(`Error while joining the room - ${ err.message}`, );

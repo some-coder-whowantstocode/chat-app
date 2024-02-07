@@ -1,7 +1,7 @@
 const { CUSTOM_RESPONSE } = require("../responses");
 const { sendtoall } = require("./senttoall");
 
-const badword = ['fuck', 'dick', 'ass', 'rape']
+const badword = ['fuck', 'dick', 'ass', 'rape','badword']
 
 
 const checkword = (message, ind, word, tempmsg) => {
@@ -34,18 +34,19 @@ const findwords = (message, i, tempmsg) => {
 
 module.exports.message = (data, ROOM) => {
     try {
-        let message = Array.from(data.msg);
-        let tempmsg = Array.from(data.msg.toLowerCase());
+        const { msg, roomid, name, Admin } = data;
+        let message = Array.from(msg);
+        let tempmsg = Array.from(msg.toLowerCase());
         findwords(message, 0, tempmsg);
         message = message.join('');
         
 
-        const msg = {...CUSTOM_RESPONSE.MESSAGE}
-        msg.Admin = data.Admin;
-        msg.name = data.name ;
-        msg.msg = message;
-        const Room = ROOM.get(data.roomid)
-        sendtoall(Room.members, msg);
+        const res = {...CUSTOM_RESPONSE.MESSAGE}
+        res.Admin = Admin;
+        res.name = name ;
+        res.msg = message;
+        const Room = ROOM.get(roomid)
+        sendtoall(Room.members, res);
     } catch (err) {
         throw new Error(`Error while sending message - ${ err.message}`, );
     }

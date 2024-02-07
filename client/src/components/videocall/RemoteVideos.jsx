@@ -8,7 +8,7 @@ const Videoholder =styled.div`
   max-width: inherit;
   overflow: hidden;
   display: flex;
-  background-color: black;
+  background-color: #1f1f1f;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   grid-auto-rows: 200px;
@@ -20,12 +20,13 @@ const RemoteVideos = () => {
 
   const {pc} = useSocket()
 
+
   return (
     <Videoholder>
      
       {
       pc.map((r,index)=> 
-          ( <Remotevideo key={index} r={r}/>)
+          ( <Remotevideo  key={index} r={r}/>)
            
         )
       }

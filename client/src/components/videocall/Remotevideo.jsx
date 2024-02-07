@@ -4,21 +4,25 @@ import { useSocket } from '../../context/SocketProvider';
 import { Actions } from '../../utils/Actions';
 import PropTypes from 'prop-types'
 
-// ... (Your styled components here)
 
 
 const Remoteuser = styled.video`
-  max-height: 100vh;
-  min-height: inherit;
-  width: 100%;
-  border: 2px solid black;
+  ${
+    props=> `
+    height:${props.height}px;
+    width:${props.width}px;
+    `
+  }
 `
 
 const Remoteuser_poster = styled.div`
   background-color: gray;
-  max-height: 100vh;
-  height: 100%;
-  width: 100%;
+  ${
+    props=> `
+    height:${props.height}px;
+    width:${props.width}px;
+    `
+  }
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,7 +37,7 @@ const Remoteuser_poster = styled.div`
 const Remotevideo = (props) => {
   const {r} = props;
   const [camAvailable, setCamAvailable] = useState(r.media_availability.cam);
-  const {socket} = useSocket();
+  const {socket,media_size,pc} = useSocket();
   const [rvideo,setvideo] = useState(r.stream);
 
 
@@ -42,7 +46,6 @@ const Remotevideo = (props) => {
     {
       
       r.peer.ontrack = async({ streams }) => {
-        console.log('ice')
   
         const newstream = streams[0];
         if (r.stream !== null) {
@@ -73,7 +76,6 @@ const Remotevideo = (props) => {
             r.stream = newstream;
         }
         setvideo(r.stream);
-        // console.log(r.stream)
   
     };
   
@@ -81,33 +83,25 @@ const Remotevideo = (props) => {
    
   },[r])
 
-  console.log('hi from rv')
 
   useEffect(()=>{
     setvideo(r.stream);
-    console.log(r.stream,'this ran')
-  },[])
+  },[pc])
 
   useEffect(()=>{
 
     const handlecall =async(data)=>{
       try{
-        console.log('media in remote')
-        //console.log(data,data.command)
           switch(data.command){
       
               case Actions.CALL_ACTIONS.MEDIA:
                 {               
-                  console.log()
                   if(data.from === r.name){
                     setCamAvailable(data.video);
                   }
               }
               break;
   
-              default:
-                 //console.log(data);
-              break;
           }
        
       
@@ -127,20 +121,16 @@ const Remotevideo = (props) => {
   },[socket])
 
   const playVideo =(video)=>{
-    const playpromise = video.play();
-    if(playpromise !== undefined ){
-      playpromise
-      .then(()=>{
-        console.log('playble')
-      })
-    }
+    video.play();
   }
 
   return (
-    <div>
+    <>
       {
         camAvailable ?
           <Remoteuser
+          height={media_size.height}
+          width={media_size.width}
             ref={(video) => {
               try {
                 if (video) {
@@ -160,13 +150,16 @@ const Remotevideo = (props) => {
             <div style={{ color: "white" }}>hi</div>
           </Remoteuser>
           :
-          <Remoteuser_poster>
+          <Remoteuser_poster
+          height={media_size.height}
+          width={media_size.width}
+          >
             <div>
               {r.name.substr(0, 2)}
             </div>
           </Remoteuser_poster>
       }
-    </div>
+    </>
   );
 }
 

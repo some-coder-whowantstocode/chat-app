@@ -6,6 +6,7 @@ import { useSocket } from '../context/SocketProvider';
 import RequestBox from '../components/Chatpage/RequestBox';
 import notification from "../assets/notification.wav";
 import { Actions } from '../utils/Actions';
+import Remotevideo from '../components/videocall/Remotevideo';
 
 
 const Page = styled.div`
@@ -14,6 +15,14 @@ width:100vw;
 
 height: 100dvh;
 position: relative;
+overflow:hidden;
+max-width: inherit;
+overflow: hidden;
+background-color: #1f1f1f;
+display: grid;
+grid-template-columns:  repeat(2, 1fr);;
+grid-auto-rows: ${innerHeight/2};
+grid-gap: 10px;
 `
 
 
@@ -22,7 +31,7 @@ const VideochatPage = () => {
 
   const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
-  const {socket,curr_poss,Transport} = useSocket()
+  const {socket,curr_poss,Transport,pc} = useSocket()
 
   useEffect(() => {
     if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
@@ -40,7 +49,6 @@ const VideochatPage = () => {
         break;
 
         case 'removereq':
-          console.log('recieved',jsondata)
           setreqdata((prevreqdata) => {
             let arr = prevreqdata.filter((r) => r.name != jsondata.name);
             return arr;
@@ -68,8 +76,13 @@ const VideochatPage = () => {
      
     <Usermedia/>
       
-    <RemoteVideos/>   
-      
+    {/* <RemoteVideos/>    */}
+    {
+      pc.map((r,index)=> 
+          ( <Remotevideo key={index} r={r}/>)
+           
+        )
+      }   
       
     {reqdata.map((rd) => (
         <RequestBox key={rd.name} data={rd} />

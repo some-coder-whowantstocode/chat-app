@@ -62,6 +62,30 @@ export function SocketProvider({ children }) {
   const [leavechat,setleave] = useState(false);
   const [ leaving , gonnaleave] = useState(false);
   const [pc,addpc] = useState([]);//[{name of the other user,peer}]
+  const [ media_size, changesize ] = useState({ width:innerWidth, height:innerHeight });
+  const [pinned,setpinned] = useState(false);
+
+  const remotemediasize =()=>{
+    let copy = {...media_size};
+    let num = pc.length;
+
+    if(pinned){
+      num += 1;
+    }    
+    num = num? num > 2 ? 2 : num : 1; //keep the num bettwen one and two
+    copy.width = innerWidth/num;
+    copy.height = innerHeight/num;
+    if(copy.height !== media_size.height || copy.width !== media_size.width){
+      changesize(copy);
+    }
+  }
+
+  useEffect(()=>{
+  remotemediasize();
+  },[pc,pinned])
+
+
+
 
   const setmyaudio =(data)=>{
     myaudio.current = data;
@@ -78,7 +102,6 @@ export function SocketProvider({ children }) {
     const locations = Actions.TRANSPORT_LOCATIONS;
     let copy = {...curr_poss};
     copy.last_location = window.location.href ;
-    console.log('last loc',copy.last_location,copy.location)
     switch(command){
 
       case locations.HOME:
@@ -141,6 +164,7 @@ export function SocketProvider({ children }) {
   useEffect(()=>{
 
     const handleresize =(e)=>{
+      // remotemediasize()
       const { innerWidth } = e.target;
 
       if( DEVICE_SIZES.PC.MIN <= innerWidth && innerWidth <= DEVICE_SIZES.PC.MAX )
@@ -149,9 +173,6 @@ export function SocketProvider({ children }) {
       }
       else if( DEVICE_SIZES.MOBILE.MIN <= innerWidth && innerWidth <= DEVICE_SIZES.MOBILE.MAX ){
         viewport != DEVICE_CHART.MOBILE && setview(DEVICE_CHART.MOBILE);
-      }      
-      else{
-        console.log('out of box')
       }
     }
 
@@ -169,7 +190,6 @@ export function SocketProvider({ children }) {
   const removepc =(all,name,Id)=>{
     try{
       if(all){
-        console.log('remove all')
         addpc([])
        }else{
          if(name){
@@ -216,7 +236,6 @@ export function SocketProvider({ children }) {
   
               case "disconnected":
                   try {
-                    console.log('disoccdsifsadijlsdsfasdjfi')
                       if (p.incall === false) {
                           p.Close();
                           removepc(false,p.name,p.Id)
@@ -257,7 +276,7 @@ export function SocketProvider({ children }) {
   const gettoken = async () => {
     let url,wsurl;
 
-    if(For ===APP_FOR.TESTING ){
+    if(For === APP_FOR.TESTING ){
       url = 'http://localhost:9310/handshake';
       wsurl = 'ws://localhost:9310';
     }else{
@@ -281,7 +300,6 @@ console.log(err);
   });
 
   socket.on('connect_error', async(err) => {
-    console.log(`connect_error due to ${err.message}`);
     if(curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT || curr_poss.activity.sub_act === Actions.USER_ACTIONS.JOINING_VIDEO_CHAT){
      await Mediapackup(Actions.PACKUP_ACTIONS.ALL,{audio:myaudio.current,video:myvideo.current})
     }
@@ -360,7 +378,6 @@ console.log(err);
     setwaiting(true);
     let name = sessionStorage.getItem('name');
     let roomid = sessionStorage.getItem('room');
-    console.log(rejoin)
     if(rejoin){
     let key = sessionStorage.getItem('roomkey');
     socket && socket.send({type:'join',name,roomid,rejoin,key});
@@ -426,7 +443,6 @@ useEffect(()=>{
   }
  }
  
-console.log('hi')
    
  
 
@@ -512,6 +528,14 @@ console.log('hi')
 
           case CHAT_METHODS.ANNOUNCEMENT:
             try{
+              if(jsondata.joined){
+                setmembers(prevdata=>[...prevdata,jsondata.name])
+              }
+              if(jsondata.leftroom){
+                let copymems = [...members];
+                copymems = copymems.filter((m)=>jsondata.name !== m)
+                setmembers(copymems);
+              }
               if(jsondata.change){
                 if(sessionStorage.getItem('name') === jsondata.newAdmin) setAdmin(true);
                 setadminname(jsondata.newAdmin)
@@ -617,8 +641,7 @@ useEffect(()=>{
 
 
 const handleconnection =()=>{
-  Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
-  navigate('/')
+  Transport(Actions.TRANSPORT_LOCATIONS.HOME)
 }
 
 const reconnect =async()=>{
@@ -633,7 +656,6 @@ const reconnect =async()=>{
 
 
 useEffect(()=>{
-  console.log('why no leave',curr_poss.location,curr_poss.last_location )
   if(curr_poss.location != curr_poss.last_location){
     navigate(curr_poss.location);
   }
@@ -677,7 +699,10 @@ useEffect(()=>{
         leaving,
         gonnaleave,
         viewport,
-        DEVICE_CHART
+        DEVICE_CHART,
+        pinned,
+        setpinned,
+        media_size
         }
         }>
       {children}

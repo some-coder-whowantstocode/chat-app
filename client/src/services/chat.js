@@ -1,7 +1,6 @@
 const createRoom = (socket, name, roomid) => {
     try {
         if (socket) {
-            console.log('hmm')
             socket.send({ type: 'create', roomid: roomid, name: name })
         }
     } catch (err) {
