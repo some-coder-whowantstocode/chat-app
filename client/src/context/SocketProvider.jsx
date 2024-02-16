@@ -9,7 +9,6 @@ import { Actions } from '../utils/Actions';
 import { PATH } from '../utils/Paths';
 import { DEVICE_SIZES, DEVICE_CHART } from '../utils/Sizechart';
 import { Mediapackup } from '../utils/mediahandler';
-import Peer from '../services/peer';
 
 
 const SocketContext = createContext(null);
@@ -30,7 +29,7 @@ export function SocketProvider({ children }) {
   }
   const [notificationsound] = useState(new Audio(notification));
   const navigate = useNavigate();
-  const For = APP_FOR.PRODUCTION
+  const FOR = APP_FOR.PRODUCTION
   const SERVER_URL = FOR === APP_FOR.TESTING ? 'http://localhost:9310/handshake' : 'https://instant-chat-backend.onrender.com/handshake';
   const WS_URL = FOR === APP_FOR.TESTING ? 'ws://localhost:9310' : `wss://instant-chat-backend.onrender.com`;
   const [connection_state,setcon] = useState(CONNECTION_STATES.INITIAL_STATE);
@@ -690,7 +689,7 @@ useEffect(()=>{
       }
       
      
-    }, 1000 * 2);
+    }, 1000 * 15);
 
 
     return(()=>{

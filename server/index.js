@@ -344,7 +344,7 @@ const inspector = () => {
             })
     
              
-        }, [1000 * 10]);
+        }, [1000 * 60]);
     }catch(err){
         console.log(err);
     }
