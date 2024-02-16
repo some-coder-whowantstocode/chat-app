@@ -2,12 +2,13 @@ import React, { useEffect , useState } from 'react'
 import styled from 'styled-components'
 import { GiHamburgerMenu } from "react-icons/gi";
 import { useSocket } from '../../context/SocketProvider';
-import { BsThreeDotsVertical } from "react-icons/bs";
 import { RxCross2 } from "react-icons/rx";
 import { Link } from 'react-router-dom';
+import { IoLogOutOutline } from "react-icons/io5";
 
 
-const Alter = styled(BsThreeDotsVertical)`
+
+const Alter = styled(IoLogOutOutline)`
   cursor: pointer;
 `
 
@@ -167,8 +168,9 @@ const Members = () => {
   const {adminname,Admin,kickout, viewport,DEVICE_CHART,members} = useSocket();
   const [isclicked,setisclicked] = useState(false);
 
+  useEffect(()=>{
 
-
+  },[adminname])
 
   return (
     <MemBox
@@ -235,10 +237,15 @@ const Members = () => {
     
                 >
                   {me}
-               <div> <Alter onClick={()=>{
-                  kickout(me);
-                }}/>
-                </div>
+                  {
+                    Admin &&
+                     <div> 
+                     <Alter onClick={()=>{
+                       kickout(me);
+                     }}/>
+                     </div>
+                  }
+              
                 </Mem>
             }
             </React.Fragment>
@@ -278,9 +285,13 @@ const Members = () => {
   
               >
                 {me}
-             <div> <Alter onClick={()=>{
+             {
+              Admin  &&
+              <div>
+               <Alter onClick={()=>{
                 kickout(me);
               }}/></div>
+            }
               </Mem>
               :
   

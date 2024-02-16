@@ -20,16 +20,14 @@ const RemoteVideos = () => {
 
   const {pc} = useSocket()
 
-
   return (
     <Videoholder>
      
-      {
-      pc.map((r,index)=> 
-          ( <Remotevideo  key={index} r={r}/>)
-           
-        )
-      }
+     {
+  pc.map((r, index) => 
+   <Remotevideo key={index} r={r}/>
+  )
+}
     </Videoholder>
   )
 }

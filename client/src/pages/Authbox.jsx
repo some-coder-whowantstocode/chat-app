@@ -1,4 +1,4 @@
-import { useEffect, useState, useconnection_state } from 'react'
+import { useState } from 'react'
 import back from '../assets/back.jpg'
 import  {
     Loading,
@@ -10,7 +10,6 @@ import  {
 } from '../components/Auth/cstomstyles'
 import {useSocket} from '../context/SocketProvider'
 import { Actions } from '../utils/Actions'
-// import { useNavigate } from 'react-router-dom'
 
 
 
@@ -21,7 +20,6 @@ const Authbox = () => {
     const {loading,connection_state,CONNECTION_STATES,reopensocket,Transport} =useSocket()
 
    
-    // const navigate = useNavigate();
 
   
 

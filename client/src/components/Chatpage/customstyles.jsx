@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { AiOutlineSend } from "react-icons/ai";
+import { MdOutlineContentCopy } from 'react-icons/md';
 
 
 
@@ -172,6 +173,14 @@ export const Nameholder = styled.div`
   margin-bottom: 18px;
 `
 
+export const Copy = styled(MdOutlineContentCopy)`
+margin:0 10px;
+cursor:pointer;
+&:hover{
+  color:blue;
+}
+`
+
 export const Logo = styled.div`
 box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
   font-size: 16px;
@@ -191,7 +200,7 @@ box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
   transition-duration: 0.6s;
   cursor: pointer;
   div{
-    opacity: 0;
+    display:none;
     position: absolute;
     background-color: #999696;
     padding: 3px 10px;
@@ -240,7 +249,7 @@ box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
   }
   &:hover{
     div{
-      opacity: 1;
+      display:block;
     }
 
   }

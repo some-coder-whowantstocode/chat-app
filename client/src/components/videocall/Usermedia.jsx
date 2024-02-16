@@ -93,7 +93,7 @@ ${
 position:absolute;
 height: 100px;
 width: 200px;
-bottom: 10px;
+bottom: 50px;
 right: 70px;
 background:black;
 overflow:hidden;
@@ -236,23 +236,34 @@ const Usermedia = () => {
       
         window.addEventListener('mouseup',releasevideo);
         window.addEventListener('mouseleave',releasevideo);
-      
+        window.addEventListener('touchend',releasevideo);
         return(()=>{
           window.removeEventListener('mouseup',releasevideo);
           window.removeEventListener('mouseleave',releasevideo);
+        window.removeEventListener('touchend',releasevideo);
           })
          
         
       },[])
 
-    const handleMousemove = (animationId,element)=>{
-        return function(e){
-          if(element){
+    const handleMove = (animationId,element)=>{
+      return function(e){
+        if(element){
+          const {type} = e;
+          let x,y;
+          if(type === 'mousemove'){
+            x = e.clientX;
+            y = e.clientY;
+          }
+          if(type === 'touchmove'){
+            x = e.touches[0].clientX;
+            y = e.touches[0].clientY;
+          }
             if(Drag.current === true){
               cancelAnimationFrame(animationId);
             animationId = requestAnimationFrame(() => {
-              lastpos.current.y =  element.style.top = `${e.clientY - (element.offsetHeight/2)}px`;
-              lastpos.current.x = element.style.left = `${e.clientX -  (element.offsetWidth/2)}px`;
+              lastpos.current.y =  element.style.top = `${y - (element.offsetHeight/2)}px`;
+              lastpos.current.x = element.style.left = `${x -  (element.offsetWidth/2)}px`;
             });
             }else{
         
@@ -272,9 +283,7 @@ const Usermedia = () => {
         const playpromise = video.play();
         if(playpromise !== undefined ){
           playpromise
-          .then(()=>{
-            console.log('playble')
-          })
+         
         }
       }
     if (videoref.current) {
@@ -311,13 +320,16 @@ const Usermedia = () => {
     
     
      
-      window.addEventListener('mousemove',handleMousemove(null,videoelement));
+      window.addEventListener('mousemove',handleMove(null,videoelement));
+      window.addEventListener('touchmove',handleMove(null,videoelement));
       videoelement.addEventListener('mousedown',lockvideo);
-      videoelement.addEventListener('touch',lockvideo)
+      videoelement.addEventListener('touchstart',lockvideo)
 
       return(()=>{
-      window.removeEventListener('mousemove',handleMousemove);
+      window.removeEventListener('mousemove',handleMove);
+      window.removeEventListener('touchmove',handleMove);
       videoelement.removeEventListener('mousedown',lockvideo);
+      videoelement.removeEventListener('touchstart',lockvideo)
       })
     }
      

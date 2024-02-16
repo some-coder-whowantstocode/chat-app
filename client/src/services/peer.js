@@ -19,10 +19,14 @@ export default class Peer {
         this.incall = true;
         this.stream = null;
         this.media_availability = { cam: true, mic: true };
+        this.negodone = false;
+        this.active = true;
+        this.connecting = false;
 
 
         this.socket.on("message", async({ command, des, to, Id }) => {
             try {
+                if(!this.active) return
                 if (to === this.myname && Id === this.Id) {
                     if (command === Actions.CALL_ACTIONS.ICE) {
                         this.peer.addIceCandidate(des);
@@ -48,6 +52,7 @@ export default class Peer {
         })
 
         this.peer.onicecandidate = (event) => {
+            if(!this.active) return
             this.socket.send({
                 roomid: this.roomid,
                 from: this.myname,
@@ -66,6 +71,8 @@ export default class Peer {
 
         this.peer.onnegotiationneeded = async() => {
             try {
+                if(!this.active) return
+                this.negodone = false;
                 await this.peer.setLocalDescription();
                 this.socket.send({
                     roomid: this.roomid,
@@ -85,7 +92,7 @@ export default class Peer {
 
     }
     async addTracks(stream) {
-
+        if(!this.active) return
         return new Promise((resolve, reject) => {
 
             let tracks = stream.getTracks();
@@ -115,6 +122,7 @@ export default class Peer {
 
     async getOffer() {
         try {
+            if(!this.active) return
             await this.peer.setLocalDescription();
 
             return this.peer.localDescription;
@@ -125,20 +133,34 @@ export default class Peer {
 
 
     async handleOffer(offer) {
-
-        await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
-        let answer = await this.peer.createAnswer();
-        await this.peer.setLocalDescription(answer);
-        return answer;
+        try {
+            if(!this.active) return
+            await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
+            let answer = await this.peer.createAnswer();
+            await this.peer.setLocalDescription(answer);
+            return answer;
+        } catch (error) {
+            console.log(error)
+            
+        }
+       
     }
-
+    
     async handleAnswer(answer) {
-        await this.peer.setRemoteDescription(new RTCSessionDescription(answer));
-        return;
+        try {
+            if(!this.active) return
+            await this.peer.setRemoteDescription(new RTCSessionDescription(answer));
+            return;
+        } catch (error) {
+            console.log(error)
+        }
+       
     }
 
     Close() {
-
         this.peer.close();
+        this.stream = null;
+        this.active = false;
+        this.incall = false;
     }
 }

@@ -80,6 +80,7 @@ const {
 } = require('./wsmethods/index.js');
 const { Admin, cancelrequest } = require('./wsmethods/cancelrequest.js');
 const chatLogger = require('./Logger/index.js');
+const { CUSTOM_RESPONSE } = require('./responses.js');
 
 
 const Logger = chatLogger();
@@ -259,7 +260,9 @@ try {
             socket.on('ping', ({ key, roomid, name }) => {
                 if (roomid && key) {
                     const Room = ROOM.get(roomid);
+                    let remove = false;
                     if(Room){
+
                         if (Room.key === key) {
                             Room.members = Room.members.map((m)=> {
                                 if(m.name === name) m.active = true;
@@ -268,14 +271,20 @@ try {
                             ROOM.set(roomid,Room);
                         }
                         else{
-                            socket.send({
-                                type: 'Announcement',
-                                left: true,
-                                msg: `You left the room ${roomid}`
-                            })
+                            remove = true;
+                            
+
                         }
+                    }else{
+                        remove = true;
                     }
-                  
+                  if(remove){
+                    let msg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL};
+                    msg.key = key;
+                    msg.name = name;
+                    msg.roomid = roomid;
+                    socket.send(msg)
+                  }
                 }
 
 
@@ -335,7 +344,7 @@ const inspector = () => {
             })
     
              
-        }, [1000 * 60]);
+        }, [1000 * 10]);
     }catch(err){
         console.log(err);
     }

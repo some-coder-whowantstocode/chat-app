@@ -46,6 +46,8 @@ module.exports.permission = async(data, ROOM, USER_LIMIT) => {
                 const message = {...CUSTOM_RESPONSE.PERMISSION.ACCEPT.ANNOUNCEMENT};
                 message.name = name;
                 message.msg = `${name} joined the room.`
+                message.roomid = roomid;
+                message.key = Room.key;
                 sendtoall(mem,message);
                 requester.ws.send(accept);
                

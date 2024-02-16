@@ -6,18 +6,19 @@ module.exports.cancelrequest = (data, ROOM) => {
             return;
         }
         let admin = Room.admin;
-
         if (admin) {
+
             admin.ws.send({
                 type: 'cancelrequest',
-                name: name
+                name: name,
+                key:Room.key
             });
         }
         let reqs = Room.requesters;
         if (reqs) {
             reqs = reqs.filter((r) => r.name !== name);
             Room.requesters = reqs;
-            ROOM.set(roomid,reqs)
+            ROOM.set(roomid,Room)
         }
 
     } catch (err) {

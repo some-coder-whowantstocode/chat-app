@@ -14,7 +14,7 @@ const ClearTracks = (tracks) => {
 
 }
 
-export const Mediacontroller = async(use, pc, socket, media, givenstream) => {
+export const Mediacontroller = async(use, pc, socket, media, givenstream,waiting) => {
 
     if (socket) {
 
@@ -26,20 +26,23 @@ export const Mediacontroller = async(use, pc, socket, media, givenstream) => {
                     navigator.mediaDevices.getUserMedia({ video: true })
                         .then(async(stream) => {
 
-                            peers = peers.map(async(peer) => {
-                                await peer.addTracks(stream);
-
-                            })
-
-                            socket.send({
-                                type: 'videocall',
-                                roomid: sessionStorage.getItem('room'),
-                                from: sessionStorage.getItem('name'),
-                                command: Actions.CALL_ACTIONS.MEDIA,
-                                video: true,
-                                audio: media.current.mic
-                            })
-
+                            if(!waiting){
+                                peers = peers.map(async(peer) => {
+                                    await peer.addTracks(stream);
+    
+                                })
+    
+                                socket.send({
+                                    type: 'videocall',
+                                    roomid: sessionStorage.getItem('room'),
+                                    from: sessionStorage.getItem('name'),
+                                    command: Actions.CALL_ACTIONS.MEDIA,
+                                    video: true,
+                                    audio: media.current.mic
+                                })
+    
+                               
+                            }
                             media.current.cam = true;
                             resolve(stream)
 
@@ -59,18 +62,21 @@ export const Mediacontroller = async(use, pc, socket, media, givenstream) => {
                     navigator.mediaDevices.getUserMedia({ audio: true })
                         .then(async(stream) => {
 
-                            peers = peers.map(async(peer) => {
-                                await peer.addTracks(stream);
-                            })
-
-                            socket.send({
-                                type: 'videocall',
-                                roomid: sessionStorage.getItem('room'),
-                                from: sessionStorage.getItem('name'),
-                                command: Actions.CALL_ACTIONS.MEDIA,
-                                audio: true,
-                                video: media.current.cam
-                            })
+                            if(!waiting){
+                                peers = peers.map(async(peer) => {
+                                    await peer.addTracks(stream);
+                                })
+    
+                                socket.send({
+                                    type: 'videocall',
+                                    roomid: sessionStorage.getItem('room'),
+                                    from: sessionStorage.getItem('name'),
+                                    command: Actions.CALL_ACTIONS.MEDIA,
+                                    audio: true,
+                                    video: media.current.cam
+                                })
+                            }
+                           
                             resolve(stream)
 
                         })
@@ -94,15 +100,18 @@ export const Mediacontroller = async(use, pc, socket, media, givenstream) => {
                         ClearTracks(tracks);
                         let newstream = new MediaStream([])
 
+                        if(!waiting){
+                            socket.send({
+                                type: 'videocall',
+                                roomid: sessionStorage.getItem('room'),
+                                from: sessionStorage.getItem('name'),
+                                command: Actions.CALL_ACTIONS.MEDIA,
+                                video: false,
+                                audio: media.current.mic
+                            })
+                        }
 
-                        socket.send({
-                            type: 'videocall',
-                            roomid: sessionStorage.getItem('room'),
-                            from: sessionStorage.getItem('name'),
-                            command: Actions.CALL_ACTIONS.MEDIA,
-                            video: false,
-                            audio: media.current.mic
-                        })
+                       
                         resolve(newstream);
                     }
                     break;
@@ -114,15 +123,17 @@ export const Mediacontroller = async(use, pc, socket, media, givenstream) => {
                         ClearTracks(tracks);
                         let newstream = new MediaStream([])
 
-
-                        socket.send({
-                            type: 'videocall',
-                            roomid: sessionStorage.getItem('room'),
-                            from: sessionStorage.getItem('name'),
-                            command: Actions.CALL_ACTIONS.MEDIA,
-                            audio: false,
-                            video: media.current.cam
-                        })
+                        if(!waiting){
+                            socket.send({
+                                type: 'videocall',
+                                roomid: sessionStorage.getItem('room'),
+                                from: sessionStorage.getItem('name'),
+                                command: Actions.CALL_ACTIONS.MEDIA,
+                                audio: false,
+                                video: media.current.cam
+                            })
+                        }
+                       
                         resolve(newstream);
 
                     }

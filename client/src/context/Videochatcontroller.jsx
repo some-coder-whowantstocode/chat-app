@@ -9,7 +9,7 @@ const Videocontext = createContext(null);
 
 export function Videochatcontroller({ children }) {
   
-    const media = useRef({mic:true,cam:true});
+    
     const {
       socket,
       videocallstatus,
@@ -22,7 +22,12 @@ export function Videochatcontroller({ children }) {
       setpinned,
       gonnaleave,
       leaving,
-      Transport
+      Transport,
+      findpeer,
+      replacePeer,
+      setmyaudio,
+      setmyvideo,
+      media
     } = useSocket();
    
     const remote_stream_list = useRef(new Map());//{username,streamId}
@@ -32,21 +37,24 @@ export function Videochatcontroller({ children }) {
   
 /* adding new member to the video call --------------------------------------------------------------------------*/
 
-    useEffect(()=>{
-      if(joining_list.length > 0){
+    useEffect(()=>
+    {
+      if(joining_list.length > 0)
+      {
         let list = [...joining_list];
 
-        list = list.map(async(data)=>{
-          return new Promise((resolve,reject)=>{
+        list.map(async(data)=>
+        {
             try{
-              const Id = Date.now().toString(36) + Math.random().toString(36).slice(2);
-              let peer = new Peer(socket,data.name,Id);
-              const stream = new MediaStream([...myvideo.getTracks(), ...myaudio.getTracks()]);
-              peer.addTracks(stream)
-             .then(()=>{
-              peer.getOffer()
-              .then((offer)=>{
+              const { name} = data;
+        const Id = Date.now().toString(36) + Math.random().toString(36).slice(2);
 
+              let peer = new Peer(socket,name,Id);
+              const stream = new MediaStream([...myvideo.getTracks(), ...myaudio.getTracks()]);
+             await peer.addTracks(stream)
+             
+              let offer = await peer.getOffer()
+              
 
                 socket.send({
                   roomid:sessionStorage.getItem('room'),
@@ -54,49 +62,22 @@ export function Videochatcontroller({ children }) {
                    command:Actions.CALL_ACTIONS.OFFER,
                    type:'videocall',
                    des:offer,
-                   to:data.name,
+                   to:name,
                    video:media.current.cam,
                    audio:media.current.mic,
                    Id
                  })
-                 
-               
-               
-              
+                     
               setpc(peer)
-                  resolve();
-                 
-              })
-              .catch((err)=>{
-                reject(err);
-              })
-             })
-            .catch((err)=>{
-              reject(err);
-            })
-          
-                
-               
-               
-             
+            
             }catch(err){
-            reject(err);
+              console.log(err);
             }
-          })
-         
+        })
 
-        })
-        
-        Promise.all(list)
-        .then(()=>{
-          setlist([]);
-        })
-        .catch((err)=>{
-          console.log("error while adding new",err);
-        })
-        
+        setlist([]); 
       }
-    
+        
     },[joining_list,socket,setpc,myvideo,myaudio])
 
 /* adding new member to the video call ------------------------------------------------------------------------------*/
@@ -170,49 +151,45 @@ export function Videochatcontroller({ children }) {
       Mediapackup(Actions.PACKUP_ACTIONS.ALL,{audio:myaudio,video:myvideo});
     }
 
-    
 
-
-    const findpeer =(name,Id)=>{
     
-        if(pc){
-          if(Id){
-            return pc.find(p=>p.name === name && p.Id === Id);
-          }else{
-            return pc.find(p=>p.name === name );
-          }
-          
-        }
-      }
 
 
 
 /*Leave video call */
 
 
-const leavecall = useCallback(()=>{
+const leavecall = useCallback(async()=>{
   if(socket && curr_poss.activity.sub_act === Actions.USER_ACTIONS.VIDEO_CHAT && leaving === true ){
     setpinned(false);
     try{
       let copy = [...pc];
-    copy =copy.map((peer)=>{
-        peer.Close();
+
+      socket.send({
+        type:'videocall',
+        command:Actions.CALL_ACTIONS.LEAVE,
+        name:sessionStorage.getItem('name'),
+        roomid:sessionStorage.getItem('room'),
       })
-  Promise.all(copy)
-  .then(()=>{
-    socket.send({
-      type:'videocall',
-      command:Actions.CALL_ACTIONS.LEAVE,
-      name:sessionStorage.getItem('name'),
-      roomid:sessionStorage.getItem('room')
-    })
+      for(let i=0;i<copy.length;i++){
+        if(!copy[i].active) continue;
+        await copy[i].Close();
+        const request = {
+          type:'videocall',
+          command:Actions.CALL_ACTIONS.LEFT,
+          to:copy[i].name,
+          Id:copy[i].Id,
+          name:copy[i].myname,
+          roomid:copy[i].roomid
+        }
+        socket.send(request)
+  
+      }
+
+          
     Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
     removepc(true)
-  })
-  .catch((err)=>{
-    console.log(err);
-  })
-      
+ 
      
     }catch(err){
       console.log(err);
@@ -266,15 +243,66 @@ useEffect(()=>{
                     
                       }
          break;
+
+        //  case Actions.CALL_ACTIONS.R_OFFER:
+        //   try{
+        //     console.log('reconnect offer');
+        //     const {Id,from} = data;
+        //     let peer = new Peer(socket,from,Id);
+        //     removepc(false,from,Id);
+        //         replacePeer(from,Id,peer)
+                // let audio,video;
+                // let st = await navigator.mediaDevices.getUserMedia({audio:media.current.cam,video:media.current.mic})
+
+                // for(const track of  st.getTracks()){
+                //   if(track.kind === 'audio'){
+                //     audio =track;
+                //     setmyaudio(new MediaStream([track]))
+                //   }
+                //   else{
+                //     video =track;
+                //     setmyvideo(new MediaStream([track]))
+                //   }
+                // }
+              
+                // const stream = new MediaStream([audio, video]);
+            // peer.addTracks(stream)
+            // .then(()=>{
+            
+              // peer.handleOffer(data.des)
+              // .then((ans)=>{
+              //   socket.send({
+              //     roomid:sessionStorage.getItem('room'),
+              //     from:sessionStorage.getItem('name'),
+              //    command:Actions.CALL_ACTIONS.ANSWER,
+              //    type:'videocall',
+              //    des:ans,
+              //    to:data.from,
+              //    video:media.current.cam,
+              //    audio:media.current.mic,
+              //    Id
+              //    })
+              //   })
+
+              //   // console.log('peer',peer);
+              // })
+              
+        //   }catch(err){
+        //     console.log(err);
+        //   }
+        //  break;
          
          case Actions.CALL_ACTIONS.ANSWER:
                        {
                         try{
-                          let peer = findpeer(data.from,data.Id);
+                          console.log('reconnect answer');
+                          const { from, Id, des } = data;
+                          let peer = findpeer(from,Id);
                           if(peer){
-                              await peer.handleAnswer(data.des);
+                              await peer.handleAnswer(des);
                              
                               await peer.addTracks(myvideo,myaudio);
+                              // console.log(peer);
                           }  
                       } catch(err){
                           console.log(err);
@@ -283,57 +311,15 @@ useEffect(()=>{
                      }
          break;
          
-        
-                    case Actions.CALL_ACTIONS.NEGO_INIT:
-                      {
-                        try{
-                        let peer = findpeer(data.from,data.Id);
-                        if(peer.peer.signalingState !== 'stable'){
-                          return;
-                        }
-        
-                        peer.handleOffer(data.des)
-                        .then((ans)=>{
-                          socket.send({
-                            roomid:sessionStorage.getItem('room'),
-                            from:sessionStorage.getItem('name'),
-                            type:'videocall',
-                            command:Actions.CALL_ACTIONS.NEGO_DONE,
-                            des:ans,
-                            to:data.from,
-                            Id:data.Id
-                          })
-                        })
-                      
-                      }
-                      catch(err){
-                        console.log(err);
-                      }
-                     
-                      }
-                    break;
-        
-                    case Actions.CALL_ACTIONS.NEGO_DONE:
-                      {
-                        try{
-                          let peer = findpeer(data.from,data.Id);
-                          await peer.handleAnswer(data.des);
-                        }catch(err){
-                          console.log(err);
-                        }
-                       
-                      }
-                    break;
 
                     case Actions.CALL_ACTIONS.LEFT:
                       {
+                        const { Id, name } = data;
                        for(let i = 0;i<pc.length;i++){
-
-                        if(pc[i].name === data.name){
+                        if(pc[i].name === name && pc[i].Id === Id){
                           pc[i].incall = false;
-
                           let timeout = setTimeout(()=>{
-                            removepc(false,pc[i].name,pc[i].id);
+                            if(pc[i].active !== false) removepc(false,pc[i].name,pc[i].id);
                             clearTimeout(timeout);
                           },[1000*13])
                           break;
@@ -352,7 +338,8 @@ useEffect(()=>{
                  ;
                     }
                     break;
-        
+
+                    
                  
                 }
              
@@ -387,7 +374,7 @@ useEffect(()=>{
 
 
     return(
-        <Videocontext.Provider value={{ goback,gonnaleave,remote_stream_list,media,joincall,leavecall}}>
+        <Videocontext.Provider value={{ goback,gonnaleave,remote_stream_list,media,joincall,leavecall,findpeer }}>
         {children}
         </Videocontext.Provider>
     )

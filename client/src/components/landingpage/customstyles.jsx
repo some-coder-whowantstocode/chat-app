@@ -17,6 +17,9 @@ export const Input = styled.div`
     justify-content: center;
     transition-duration: 1s;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    position:relative;
+    
+
 
     input{
         width: 300px;
@@ -26,7 +29,6 @@ export const Input = styled.div`
         background-color: transparent;
         border: 2px solid #ffffff;
         border-radius: 5px;
-        /* color: white; */
         &:focus{
             transition-delay: 0.1s;
             outline: none;
@@ -107,6 +109,18 @@ export const Custombtn = styled.div`
     cursor: pointer;
     border: none;
     background-color: rgb(0, 112, 217);
+    background-color:${props=>props.color} ;
+    ${props=>props.color ?
+    `
+    color: white;
+      
+    `
+  :
+  `
+    
+  `
+  
+  }
     color: white;
     box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
     margin-right: 10px;

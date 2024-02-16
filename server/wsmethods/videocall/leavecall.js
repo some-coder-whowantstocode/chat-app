@@ -5,12 +5,6 @@ module.exports.leavecall = async(data, ROOM) => {
         let copy = Room.call;
         if (copy.find(c => c.name === name)) {
             copy = copy.filter((c) => c.name != name);
-            copy.forEach((c) => {
-                c.ws.send({
-                    command: 'leftcall',
-                    name
-                })
-            })
             Room.call = copy;
             ROOM.set(roomid,Room)
         }

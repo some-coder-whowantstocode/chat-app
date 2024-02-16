@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 import { useSocket } from '../../context/SocketProvider'
 
@@ -23,7 +23,7 @@ const Errbox = styled.div`
 
 const Content = styled.div`
    position: relative;
-  color: red;
+  color: white;
   font-size: 20px;
  
    

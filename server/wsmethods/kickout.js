@@ -1,54 +1,46 @@
+const { CUSTOM_RESPONSE } = require("../responses");
 const { sendtoall } = require("./senttoall");
 
-module.exports.kickout = async(data, ws, roomAdmin, rooms_id, users_in_rooms) => {
+module.exports.kickout = async(data, ws, ROOM) => {
     try {
         const { roomid, name, Admin } = data;
         if (!roomid || !name || !Admin) {
-            ws.send({
-                type: 'error',
-                msg: 'some data are not valid.'
-            })
+            ws.send(CUSTOM_RESPONSE.KICKOUT.REJECT.INVALID_CREDINTIALS)
             return;
         }
 
-        const room = rooms_id.get(roomid);
-        const users = users_in_rooms.get(roomid);
-        const givenAdminindex = users.indexOf(Admin);
-        const givenAdmin = room[givenAdminindex];
-        const actualAdmin = roomAdmin.get(roomid);
+        const Room = ROOM.get(roomid);
+        let users = Room.members;
+        const actualAdmin = Room.admin.name;
 
-        if (actualAdmin !== givenAdmin) {
-            ws.send({
-                type: 'error',
-                msg: 'you are not admin.'
-            })
+        if (actualAdmin !== Admin) {
+            ws.send(CUSTOM_RESPONSE.KICKOUT.REJECT.IMPOSTER)
             return;
         }
+        const user = users.find(u=>u.name === name);
+        if(!user) return;
+        users = users.filter((user)=>user.name !== name);
 
-        const userindex = users.indexOf(name);
-        const user = room[userindex];
-        users.splice(userindex, 1);
-        room.splice(userindex, 1);
-        user.send({
-            type: 'Announcement',
-            kickedout: true,
-            name: data.name,
-            msg: `Admin kicked you out.`
-        })
+      
+        let news = {...CUSTOM_RESPONSE.KICKOUT.ACCEPT.BAD_NEWS};
+        news.name = name;
+        news.roomid = roomid;
+        news.key = Room.key;
+        user.ws.send(news);
 
-        const msg = {
-            type: 'Announcement',
-            left: true,
-            name: data.name,
-            msg: `${name} was kicked out by Admin.`
-        }
+        const msg = {...CUSTOM_RESPONSE.KICKOUT.ACCEPT.ANNOUNCEMENT};
+        msg.name = name;
+        msg.msg = `${name} was kicked out by Admin.`;
+        msg.roomid = roomid;
+        msg.key = Room.key;
 
-        sendtoall(room, msg);
-
-        rooms_id.set(roomid, room);
-        users_in_rooms.set(roomid, users);
+        sendtoall(users, msg);
+        Room.members = users;
+        Room.users = Room.users-1;
+        ROOM.set(roomid,Room);
     } catch (err) {
-        throw new Error(`Error while kicking out member - ${ err.message}`, );
+        console.log(err)
+        // throw new Error(`Error while kicking out member - ${ err.message}`, );
     }
 
 }

@@ -52,13 +52,18 @@ module.exports.CUSTOM_RESPONSE = {
             SUCCESSFUL:{
                 type: 'Announcement',
                 left: true,
-                msg: `You left the room.`
+                msg: `You left the room.`,
+                name:null,
+                roomid:null,
+                key:null
             },
             ANNOUNCEMENT:{
                 type: 'Announcement',
                 leftroom: true,
                 name: null,
-                msg: null
+                msg: null,
+                roomid:null,
+                key:null
             },
             DECLINE_ALL_REQUESTS:{
                 type: 'response',
@@ -70,7 +75,9 @@ module.exports.CUSTOM_RESPONSE = {
                 type: 'Announcement',
                 change: true,
                 newAdmin: null,
-                msg: null
+                msg: null,
+                roomid:null,
+                key:null
             }
         }
     },
@@ -90,6 +97,8 @@ module.exports.CUSTOM_RESPONSE = {
                 joined:true,
                 name:null,
                 msg:null,
+                roomid:null,
+                key:null
             }
         },
         REJECT:{
@@ -110,6 +119,36 @@ module.exports.CUSTOM_RESPONSE = {
         msg: null,
         name: null,
         Admin: null
+    },
+    KICKOUT:{
+        ACCEPT:{
+            BAD_NEWS:{
+                type: 'Announcement',
+                kickedout: true,
+                name: null,
+                msg: `Admin kicked you out.`,
+                roomid:null,
+                key:null
+            },
+            ANNOUNCEMENT:{
+                type: 'Announcement',
+                leftroom:true,
+                name: null,
+                msg: null,
+                roomid:null,
+                key:null
+            }
+        },
+        REJECT:{
+            INVALID_CREDINTIALS:{
+                type: `error`,
+                msg: `All data required.`,
+            },
+            IMPOSTER:{
+                type:`error`,
+                msg:'You are not admin.'
+            }
+        }
     },
     REJECT:{    
     }

@@ -2,7 +2,7 @@
   "scripts": {
     "pre-deploy": "powershell -Command \"(Get-Content ./client/src/context/SocketProvider.jsx) -replace 'For = APP_FOR.TESTING', 'For = APP_FOR.PRODUCTION' | Set-Content ./client/src/context/SocketProvider.jsx\"",
     "add": "git add -A",
-    "commit": "git commit -m 'updated ui-ux added pin and updated test cases , increased the number of user to 4'",
+    "commit": "git commit -m 'added invitation feature.'",
     "push": "git push origin",
     "deploy": "npm-run-all add commit push"
   },

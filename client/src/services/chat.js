@@ -41,16 +41,18 @@ const cancelrequest = async(socket) => {
     try{
         await socket.send({
             type: "cancel",
-            name: sessionStorage.getItem('joinname'),
-            roomid: sessionStorage.getItem('joinroom')
+            name: sessionStorage.getItem('name'),
+            roomid: sessionStorage.getItem('room')
         })
-        sessionStorage.removeItem('joinroom');
-        sessionStorage.removeItem('joinname');
+        sessionStorage.removeItem('room');
+        sessionStorage.removeItem('name');
     }catch(err){
         console.log(err);
     }
   
 }
+
+
 
 export {
     createRoom,

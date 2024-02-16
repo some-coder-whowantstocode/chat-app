@@ -30,7 +30,7 @@ export const Loading =styled.div`
 
 export const Loader = styled(AiOutlineLoading)`
 
-animation: ${rotating} infinite 1s;
+animation: ${rotating} infinite 1s linear;
 color: black;
 
 `
@@ -118,18 +118,6 @@ export const Text = styled.div`
     }
 `
 
-
-// export const Backimg = styled.img`
-//       max-width: 100%;
-//     width: 100vw;
-//     max-height: 100%;
-//     height: 100vh;
-//     z-index: 99;
-//     filter: contrast(1);
-//     position: absolute;
-//     top: 0;
-//     left: 0;
-// `
 
 
 

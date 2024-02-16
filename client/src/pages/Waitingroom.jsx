@@ -139,15 +139,13 @@ const Videoholder = styled.div`
 const Waitingroom = () => {
 
     const { goback , media , joincall  } = useVideo();
-    const { myvideo,Transport, myaudio , setmyaudio ,  viewport, DEVICE_CHART,setmyvideo , pc , socket , curr_poss} =useSocket()
+    const { myvideo,Transport, myaudio , setmyaudio ,setmyvideo , pc , socket , curr_poss, requests} =useSocket()
     const videoref = useRef(null);
     const audioref = useRef(null);
     const username = sessionStorage.getItem('name');
     const [ medialoading , setmediaload ] = useState(true);
     const [video,setvideo] = useState();
     const [audio,setaudio] = useState();
-    const [reqdata, setreqdata] = useState([]);
-  const [notificationsound] = useState(new Audio(notification));
 
   useEffect(() => {
     if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
@@ -158,35 +156,7 @@ const Waitingroom = () => {
 
     // const navigate = useNavigate()
 
-    useEffect(() => {
-      const handleMessage = (jsondata) => {
-        switch(jsondata.type){
-  
-
-  
-          case 'request':
-            notificationsound.play();
-            setreqdata((prevreqdata) => [jsondata, ...prevreqdata]);
-          break;
-  
-          case 'removereq':
-            setreqdata((prevreqdata) => {
-              let arr = prevreqdata.filter((r) => r.name != jsondata.name);
-              return arr;
-            });
-          break;
-  
-        }
-      }
-  
-  
-      if (socket) {
-        socket.addEventListener("message", handleMessage);
-        return () => {
-          socket.removeEventListener("message", handleMessage);
-        };
-      }
-    }, [socket]);
+    
 
     const Getmedia =()=>{
       const {cam,mic} = media.current;
@@ -280,7 +250,7 @@ const Waitingroom = () => {
   
 
   return (
-    <WaitingRoom min={viewport === DEVICE_CHART.MOBILE}>
+    <WaitingRoom >
    
       <Videoholder>
 
@@ -303,7 +273,7 @@ const Waitingroom = () => {
             <IoVideocam
             size={30}
             onClick={()=>{
-              Mediacontroller("remove_video",pc,socket,media,video) 
+              Mediacontroller("remove_video",pc,socket,media,video,true) 
               .then((stream)=>{
                 setmyvideo(stream);
                 setvideo(stream);
@@ -314,7 +284,7 @@ const Waitingroom = () => {
             <IoVideocamOff
             size={30}
             onClick={()=>{
-              Mediacontroller("add_video",pc,socket,media,video) 
+              Mediacontroller("add_video",pc,socket,media,video,true) 
               .then((stream)=>{
                 setmyvideo(stream);
                 setvideo(stream);
@@ -323,7 +293,7 @@ const Waitingroom = () => {
             />
         }
          
-      {reqdata.map((rd) => (
+      {requests.map((rd) => (
         <RequestBox key={rd.name} data={rd} />
       ))}
       </VideoOption>
@@ -336,7 +306,7 @@ const Waitingroom = () => {
             <IoIosMic
             size={30}
             onClick={()=>{
-              Mediacontroller("remove_audio",pc,socket,media,audio) 
+              Mediacontroller("remove_audio",pc,socket,media,audio,true) 
               .then((stream)=>{
                 setmyaudio(stream);
                 setaudio(stream);
@@ -348,7 +318,7 @@ const Waitingroom = () => {
             <IoIosMicOff
             size={30}
             onClick={()=>{
-              Mediacontroller("add_audio",pc,socket,media,audio) 
+              Mediacontroller("add_audio",pc,socket,media,audio,true) 
               .then((stream)=>{
                 setmyaudio(stream);
                 setaudio(stream);

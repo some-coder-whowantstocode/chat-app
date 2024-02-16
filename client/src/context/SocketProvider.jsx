@@ -9,21 +9,13 @@ import { Actions } from '../utils/Actions';
 import { PATH } from '../utils/Paths';
 import { DEVICE_SIZES, DEVICE_CHART } from '../utils/Sizechart';
 import { Mediapackup } from '../utils/mediahandler';
+import Peer from '../services/peer';
 
 
 const SocketContext = createContext(null);
 
 export function SocketProvider({ children }) {
 
-  const CHAT_METHODS = {
-    CREATE:"create",
-    JOIN_RESPONSE:"response",
-    ERROR:"error",
-    ANNOUNCEMENT:"Announcement",
-    ALERT:"Alert",
-    AUTHENTICATION:"Authentication",
-    KICKOUT:"kickout"
-  }
 
   const CONNECTION_STATES = {
     CONNECTED:'connected',
@@ -36,8 +28,11 @@ export function SocketProvider({ children }) {
     PRODUCTION:'PRODUCTION',
     TESTING:'TESTING'
   }
-
+  const [notificationsound] = useState(new Audio(notification));
+  const navigate = useNavigate();
   const For = APP_FOR.PRODUCTION
+  const SERVER_URL = FOR === APP_FOR.TESTING ? 'http://localhost:9310/handshake' : 'https://instant-chat-backend.onrender.com/handshake';
+  const WS_URL = FOR === APP_FOR.TESTING ? 'ws://localhost:9310' : `wss://instant-chat-backend.onrender.com`;
   const [connection_state,setcon] = useState(CONNECTION_STATES.INITIAL_STATE);
   const [ viewport , setview ] = useState(innerWidth <= DEVICE_SIZES.MOBILE.MAX ? DEVICE_CHART.MOBILE : DEVICE_CHART.PC);
   const [socket, setSocket] = useState(); 
@@ -64,15 +59,62 @@ export function SocketProvider({ children }) {
   const [pc,addpc] = useState([]);//[{name of the other user,peer}]
   const [ media_size, changesize ] = useState({ width:innerWidth, height:innerHeight });
   const [pinned,setpinned] = useState(false);
+  const [requests,setrequests] = useState([]);
+  const media = useRef({mic:true,cam:true});
+
+  const popup =(message)=>{
+    let timeoutId;
+    seterrmsg(prevdata => {
+      const newMsg = { msg: message, id: Date.now() };
+       timeoutId = setTimeout(() => {
+        seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
+      }, 3000);
+      return [...prevdata,{ ...newMsg, timeoutId }];
+    });
+  }
+
+  const copyToclip =()=>{
+    const link = `${window.location.origin}/invite/${sessionStorage.getItem('room')}`
+    navigator.clipboard.writeText(link);
+  }
+
+  const verify =(suitable_condition,name,roomid,key)=>{
+    if(curr_poss.activity.main_act !== suitable_condition){
+      return false;
+    }
+    
+    if(name){
+      const curr_name = sessionStorage.getItem('name');
+      if(curr_name !== name) return false;
+    }
+    
+    if(roomid){
+      const curr_room = sessionStorage.getItem('room');
+      if(curr_room !== roomid) return false;
+    }
+   
+    if(curr_poss.activity.main_act === Actions.USER_ACTIONS.CHAT){
+      const curr_key = sessionStorage.getItem('roomkey');
+      if(key !== curr_key) return false;
+    }
+
+    return true;
+    
+  }
+
 
   const remotemediasize =()=>{
     let copy = {...media_size};
-    let num = pc.length;
+    let num = 0;
+
+    pc.map((p)=>{
+      p.active && num++;
+    })
 
     if(pinned){
-      num += 1;
+    num++;
     }    
-    num = num? num > 2 ? 2 : num : 1; //keep the num bettwen one and two
+    num = num? num > 2 ? 2 : num : 1; //keep the num either one or two
     copy.width = innerWidth/num;
     copy.height = innerHeight/num;
     if(copy.height !== media_size.height || copy.width !== media_size.width){
@@ -84,7 +126,21 @@ export function SocketProvider({ children }) {
   remotemediasize();
   },[pc,pinned])
 
+  const findpeer =(name,Id)=>{
+    
+        return pc.find(p=>p.name === name && p.Id === Id);
+  }
 
+  const replacePeer =(name,Id,newpeer)=>{
+    let copy = [...pc];
+    
+    copy = copy.map((peer)=>{
+      if(peer.name === name && peer.Id === Id){
+        return newpeer;
+      }
+      return peer;
+    })
+  }
 
 
   const setmyaudio =(data)=>{
@@ -164,7 +220,7 @@ export function SocketProvider({ children }) {
   useEffect(()=>{
 
     const handleresize =(e)=>{
-      // remotemediasize()
+      remotemediasize()
       const { innerWidth } = e.target;
 
       if( DEVICE_SIZES.PC.MIN <= innerWidth && innerWidth <= DEVICE_SIZES.PC.MAX )
@@ -181,7 +237,7 @@ export function SocketProvider({ children }) {
     return ()=>{
       window.removeEventListener('resize',handleresize);
     }
-  },[])
+  },[pc])
 
 
 
@@ -194,22 +250,13 @@ export function SocketProvider({ children }) {
        }else{
          if(name){
            let copy = [...pc];
-           let index = -1 ;
            for(let i = 0;i<copy.length;i++){
             if(copy[i].name === name && copy[i].Id === Id){
-              index = i;
+              copy[i].Close();
               break;
             }
            }
-           
-           if(index != -1){
-             copy.splice(index,1);
-             if(copy.length>0){
-              addpc(copy);
-             }else{
-              addpc([]);
-             }
-           }
+           addpc(copy);           
           
          }
         
@@ -236,22 +283,39 @@ export function SocketProvider({ children }) {
   
               case "disconnected":
                   try {
-                      if (p.incall === false) {
-                          p.Close();
-                          removepc(false,p.name,p.Id)
-                      }else{
-                        const offer =await p.getOffer();
-                        socket.send({
-                          
-                          roomid:sessionStorage.getItem('room'),
-                          from:sessionStorage.getItem('name'),
-                           command:Actions.CALL_ACTIONS.R_OFFER,
-                           type:'videocall',
-                           des:offer,
-                           to:p.name,
-                           Id:p.Id
-                         })
-                      }
+                    removepc(false,p.name,p.Id);
+                      // if (p.active === true && p.connecting !== true) {
+
+                      //   let newpeer = new Peer(socket,p.name,p.Id);
+                      //   let audio ,video;
+                      //   newpeer.connecting = true;
+                      //   replacePeer(p.name,p.Id,newpeer);
+                      //  let st = await navigator.mediaDevices.getUserMedia({audio:media.current.cam,video:media.current.mic})
+
+                      //     for(const track of  st.getTracks()){
+                      //       if(track.kind === 'audio'){
+                      //         audio =track;
+                      //         setmyaudio(new MediaStream([track]));
+                      //       }
+                      //       else{
+                      //         video =track;
+                      //         setmyvideo(new MediaStream([track]));
+                      //       }
+                      //     }
+                        
+                      //   const stream = new MediaStream([audio,video]);
+                      //   await newpeer.addTracks(stream)
+                      //   const offer =await newpeer.getOffer();
+                      //   socket.send({
+                      //     roomid:sessionStorage.getItem('room'),
+                      //     from:sessionStorage.getItem('name'),
+                      //      command:Actions.CALL_ACTIONS.R_OFFER,
+                      //      type:'videocall',
+                      //      des:offer,
+                      //      to:newpeer.name,
+                      //      Id:newpeer.Id
+                      //    })
+                      // }
                   } catch (err) {
                       console.log(err);
                   }
@@ -265,35 +329,23 @@ export function SocketProvider({ children }) {
       })
     }
    
-  },[pc])
+  },[pc,socket])
 
 
-  const [notificationsound] = useState(new Audio(notification));
-  const navigate = useNavigate();
+  
 
   /* Frist get token for establising connection with websocket at backend.*/
 
-  const gettoken = async () => {
-    let url,wsurl;
-
-    if(For === APP_FOR.TESTING ){
-      url = 'http://localhost:9310/handshake';
-      wsurl = 'ws://localhost:9310';
-    }else{
-      url = 'https://instant-chat-backend.onrender.com/handshake';
-      wsurl = `wss://instant-chat-backend.onrender.com`;
-    }
-
-
+const gettoken = async () => {
  
-  const { data } = await axios.get(url).catch(err =>{
+  const { data } = await axios.get(SERVER_URL).catch(err =>{
     
 console.log(err);
   });
    const { jwtToken } = data;
   sessionStorage.setItem('jwtToken', jwtToken);
 
-  let socket = io(wsurl, { 
+  let socket = io(WS_URL, { 
     query: { token: jwtToken },
     transports: ['websocket'],
     withCredentials: true
@@ -360,27 +412,29 @@ console.log(err);
 
   
   const wanttocreate =(name,roomid)=>{
+    sessionStorage.setItem('name',name);
+    sessionStorage.setItem('room',roomid);
     setLoading(true);
     createRoom(socket,name,roomid);
    }
  
    const wanttojoin =async(name,roomid)=>{
-    // set_room_status('waiting');
      setwaiting(true);
-     sessionStorage.setItem('joinname',name);
-     sessionStorage.setItem('joinroom',roomid);
-   
+     let copy = {...curr_poss};
+     copy.activity.sub_act = Actions.USER_ACTIONS.JOINING_CHAT;
+     sessionStorage.setItem('name',name);
+     sessionStorage.setItem('room',roomid);
      joinRoom(socket,name,roomid);
    }
 
-   const wanttorejoin =async(rejoin)=>{
+   const wanttorejoin =async(rejoin_oldroom)=>{
     // set_room_status('waiting');
     setwaiting(true);
     let name = sessionStorage.getItem('name');
     let roomid = sessionStorage.getItem('room');
-    if(rejoin){
+    if(rejoin_oldroom){
     let key = sessionStorage.getItem('roomkey');
-    socket && socket.send({type:'join',name,roomid,rejoin,key});
+    socket && socket.send({type:'join',name,roomid,rejoin_oldroom,key});
     return ;
     }
   
@@ -416,39 +470,44 @@ useEffect(()=>{
 },[leavechat,socket,curr_poss])
 
    const kickedout =async()=>{
+    try{
     Transport(Actions.TRANSPORT_LOCATIONS.REJOIN);
     setAdmin(false);
     setadminname('');
     setmembers([]);
+    }catch(err){
+      console.log(err);
+    }
+    
    }
    
  
    const wanttocancel =async()=>{
-    await cancelrequest(socket);
-    Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
-     setwaiting(false);
-    
+    try {
+      await cancelrequest(socket);
+      Transport(curr_poss.last_location)
+       setwaiting(false);
+    } catch (error) {
+      console.log(error);
+    }
  }
 
 
  const kickout = async(name)=>{
-  if(socket){
-
+  try {
     socket.send({
       name:name,
       roomid:sessionStorage.getItem('room'),
       Admin:sessionStorage.getItem('name'),
-      type:CHAT_METHODS.KICKOUT
+      type:Actions.CHAT_METHODS.KICKOUT
     })
+  } catch (error) {
+   console.log(error); 
   }
  }
  
-   
- 
-
   useEffect(()=>{
     if(socket && socket.readyState ==0) {
-      // set_room_status('waiting');
       
       setwaiting(true);
 
@@ -466,24 +525,23 @@ useEffect(()=>{
 
         let timeoutId;
         switch(jsondata.type){
-          case CHAT_METHODS.CREATE:
+          case Actions.CHAT_METHODS.CREATE:
+           if( verify(Actions.USER_ACTIONS.IDLE,jsondata.name,jsondata.roomid)){
             setLoading(false);
-              sessionStorage.setItem('name',jsondata.name);
-              sessionStorage.setItem('room',jsondata.roomid);
               sessionStorage.setItem('roomkey',jsondata.key);
               setadminname(jsondata.name);
               Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
               setmembers([jsondata.name]);
               setAdmin(true);
-            
+           }
           break;
 
-          case CHAT_METHODS.JOIN_RESPONSE:
+          case Actions.CHAT_METHODS.JOIN_RESPONSE:
+            if( verify(Actions.USER_ACTIONS.IDLE,jsondata.name,jsondata.roomid)){
               if(jsondata.permission === 'Acc')
               {
-                const {name,roomid,key} = jsondata;
-              sessionStorage.setItem('name',name);
-              sessionStorage.setItem('room',roomid);
+
+                const {key} = jsondata;
               sessionStorage.setItem('roomkey',key)
               Transport(Actions.TRANSPORT_LOCATIONS.CHAT)
                   setwaiting(false);
@@ -493,41 +551,33 @@ useEffect(()=>{
               }
               else if(jsondata.permission == 'Dec')
               {
-                sessionStorage.removeItem('joinroom');
-                sessionStorage.removeItem('joinname');
-                let timeoutId;
-                seterrmsg(prevdata => {
-                  const newMsg = { msg: 'Admin denied your access.', id: Date.now() };
-                   timeoutId = setTimeout(() => {
-                    seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
-                  }, 3000);
-                  return [...prevdata,{ ...newMsg, timeoutId }];
-                });
-                Transport(Actions.TRANSPORT_LOCATIONS.LANDING_PAGE)
+                sessionStorage.removeItem('room');
+                sessionStorage.removeItem('name');
+               
+                popup('Admin denied your access.');
+
+                Transport(curr_poss.last_location)
                 setwaiting(false);
               
                 
               }
+            }
           break;
 
-          case CHAT_METHODS.ERROR:
+          case Actions.CHAT_METHODS.ERROR:
            if(jsondata.create){
             setLoading(false);
            }
-            
-            seterrmsg(prevdata => {
-              const newMsg = { msg: jsondata.msg, id: Date.now() };
-               timeoutId = setTimeout(() => {
-                seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
-              }, 3000);
-              return [...prevdata,{ ...newMsg, timeoutId }];
-            });
+            popup(jsondata.msg);
+          
             setwaiting(false);
 
           break;
 
-          case CHAT_METHODS.ANNOUNCEMENT:
+          case Actions.CHAT_METHODS.ANNOUNCEMENT:
             try{
+              if( verify(Actions.USER_ACTIONS.CHAT,null,jsondata.roomid,jsondata.key)){
+
               if(jsondata.joined){
                 setmembers(prevdata=>[...prevdata,jsondata.name])
               }
@@ -542,15 +592,8 @@ useEffect(()=>{
               }
               if(jsondata.kickedout){
                 kickedout()
-                seterrmsg(prevdata => {
-                  const newMsg = { msg: jsondata.msg, id: Date.now() };
-                   timeoutId = setTimeout(() => {
-                    seterrmsg(prevdata => prevdata.filter(msg => msg.id !== newMsg.id));
-                  }, 3000);
-                  return [...prevdata,{ ...newMsg, timeoutId }];
-                });
+                popup(jsondata.msg);
               }
-              /* remove user if left the room */
               if(jsondata.left){
                   gonnaleave(true)
                   setrem('want to rejoin room.');
@@ -558,10 +601,11 @@ useEffect(()=>{
                  setAdmin(false);
                  setadminname('');
                  setmembers([]);
+                 setrequests([]);
+                }
                
-              }
             
-  
+            }
             }catch(err){
               console.log('error at socketprovider/announcement :' , err)
             }
@@ -569,19 +613,40 @@ useEffect(()=>{
            
           break;
 
-          case CHAT_METHODS.ALERT:
+          case Actions.CHAT_METHODS.ALERT:
             if(jsondata.action_required){
               setstate('ConnectionLost')
             }
           break;
 
-          case CHAT_METHODS.AUTHENTICATION:
+          case Actions.CHAT_METHODS.AUTHENTICATION:
             if(jsondata.status == 'failed'){
               setstate('Authfailed');
             }else{
               setstate('Authenticated')
             }
           break;
+
+
+          case Actions.CHAT_METHODS.REQUEST:
+            notificationsound.play();
+            setrequests((prevrequests) => [jsondata, ...prevrequests]);
+          break;
+  
+          case Actions.CHAT_METHODS.REMOVE_REQUEST:
+            setrequests((prevrequests) => {
+              let arr = prevrequests.filter((r) => r.name != jsondata.name);
+              return arr;
+            });
+          break;
+  
+          case Actions.CHAT_METHODS.CANCEL_REQUEST:
+            setrequests((prevrequests) => {
+              let arr = prevrequests.filter((r) => r.name != jsondata.name);
+              return arr;
+            });
+          break;
+  
         }
 
 
@@ -610,7 +675,7 @@ useEffect(()=>{
     }
     
 
-},[socket,notificationsound,curr_poss])
+},[socket,notificationsound,curr_poss,members])
 
 
 useEffect(()=>{
@@ -625,7 +690,7 @@ useEffect(()=>{
       }
       
      
-    }, 1000 * 15);
+    }, 1000 * 2);
 
 
     return(()=>{
@@ -665,6 +730,7 @@ useEffect(()=>{
   return (
     <SocketContext.Provider value={
       {
+        media,
         curr_poss,
         Transport,
         myaudio:myaudio.current,
@@ -693,6 +759,7 @@ useEffect(()=>{
         waiting,
         errmsg,
         seterrmsg,
+        popup,
         pc,
         setpc,
         removepc,
@@ -702,7 +769,12 @@ useEffect(()=>{
         DEVICE_CHART,
         pinned,
         setpinned,
-        media_size
+        media_size,
+        requests,
+        setrequests,
+        findpeer,
+        replacePeer,
+        copyToclip
         }
         }>
       {children}

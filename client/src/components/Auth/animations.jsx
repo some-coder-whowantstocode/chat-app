@@ -1,4 +1,4 @@
-import styled,{css, keyframes} from 'styled-components'
+import { keyframes} from 'styled-components'
 
 
 export const moveanimateY =(a,b,c,d,e)=> keyframes`
@@ -32,7 +32,7 @@ export const rotating = keyframes`
         transform: rotate(0deg);
     }
     100%{
-        transform: rotate(300deg);
+        transform: rotate(360deg);
     }
 
 `

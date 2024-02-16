@@ -3,6 +3,9 @@ import styled from 'styled-components';
 import { useSocket } from '../../context/SocketProvider';
 import { Actions } from '../../utils/Actions';
 import PropTypes from 'prop-types'
+import { useVideo } from '../../context/Videochatcontroller';
+import { rotating } from '../Auth/animations';
+import { AiOutlineLoading } from "react-icons/ai";
 
 
 
@@ -34,12 +37,37 @@ const Remoteuser_poster = styled.div`
   }
 `
 
+
+const Load = styled(AiOutlineLoading)`
+
+animation: ${rotating} infinite 1s linear;
+color: white;
+height: 30px;
+width: 30px;
+`
+
+const Remoteloader =styled.div`
+${
+  props=> `
+  height:${props.height}px;
+  width:${props.width}px;
+  `
+}
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+`
+
+
+
 const Remotevideo = (props) => {
   const {r} = props;
   const [camAvailable, setCamAvailable] = useState(r.media_availability.cam);
-  const {socket,media_size,pc} = useSocket();
+  const {socket,media_size} = useSocket();
+  const {findpeer} = useVideo();
   const [rvideo,setvideo] = useState(r.stream);
-
+  const [ne,se] = useState(r.negodone)
 
   useEffect(()=>{
     if(r)
@@ -75,18 +103,20 @@ const Remotevideo = (props) => {
         } else {
             r.stream = newstream;
         }
-        setvideo(r.stream);
-  
+        
+          setvideo(r.stream);
+        
     };
   
     }
    
   },[r])
 
-
   useEffect(()=>{
-    setvideo(r.stream);
-  },[pc])
+    if(!camAvailable){
+      se(false);
+    }
+  },[camAvailable])
 
   useEffect(()=>{
 
@@ -100,6 +130,61 @@ const Remotevideo = (props) => {
                     setCamAvailable(data.video);
                   }
               }
+              break;
+
+              case Actions.CALL_ACTIONS.NEGO_INIT:
+                {
+                  try{
+                    
+                  let peer = findpeer(data.from,data.Id);
+                  if(peer.peer.signalingState !== 'stable' || peer.active === false){
+                    return;
+                  }
+                  peer.handleOffer(data.des)
+                  .then((ans)=>{
+                    socket.send({
+                      roomid:sessionStorage.getItem('room'),
+                      from:sessionStorage.getItem('name'),
+                      type:'videocall',
+                      command:Actions.CALL_ACTIONS.NEGO_DONE,
+                      des:ans,
+                      to:data.from,
+                      Id:data.Id
+                    })
+                  })
+                
+                }
+                catch(err){
+                  console.log(err);
+                }
+               
+                }
+              break;
+
+              case Actions.CALL_ACTIONS.NEGO_DONE:
+                {
+                  try{
+                    let peer = findpeer(data.from,data.Id);
+                    peer.negodone = true;
+                    se(true);
+                    await peer.handleAnswer(data.des);
+                    socket.send({
+                      roomid:sessionStorage.getItem('room'),
+                      from:sessionStorage.getItem('name'),
+                      type:'videocall',
+                      command:Actions.CALL_ACTIONS.NEGO_COMPLETE,
+                      to:data.from,
+                      Id:data.Id
+                    })
+                  }catch(err){
+                    console.log(err);
+                  }
+                 
+                }
+              break;
+
+              case Actions.CALL_ACTIONS.NEGO_COMPLETE:
+                se(true);
               break;
   
           }
@@ -126,8 +211,15 @@ const Remotevideo = (props) => {
 
   return (
     <>
-      {
-        camAvailable ?
+    {
+      r.active === true && 
+      <>
+ {
+      camAvailable 
+      ?
+
+        ne 
+        ?
           <Remoteuser
           height={media_size.height}
           width={media_size.width}
@@ -149,7 +241,15 @@ const Remotevideo = (props) => {
           >
             <div style={{ color: "white" }}>hi</div>
           </Remoteuser>
-          :
+
+        :
+          <Remoteloader 
+          height={media_size.height}
+          width={media_size.width}
+          >
+            <Load></Load>
+          </Remoteloader>
+      :
           <Remoteuser_poster
           height={media_size.height}
           width={media_size.width}
@@ -159,6 +259,9 @@ const Remotevideo = (props) => {
             </div>
           </Remoteuser_poster>
       }
+      </>
+    }
+     
     </>
   );
 }
@@ -167,4 +270,4 @@ Remotevideo.propTypes = {
  r:PropTypes.object, 
 }
 
-export default Remotevideo;
+export default React.memo(Remotevideo);

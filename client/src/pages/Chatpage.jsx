@@ -14,33 +14,36 @@ import {
   Chatroom,
   Room,
   Messagebox,
-  Options
+  Options,
+  Copy
 } from "../components/Chatpage/customstyles";
 import Loading from "../components/Loading";
-import { Link } from "react-router-dom";
 import Members from "../components/Chatpage/Members";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { PATH } from "../utils/Paths";
 import { Actions } from "../utils/Actions";
-
-
-
+import Customerrors from "../components/Error/Customerrors";
 
 const Chatpage = () => {
-  const { socket, Transport,viewport,DEVICE_CHART,connection_state,CONNECTION_STATES, setleave, Admin ,curr_poss } =
-    useSocket();
+  const { 
+    socket,
+    Transport,
+    viewport,
+    DEVICE_CHART,
+    connection_state,
+    CONNECTION_STATES, 
+    setleave, Admin,
+    curr_poss,
+    requests
+  } = useSocket();
 
   const [username, setname] = useState();
   const [roomid, setroomid] = useState();
   const [msgs, setmsgs] = useState([]);
   const msg = useRef('');
-  const [reqdata, setreqdata] = useState([]);
   const [notificationsound] = useState(new Audio(notification));
-  
-
+  const { popup, copyToclip } = useSocket();
   const inputref = useRef(null);
-
-  
 
   useEffect(() => {
     setname(sessionStorage.getItem("name"));
@@ -52,38 +55,18 @@ const Chatpage = () => {
   useEffect(() => {
     const handleMessage = (jsondata) => {
       switch(jsondata.type){
-
-
-        case 'message':
+        case Actions.CHAT_METHODS.MESSAGE:
           setmsgs((prevmsg) => [...prevmsg,jsondata]);
         break;
 
-        case 'request':
-          notificationsound.play();
-          setreqdata((prevreqdata) => [jsondata, ...prevreqdata]);
-        break;
-
-        case 'removereq':
-          setreqdata((prevreqdata) => {
-            let arr = prevreqdata.filter((r) => r.name != jsondata.name);
-            return arr;
-          });
-        break;
-
-        case 'cancelrequest':
-          setreqdata((prevreqdata) => {
-            let arr = prevreqdata.filter((r) => r.name != jsondata.name);
-            return arr;
-          });
-        break;
-
-        case 'Announcement':
+      
+        case Actions.CHAT_METHODS.ANNOUNCEMENT:
           setmsgs((prevmsg) => [...prevmsg, jsondata]);
         
         
         break;
 
-        case 'Alert':
+        case Actions.CHAT_METHODS.ALERT:
           if(jsondata.action_required) setleave(true);
           Transport(Actions.TRANSPORT_LOCATIONS.REJOIN)
         break;
@@ -134,7 +117,9 @@ const Chatpage = () => {
   }, [connection_state]);
 
   return (
+
     <Room>
+      <Customerrors/>
      {
       viewport === DEVICE_CHART.PC &&<Members />
      }
@@ -150,7 +135,12 @@ const Chatpage = () => {
           viewport === DEVICE_CHART.MOBILE &&<GiHamburgerMenu onClick={()=>Transport(Actions.TRANSPORT_LOCATIONS.MEMBERS)}/>
         }
         <p>{roomid}</p>
-    
+        <Copy 
+        title="copy link" 
+        onClick={()=>{
+          copyToclip();
+          popup('Link Copied');
+          }}/>
         </div>
    
       <Options>
@@ -182,7 +172,7 @@ const Chatpage = () => {
       <Loading />
 
       
-      {reqdata.map((rd) => (
+      {requests.map((rd) => (
         <RequestBox key={rd.name} data={rd} />
       ))}
       <Chatbox>

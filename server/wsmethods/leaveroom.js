@@ -10,7 +10,10 @@ module.exports.leaveroom = async(data, ws, ROOM ) => {
             key 
         } = data;
         if (!ROOM.has(roomid)) {
-            ws.send(CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL)
+            const msg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL};
+            msg.name = name;
+            msg.roomid = roomid;
+            ws.send(msg);
             return;
         }
 
@@ -27,7 +30,10 @@ module.exports.leaveroom = async(data, ws, ROOM ) => {
 
                 const leavemsg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.ANNOUNCEMENT};
                 leavemsg.name = name;
+                leavemsg.roomid = roomid;
                 leavemsg.msg = `${name} left the room `
+                leavemsg.key = Room.key;
+
 
                 if(name === Room.admin.name){
                     let random_Admin_index = Math.floor(Math.random() * ((all_mem.length-1) + 1));
@@ -38,8 +44,10 @@ module.exports.leaveroom = async(data, ws, ROOM ) => {
                     }
 
                     let msg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.NEW_ADMIN}
-                    msg.newAdmin = random_Admin.name
+                    msg.newAdmin = random_Admin.name;
+                    msg.roomid = roomid;
                     msg.msg = `${random_Admin.name} is now the new Admin.`
+                    msg.key = key
                     sendtoall(Room.members, msg);
                 }
                
@@ -64,8 +72,11 @@ module.exports.leaveroom = async(data, ws, ROOM ) => {
             }
         }
 
-
-        ws.send(CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL);
+        let msg = {...CUSTOM_RESPONSE.LEAVE_ROOM.ACCEPT.SUCCESSFUL};
+        msg.key = Room.key;
+        msg.name = name;
+        msg.roomid = roomid;
+        ws.send(msg);
 
 
     } catch (err) {

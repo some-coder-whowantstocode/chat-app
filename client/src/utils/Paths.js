@@ -5,5 +5,6 @@ export const PATH = {
     WAITING_PAGE: '/wait',
     VIDEO_CHAT_PAGE: '/videochat',
     MEMBERS_PAGE: '/members',
-    REJOIN_PAGE: '/rejoin'
+    REJOIN_PAGE: '/rejoin',
+    INVITATION_PAGE:'/invite/:roomid'
 }

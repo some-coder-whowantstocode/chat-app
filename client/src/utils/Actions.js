@@ -4,7 +4,8 @@ export const Actions = {
         CHAT:'chat',
         JOINING_VIDEO_CHAT:'waiting',
         VIDEO_CHAT:'videochat',
-        IDLE:'nothing'
+        IDLE:'nothing',
+        REJOINING_CHAT:'rejoining'
     },
     CALL_ACTIONS: {
         OFFER: "offer",
@@ -12,6 +13,7 @@ export const Actions = {
         NEW_JOIN: "newmem",
         NEGO_INIT: "negoinitiated",
         NEGO_DONE: 'negodone',
+        NEGO_COMPLETE:'negocomplete',
         ICE: 'icecandidate',
         MEDIA: 'media',
         LEFT: 'leftcall',
@@ -19,7 +21,19 @@ export const Actions = {
         R_OFFER: 'reconnect_offer',
         R_ANSWER: 'reconnect_answer',
     },
-
+    CHAT_METHODS : {
+        CREATE:"create",
+        JOIN_RESPONSE:"response",
+        ERROR:"error",
+        ANNOUNCEMENT:"Announcement",
+        ALERT:"Alert",
+        AUTHENTICATION:"Authentication",
+        KICKOUT:"kickout",
+        CANCEL_REQUEST:'cancelrequest',
+        REMOVE_REQUEST:'removereq',
+        REQUEST:'request',
+        MESSAGE:'message'
+    },
     REDUCER_ACTIONS: {
         CREATE: "create",
         UPDATETRACK: "update",

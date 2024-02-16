@@ -1,4 +1,3 @@
-import './App.css'
 import LandingPage from './pages/LandingPage'
 import {Route, Routes} from 'react-router-dom'
 import Chatpage from './pages/Chatpage'
@@ -8,6 +7,7 @@ import VideochatPage from './pages/VideochatPage'
 import Waitingroom from './pages/Waitingroom'
 import Members from './components/Chatpage/Members'
 import { PATH } from './utils/Paths'
+import Invitation from './pages/Invitation'
 
 function App() {
 
@@ -47,6 +47,11 @@ function App() {
       <Route 
       path={ PATH.WAITING_PAGE } 
       element={ <Waitingroom/> }
+      />
+
+      <Route
+      path={PATH.INVITATION_PAGE}
+      element={<Invitation/>}
       />
       
     </Routes>

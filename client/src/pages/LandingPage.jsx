@@ -118,6 +118,7 @@ const LandingPage = () => {
           </Input>
           <Controls>
             <Custombtn
+            color='rgb(0, 112, 217)'
               onClick={() =>
                 wanttocreate(
                   nameref.current.value,
@@ -128,6 +129,7 @@ const LandingPage = () => {
               CREATE
             </Custombtn>
             <Custombtn
+            color='rgb(0, 112, 217)'
               onClick={() =>
                 wanttojoin(
                     nameref.current.value, 

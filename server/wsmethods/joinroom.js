@@ -3,7 +3,7 @@ const { CUSTOM_RESPONSE } = require("../responses");
 module.exports.joinroom = (data, ws, ROOM, USER_LIMIT) => {
     try {
         const { roomid, name, rejoin, key } = data;
-        if (!ROOM.has(roomid)) {
+        if (!ROOM.has(roomid) || !name || name === '') {
             ws.send(CUSTOM_RESPONSE.JOIN_ROOM.REJECT.NOT_EXISTS)
             return;
         }

@@ -29,9 +29,7 @@ grid-gap: 10px;
 
 const VideochatPage = () => {
 
-  const [reqdata, setreqdata] = useState([]);
-  const [notificationsound] = useState(new Audio(notification));
-  const {socket,curr_poss,Transport,pc} = useSocket()
+  const {curr_poss,Transport,pc,requests} = useSocket()
 
   useEffect(() => {
     if (curr_poss.activity.main_act !== Actions.TRANSPORT_LOCATIONS.CHAT ) {
@@ -39,36 +37,7 @@ const VideochatPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const handleMessage = (jsondata) => {
-      switch(jsondata.type){
-
-        case 'request':
-          notificationsound.play();
-          setreqdata((prevreqdata) => [jsondata, ...prevreqdata]);
-        break;
-
-        case 'removereq':
-          setreqdata((prevreqdata) => {
-            let arr = prevreqdata.filter((r) => r.name != jsondata.name);
-            return arr;
-          });
-        break;
-
-      
-     
-
-      }
-    }
-
-
-    if (socket) {
-      socket.addEventListener("message", handleMessage);
-      return () => {
-        socket.removeEventListener("message", handleMessage);
-      };
-    }
-  }, [socket]);
+  
 
   
   return (
@@ -84,7 +53,7 @@ const VideochatPage = () => {
         )
       }   
       
-    {reqdata.map((rd) => (
+    {requests.map((rd) => (
         <RequestBox key={rd.name} data={rd} />
       ))}
 
@@ -92,4 +61,4 @@ const VideochatPage = () => {
   )
 }
 
-export default React.memo(VideochatPage)
+export default VideochatPage
