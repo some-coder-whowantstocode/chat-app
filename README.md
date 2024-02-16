@@ -1,6 +1,7 @@
 # Instant Group
 
-!Visit the site
+<a href="https://instant-chat-ay6x.onrender.com" target="_blank" style="text-decoration: none;"><button style="background-color: #87CEEB; color: white; border: none; padding: 15px 32px; text-align: center; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">Live Site</button></a>
+
 
 This is a real-time chat application built using the MERN stack (MongoDB, Express.js, React, Node.js), along with WebSocket, WebRTC, and React Styled Components.
 
